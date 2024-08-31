@@ -1,14 +1,18 @@
 package dev.hossain.keepalive.service
 
-import android.app.*
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import dev.hossain.keepalive.MainActivity
 import dev.hossain.keepalive.R
+import dev.hossain.keepalive.util.AppChecker
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -53,7 +57,7 @@ class WatchdogService : Service() {
                 Log.d(TAG, "Current time: ${System.currentTimeMillis()} @ ${Date()}")
                 delay(CHECK_INTERVAL_MILLIS)
 
-                if(!isAppRunning(this@WatchdogService, PHOTOS_APP_PACKAGE_NAME)) {
+                if(!AppChecker.isAppRunning(this@WatchdogService, PHOTOS_APP_PACKAGE_NAME)) {
                     Log.d(TAG, "Photos app is not running. Starting it now.")
                     startExplicitApp(PHOTOS_APP_PACKAGE_NAME)
                 } else {
@@ -120,17 +124,4 @@ class WatchdogService : Service() {
         }
         startActivity(intent)
     }
-
-    private fun isAppRunning(context: Context, packageName: String): Boolean {
-        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val runningAppProcesses = activityManager.runningAppProcesses
-        for (processInfo in runningAppProcesses) {
-            if (processInfo.processName == packageName) {
-                return true
-            }
-        }
-        return false
-    }
-
-    // ... (Other methods for checking app status and relaunching will be added later)
 }
