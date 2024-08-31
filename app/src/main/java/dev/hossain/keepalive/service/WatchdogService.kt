@@ -22,8 +22,8 @@ class WatchdogService : Service() {
     private val TAG = "WatchdogService"
 
     companion object {
-        const val TARGET_APP_PACKAGE_NAME =
-            "com.example.targetapp" // Replace with your target app's package name
+        const val PHOTOS_APP_PACKAGE_NAME =
+            "com.google.android.apps.photos" // Replace with your target app's package name
         const val CHECK_INTERVAL_MILLIS = 5_000L // Check every 5 seconds
     }
 
@@ -60,6 +60,8 @@ class WatchdogService : Service() {
     }
 
     private fun createNotificationChannel() {
+        Log.d(TAG, "createNotificationChannel() called")
+
         val channel = NotificationChannel(
             CHANNEL_ID,
 
@@ -72,19 +74,23 @@ class WatchdogService : Service() {
     }
 
     private fun buildNotification(): Notification {
-        val notificationIntent = Intent(this, MainActivity::class.java)
-        // Replace MainActivity with your app's main activity
-        val pendingIntent =
-            PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
+        Log.d(TAG, "buildNotification() called")
 
-        return NotificationCompat.Builder(
-            this,
-            CHANNEL_ID
+        val notificationIntent =
+            Intent(/* packageContext = */ this, /* cls = */ MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(/* context = */ this, /* requestCode = */
+            0, /* intent = */
+            notificationIntent, /* flags = */
+            PendingIntent.FLAG_IMMUTABLE
         )
+
+        return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Watchdog Service")
             .setContentText("Monitoring app status")
             .setSmallIcon(R.drawable.baseline_radar_24)
             .setContentIntent(pendingIntent)
+            .setPriority(NotificationCompat.PRIORITY_LOW) // Set priority
+            .setOngoing(true) // Make the notification sticky
             .build()
     }
 
