@@ -16,15 +16,14 @@ import kotlinx.coroutines.launch
 import java.util.Date
 
 class WatchdogService : Service() {
-
-    private val CHANNEL_ID = "WatchdogServiceChannel"
-    private val NOTIFICATION_ID = 1
-    private val TAG = "WatchdogService"
-
     companion object {
+        private const val CHANNEL_ID = "WatchdogServiceChannel"
+        private const val NOTIFICATION_ID = 1
+        private const val TAG = "WatchdogService"
+        // https://play.google.com/store/apps/details?id=com.google.android.apps.photos
         const val PHOTOS_APP_PACKAGE_NAME =
             "com.google.android.apps.photos" // Replace with your target app's package name
-        const val CHECK_INTERVAL_MILLIS = 5_000L // Check every 5 seconds
+        const val CHECK_INTERVAL_MILLIS = 10_000L // Check every 5 seconds
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -53,6 +52,13 @@ class WatchdogService : Service() {
             while (true) {
                 Log.d(TAG, "Current time: ${System.currentTimeMillis()} @ ${Date()}")
                 delay(CHECK_INTERVAL_MILLIS)
+
+                if(!isAppRunning(this@WatchdogService, PHOTOS_APP_PACKAGE_NAME)) {
+                    Log.d(TAG, "Photos app is not running. Starting it now.")
+                    startExplicitApp(PHOTOS_APP_PACKAGE_NAME)
+                } else {
+                    Log.d(TAG, "Photos app is already running.")
+                }
             }
         }
 
@@ -92,6 +98,38 @@ class WatchdogService : Service() {
             .setPriority(NotificationCompat.PRIORITY_LOW) // Set priority
             .setOngoing(true) // Make the notification sticky
             .build()
+    }
+
+    private fun startPhotosApp(packageName: String) {
+        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        if (launchIntent != null) {
+            Log.i(TAG, "Starting Photos app with intent: $launchIntent")
+            startActivity(launchIntent)
+        } else {
+            Log.e(TAG, "Unable to find package: $packageName")
+        }
+    }
+
+    private fun startExplicitApp(packageName: String) {
+        val intent = Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_LAUNCHER)
+            setPackage(packageName)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // Required for starting from a service
+        }
+        startActivity(intent)
+    }
+
+    private fun isAppRunning(context: Context, packageName: String): Boolean {
+        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val runningAppProcesses = activityManager.runningAppProcesses
+        for (processInfo in runningAppProcesses) {
+            if (processInfo.processName == packageName) {
+                return true
+            }
+        }
+        return false
     }
 
     // ... (Other methods for checking app status and relaunching will be added later)
