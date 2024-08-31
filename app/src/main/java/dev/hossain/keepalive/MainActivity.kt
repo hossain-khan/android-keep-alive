@@ -1,5 +1,6 @@
 package dev.hossain.keepalive
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import dev.hossain.keepalive.service.WatchdogService
 import dev.hossain.keepalive.ui.theme.KeepALiveTheme
 
 class MainActivity : ComponentActivity() {
@@ -27,6 +29,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val serviceIntent = Intent(this, WatchdogService::class.java)
+        startService(serviceIntent)
     }
 }
 
