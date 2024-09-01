@@ -25,19 +25,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import dev.hossain.keepalive.service.WatchdogService
-import dev.hossain.keepalive.ui.theme.KeepALiveTheme
+import dev.hossain.keepalive.ui.theme.KeepAliveTheme
 
-
+/**
+ * Main activity that launches the WatchdogService and requests for necessary permissions.
+ */
 class MainActivity : ComponentActivity() {
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<Array<String>>
-    private val TAG = "MainActivity"
+    private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
+
+    companion object {
+        private const val TAG = "MainActivity"
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            KeepALiveTheme {
+            KeepAliveTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
                         name = "Android",
@@ -67,6 +73,21 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        // Initialize the ActivityResultLauncher
+        activityResultLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == RESULT_OK) {
+                if (Settings.canDrawOverlays(this)) {
+                    // Permission granted, proceed with your action
+                    Log.d(TAG, "Overlay permission granted")
+                } else {
+                    // Permission not granted, show a message to the user
+                    Log.d(TAG, "Overlay permission denied")
+                }
+            }
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if ((ContextCompat.checkSelfPermission(this, POST_NOTIFICATIONS)
                         != PackageManager.PERMISSION_GRANTED) || (ContextCompat.checkSelfPermission(
@@ -90,7 +111,7 @@ class MainActivity : ComponentActivity() {
             // Permission granted, you can start the activity or service that needs this permission
         } else {
             // Permission not granted, request it
-            requestOverlayPermission();
+            requestOverlayPermission()
         }
     }
 
@@ -124,20 +145,7 @@ class MainActivity : ComponentActivity() {
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
             Uri.parse("package:$packageName")
         )
-        startActivityForResult(intent, 1)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 1) {
-            if (Settings.canDrawOverlays(this)) {
-                // Permission granted, proceed with your action
-                Log.d(TAG, "onActivityResult: Overlay permission granted")
-            } else {
-                // Permission not granted, show a message to the user
-                Log.d(TAG, "onActivityResult: Overlay permission denied")
-            }
-        }
+        activityResultLauncher.launch(intent)
     }
 
     private fun hasUsageStatsPermission(context: Context): Boolean {
@@ -149,6 +157,7 @@ class MainActivity : ComponentActivity() {
                 context.packageName
             )
         } else {
+            @Suppress("DEPRECATION")
             appOps.checkOpNoThrow(
                 AppOpsManager.OPSTR_GET_USAGE_STATS,
                 android.os.Process.myUid(),
@@ -170,7 +179,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    KeepALiveTheme {
+    KeepAliveTheme {
         Greeting("Android")
     }
 }
