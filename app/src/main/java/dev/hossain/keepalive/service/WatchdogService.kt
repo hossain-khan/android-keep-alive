@@ -1,51 +1,44 @@
 package dev.hossain.keepalive.service
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.app.Service
 import android.content.ActivityNotFoundException
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
-import androidx.core.app.NotificationCompat
-import dev.hossain.keepalive.MainActivity
-import dev.hossain.keepalive.R
 import dev.hossain.keepalive.util.AppChecker
+import dev.hossain.keepalive.util.AppConfig.PHOTOS_APP_LAUNCH_ACTIVITY
+import dev.hossain.keepalive.util.AppConfig.PHOTOS_APP_PACKAGE_NAME
+import dev.hossain.keepalive.util.AppConfig.SYNC_APP_LAUNCH_ACTIVITY
+import dev.hossain.keepalive.util.AppConfig.SYNC_APP_PACKAGE_NAME
+import dev.hossain.keepalive.util.AppConfig.ogPixelUrl
+import dev.hossain.keepalive.util.HttpPingSender
+import dev.hossain.keepalive.util.NotificationHelper
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okio.IOException
 import java.util.Date
 
-
+/**
+ * Service that keeps an eye on the Google Photos and Sync app and restarts if it's killed.
+ */
 class WatchdogService : Service() {
     companion object {
-        private const val CHANNEL_ID = "WatchdogServiceChannel"
+
         private const val NOTIFICATION_ID = 1
         private const val TAG = "WatchdogService"
 
-        // https://play.google.com/store/apps/details?id=com.nutomic.syncthingandroid
-        private const val SYNC_APP_PACKAGE_NAME = "com.nutomic.syncthingandroid"
-        private const val SYNC_APP_LAUNCH_ACTIVITY =
-            "com.nutomic.syncthingandroid.activities.FirstStartActivity"
 
-        // https://play.google.com/store/apps/details?id=com.google.android.apps.photos
-        private const val PHOTOS_APP_PACKAGE_NAME =
-            "com.google.android.apps.photos"
-        private const val PHOTOS_APP_LAUNCH_ACTIVITY =
-            "com.google.android.apps.photos.home.HomeActivity"
         private const val CHECK_INTERVAL_MILLIS = 1800_000L // 30 minutes x2
 
         // Less time for debugging
         //private const val CHECK_INTERVAL_MILLIS = 20_000L // 30 minutes x2
     }
+
+    private val pingSender = HttpPingSender(this)
+    private val notificationHelper = NotificationHelper(this)
+
 
     override fun onBind(intent: Intent?): IBinder? {
         Log.d(TAG, "onBind: $intent")
@@ -58,26 +51,27 @@ class WatchdogService : Service() {
             TAG,
             "onStartCommand() called with: intent = $intent, flags = $flags, startId = $startId"
         )
-        createNotificationChannel()
+        notificationHelper.createNotificationChannel()
 
         startForeground(
             NOTIFICATION_ID,
-            buildNotification()
+            notificationHelper.buildNotification()
         )
 
-
-        // Log current time every 10 seconds
         GlobalScope.launch {
             while (true) {
                 Log.d(TAG, "Current time: ${System.currentTimeMillis()} @ ${Date()}")
                 delay(CHECK_INTERVAL_MILLIS)
+
+                // Send heart beat ping to URL for the device
+                val watcherHeartbeat = ogPixelUrl
 
                 if (!AppChecker.isAppRunning(this@WatchdogService, PHOTOS_APP_PACKAGE_NAME)) {
                     Log.d(TAG, "Photos app is not running. Starting it now.")
                     startApplication(PHOTOS_APP_PACKAGE_NAME, PHOTOS_APP_LAUNCH_ACTIVITY)
                 } else {
                     Log.d(TAG, "Photos app is already running.")
-                    sendHttpPing()
+                    pingSender.sendHttpPing(watcherHeartbeat)
                 }
 
                 delay(30_000L) // 30 seconds
@@ -86,7 +80,7 @@ class WatchdogService : Service() {
                     startApplication(SYNC_APP_PACKAGE_NAME, SYNC_APP_LAUNCH_ACTIVITY)
                 } else {
                     Log.d(TAG, "Sync app is already running.")
-                    sendHttpPing()
+                    pingSender.sendHttpPing(watcherHeartbeat)
                 }
 
                 delay(CHECK_INTERVAL_MILLIS)
@@ -97,7 +91,6 @@ class WatchdogService : Service() {
     }
 
     private fun startApplication(packageName: String, activityName: String) {
-
         // Start the activity
         val launchIntent = Intent()
         launchIntent.setAction(Intent.ACTION_MAIN)
@@ -112,69 +105,6 @@ class WatchdogService : Service() {
         } catch (e: ActivityNotFoundException) {
             e.printStackTrace()
             Log.e(TAG, "Unable to find activity: $launchIntent", e)
-        }
-    }
-
-    private fun createNotificationChannel() {
-        Log.d(TAG, "createNotificationChannel() called")
-
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-
-            "Watchdog Service",
-            NotificationManager.IMPORTANCE_LOW
-        )
-        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-        manager.createNotificationChannel(channel)
-    }
-
-    private fun buildNotification(): Notification {
-        Log.d(TAG, "buildNotification() called")
-
-        val notificationIntent =
-            Intent(/* packageContext = */ this, /* cls = */ MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(/* context = */ this, /* requestCode = */
-            0, /* intent = */
-            notificationIntent, /* flags = */
-            PendingIntent.FLAG_IMMUTABLE
-        )
-
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Photo Auto Upload")
-            .setContentText("📸 Monitoring photo upload apps.")
-            .setSmallIcon(R.drawable.baseline_radar_24)
-            .setContentIntent(pendingIntent)
-            .setPriority(NotificationCompat.PRIORITY_LOW) // Set priority
-            .setOngoing(true) // Make the notification sticky
-            .build()
-    }
-
-    /**
-     * Sends HTTP ping to notify that service is running.
-     */
-    private fun sendHttpPing() {
-        val ogPixelUrl = "https://hc-ping.com/357a4e95-a7b3-4cd0-9506-4168fd9f1794"
-        val gs23Url = "https://hc-ping.com/c1194e83-99d2-447b-8043-520320fc4c39"
-        val client = OkHttpClient()
-
-        // Get app current version
-        val packageInfo = packageManager.getPackageInfo(packageName, 0)
-        val versionName = packageInfo.versionName
-
-        // Add user agent with app name, version, and device info
-        val userAgent = "KA/${versionName} (Android ${android.os.Build.VERSION.RELEASE}, API ${android.os.Build.VERSION.SDK_INT} ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL})"
-
-        val request = Request.Builder()
-            .url(gs23Url) // TODO - make this dynamic or add UI for this to configure
-            .header("User-Agent", userAgent)
-            .build()
-        client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) {
-                Log.e(TAG, "Unexpected code $response", IOException("Unexpected code $response"))
-            } else {
-                Log.d(TAG, "sendHttpPing: Response: ${response.body!!.string()}")
-            }
         }
     }
 }
