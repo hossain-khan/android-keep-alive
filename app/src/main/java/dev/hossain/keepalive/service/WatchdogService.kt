@@ -41,7 +41,7 @@ class WatchdogService : Service() {
             "com.google.android.apps.photos"
         private const val PHOTOS_APP_LAUNCH_ACTIVITY =
             "com.google.android.apps.photos.home.HomeActivity"
-        private const val CHECK_INTERVAL_MILLIS = 30_000L
+        private const val CHECK_INTERVAL_MILLIS = 1800_000L // 30 minutes x2
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -77,7 +77,7 @@ class WatchdogService : Service() {
                     sendHttpPing()
                 }
 
-                delay(CHECK_INTERVAL_MILLIS)
+                delay(30_000L) // 30 seconds
                 if (!AppChecker.isAppRunning(this@WatchdogService, SYNC_APP_PACKAGE_NAME)) {
                     Log.d(TAG, "Sync app is not running. Starting it now.")
                     startApplication(SYNC_APP_PACKAGE_NAME, SYNC_APP_LAUNCH_ACTIVITY)
