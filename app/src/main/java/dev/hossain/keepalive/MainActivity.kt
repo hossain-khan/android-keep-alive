@@ -6,6 +6,7 @@ import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -25,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import dev.hossain.keepalive.service.WatchdogService
 import dev.hossain.keepalive.ui.theme.KeepALiveTheme
+
 
 class MainActivity : ComponentActivity() {
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<Array<String>>
@@ -77,11 +79,18 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        if(hasUsageStatsPermission(this)) {
+        if (hasUsageStatsPermission(this)) {
             Log.d(TAG, "onCreate: PACKAGE_USAGE_STATS Permission granted")
         } else {
             Log.d(TAG, "onCreate: PACKAGE_USAGE_STATS Permission denied")
             requestUsageStatsPermission()
+        }
+
+        if (Settings.canDrawOverlays(this)) {
+            // Permission granted, you can start the activity or service that needs this permission
+        } else {
+            // Permission not granted, request it
+            requestOverlayPermission();
         }
     }
 
@@ -100,9 +109,44 @@ class MainActivity : ComponentActivity() {
         startService(serviceIntent)
     }
 
+    /**
+     * When your app's WindowStopped is set to true, it means that your app's activity has been stopped,
+     * which typically occurs when the app is no longer visible to the user. Starting a new activity
+     * when your app's WindowStopped is true is restricted on newer versions of Android due to the
+     * background activity launch restrictions.
+     *
+     * Understanding the Restriction
+     * Starting from Android 10 (API level 29), apps are restricted from launching activities from
+     * the background to improve the user experience and reduce unexpected interruptions.
+     */
+    private fun requestOverlayPermission() {
+        val intent = Intent(
+            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+            Uri.parse("package:$packageName")
+        )
+        startActivityForResult(intent, 1)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 1) {
+            if (Settings.canDrawOverlays(this)) {
+                // Permission granted, proceed with your action
+                Log.d(TAG, "onActivityResult: Overlay permission granted")
+            } else {
+                // Permission not granted, show a message to the user
+                Log.d(TAG, "onActivityResult: Overlay permission denied")
+            }
+        }
+    }
+
     private fun hasUsageStatsPermission(context: Context): Boolean {
         val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        val mode = appOps.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), context.packageName)
+        val mode = appOps.unsafeCheckOpNoThrow(
+            AppOpsManager.OPSTR_GET_USAGE_STATS,
+            android.os.Process.myUid(),
+            context.packageName
+        )
         return mode == AppOpsManager.MODE_ALLOWED
     }
 }

@@ -5,6 +5,8 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.ActivityNotFoundException
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
@@ -18,6 +20,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Date
+
 
 class WatchdogService : Service() {
     companion object {
@@ -59,7 +62,8 @@ class WatchdogService : Service() {
 
                 if(!AppChecker.isAppRunning(this@WatchdogService, PHOTOS_APP_PACKAGE_NAME)) {
                     Log.d(TAG, "Photos app is not running. Starting it now.")
-                    startExplicitApp(PHOTOS_APP_PACKAGE_NAME)
+                    //startExplicitApp(PHOTOS_APP_PACKAGE_NAME)
+                    startPhotos()
                 } else {
                     Log.d(TAG, "Photos app is already running.")
                 }
@@ -67,6 +71,28 @@ class WatchdogService : Service() {
         }
 
         return START_STICKY // Restart the service if it's killed
+    }
+
+    fun startPhotos() {
+
+        // Start the activity
+        val launchIntent = Intent()
+        launchIntent.setAction(Intent.ACTION_MAIN)
+        launchIntent.addCategory(Intent.CATEGORY_LAUNCHER)
+        launchIntent.setComponent(
+            ComponentName(
+                PHOTOS_APP_PACKAGE_NAME,
+                "com.google.android.apps.photos.home.HomeActivity"
+            )
+        )
+        launchIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+        try {
+            startActivity(launchIntent)
+        } catch (e: ActivityNotFoundException) {
+            e.printStackTrace()
+            Log.e(TAG, "Unable to find activity: $launchIntent", e)
+        }
     }
 
     private fun createNotificationChannel() {
@@ -114,14 +140,5 @@ class WatchdogService : Service() {
         } else {
             Log.e(TAG, "Unable to find package: $packageName")
         }
-    }
-
-    private fun startExplicitApp(packageName: String) {
-        val intent = Intent(Intent.ACTION_MAIN).apply {
-            addCategory(Intent.CATEGORY_LAUNCHER)
-            setPackage(packageName)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // Required for starting from a service
-        }
-        startActivity(intent)
     }
 }
