@@ -1,5 +1,8 @@
 package dev.hossain.keepalive.util;
 
+import static dev.hossain.keepalive.util.AppConfig.PHOTOS_APP_PACKAGE_NAME;
+import static dev.hossain.keepalive.util.AppConfig.SYNC_APP_PACKAGE_NAME;
+
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
@@ -11,10 +14,17 @@ import java.util.TreeMap;
 
 public class AppChecker {
 
+    public static boolean isGooglePhotosRunning(Context context) {
+        return isAppRunning(context, PHOTOS_APP_PACKAGE_NAME);
+    }
+    public static boolean isSyncthingRunning(Context context) {
+        return isAppRunning(context, SYNC_APP_PACKAGE_NAME);
+    }
+
     /**
      * Check if the app is running in foreground.
      */
-    public static boolean isAppRunning(Context context, String packageName) {
+    private static boolean isAppRunning(Context context, String packageName) {
         UsageStatsManager usageStatsManager = (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
 
         long time = System.currentTimeMillis();

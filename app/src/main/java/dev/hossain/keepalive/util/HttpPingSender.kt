@@ -23,7 +23,7 @@ class HttpPingSender(private val context: Context) {
 
         // Add user agent with app name, version, and device info
         val userAgent =
-            "KA/${versionName} (Android ${android.os.Build.VERSION.RELEASE}, API ${android.os.Build.VERSION.SDK_INT} ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL})"
+            "KA/${versionName} (Android ${android.os.Build.VERSION.RELEASE}, API ${android.os.Build.VERSION.SDK_INT}, ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL})"
 
         val request = Request.Builder()
             .url(pingUrl)
@@ -33,7 +33,7 @@ class HttpPingSender(private val context: Context) {
             if (!response.isSuccessful) {
                 Log.e(TAG, "Unexpected code $response", IOException("Unexpected code $response"))
             } else {
-                Log.d(TAG, "sendHttpPing: Response: ${response.body!!.string()}")
+                Log.d(TAG, "Heartbeat Ping Sent: Response: ${response.body?.string()}")
             }
         }
     }

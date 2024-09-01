@@ -1,17 +1,12 @@
 package dev.hossain.keepalive.service
 
 import android.app.Service
-import android.content.ActivityNotFoundException
-import android.content.ComponentName
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
 import dev.hossain.keepalive.util.AppChecker
-import dev.hossain.keepalive.util.AppConfig.PHOTOS_APP_LAUNCH_ACTIVITY
-import dev.hossain.keepalive.util.AppConfig.PHOTOS_APP_PACKAGE_NAME
-import dev.hossain.keepalive.util.AppConfig.SYNC_APP_LAUNCH_ACTIVITY
-import dev.hossain.keepalive.util.AppConfig.SYNC_APP_PACKAGE_NAME
 import dev.hossain.keepalive.util.AppConfig.ogPixelUrl
+import dev.hossain.keepalive.util.AppLauncher
 import dev.hossain.keepalive.util.HttpPingSender
 import dev.hossain.keepalive.util.NotificationHelper
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -32,8 +27,8 @@ class WatchdogService : Service() {
 
         private const val CHECK_INTERVAL_MILLIS = 1800_000L // 30 minutes x2
 
-        // Less time for debugging
-        //private const val CHECK_INTERVAL_MILLIS = 20_000L // 30 minutes x2
+        // Less time for debugging - 20 seconds
+        //private const val CHECK_INTERVAL_MILLIS = 20_000L
     }
 
     private val pingSender = HttpPingSender(this)
@@ -66,18 +61,18 @@ class WatchdogService : Service() {
                 // Send heart beat ping to URL for the device
                 val watcherHeartbeat = ogPixelUrl
 
-                if (!AppChecker.isAppRunning(this@WatchdogService, PHOTOS_APP_PACKAGE_NAME)) {
+                if (!AppChecker.isGooglePhotosRunning(this@WatchdogService)) {
                     Log.d(TAG, "Photos app is not running. Starting it now.")
-                    startApplication(PHOTOS_APP_PACKAGE_NAME, PHOTOS_APP_LAUNCH_ACTIVITY)
+                    AppLauncher.openGooglePhotos(this@WatchdogService)
                 } else {
                     Log.d(TAG, "Photos app is already running.")
                     pingSender.sendHttpPing(watcherHeartbeat)
                 }
 
                 delay(30_000L) // 30 seconds
-                if (!AppChecker.isAppRunning(this@WatchdogService, SYNC_APP_PACKAGE_NAME)) {
+                if (!AppChecker.isSyncthingRunning(this@WatchdogService)) {
                     Log.d(TAG, "Sync app is not running. Starting it now.")
-                    startApplication(SYNC_APP_PACKAGE_NAME, SYNC_APP_LAUNCH_ACTIVITY)
+                    AppLauncher.openSyncthing(this@WatchdogService)
                 } else {
                     Log.d(TAG, "Sync app is already running.")
                     pingSender.sendHttpPing(watcherHeartbeat)
@@ -90,21 +85,5 @@ class WatchdogService : Service() {
         return START_STICKY // Restart the service if it's killed
     }
 
-    private fun startApplication(packageName: String, activityName: String) {
-        // Start the activity
-        val launchIntent = Intent()
-        launchIntent.setAction(Intent.ACTION_MAIN)
-        launchIntent.addCategory(Intent.CATEGORY_LAUNCHER)
-        launchIntent.setComponent(
-            ComponentName(packageName, activityName)
-        )
-        launchIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
-        try {
-            startActivity(launchIntent)
-        } catch (e: ActivityNotFoundException) {
-            e.printStackTrace()
-            Log.e(TAG, "Unable to find activity: $launchIntent", e)
-        }
-    }
 }
