@@ -27,10 +27,18 @@ class WatchdogService : Service() {
         private const val CHANNEL_ID = "WatchdogServiceChannel"
         private const val NOTIFICATION_ID = 1
         private const val TAG = "WatchdogService"
+
+        // https://play.google.com/store/apps/details?id=com.nutomic.syncthingandroid
+        private const val SYNC_APP_PACKAGE_NAME = "com.nutomic.syncthingandroid"
+        private const val SYNC_APP_LAUNCH_ACTIVITY =
+            "com.nutomic.syncthingandroid.activities.FirstStartActivity"
+
         // https://play.google.com/store/apps/details?id=com.google.android.apps.photos
-        const val PHOTOS_APP_PACKAGE_NAME =
-            "com.google.android.apps.photos" // Replace with your target app's package name
-        const val CHECK_INTERVAL_MILLIS = 10_000L // Check every 5 seconds
+        private const val PHOTOS_APP_PACKAGE_NAME =
+            "com.google.android.apps.photos"
+        private const val PHOTOS_APP_LAUNCH_ACTIVITY =
+            "com.google.android.apps.photos.home.HomeActivity"
+        private const val CHECK_INTERVAL_MILLIS = 30_000L
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -51,8 +59,6 @@ class WatchdogService : Service() {
             buildNotification()
         )
 
-        // Periodically check if the target app is running
-
 
         // Log current time every 10 seconds
         GlobalScope.launch {
@@ -60,30 +66,36 @@ class WatchdogService : Service() {
                 Log.d(TAG, "Current time: ${System.currentTimeMillis()} @ ${Date()}")
                 delay(CHECK_INTERVAL_MILLIS)
 
-                if(!AppChecker.isAppRunning(this@WatchdogService, PHOTOS_APP_PACKAGE_NAME)) {
+                if (!AppChecker.isAppRunning(this@WatchdogService, PHOTOS_APP_PACKAGE_NAME)) {
                     Log.d(TAG, "Photos app is not running. Starting it now.")
-                    //startExplicitApp(PHOTOS_APP_PACKAGE_NAME)
-                    startPhotos()
+                    startApplication(PHOTOS_APP_PACKAGE_NAME, PHOTOS_APP_LAUNCH_ACTIVITY)
                 } else {
                     Log.d(TAG, "Photos app is already running.")
                 }
+
+                delay(CHECK_INTERVAL_MILLIS)
+                if (!AppChecker.isAppRunning(this@WatchdogService, SYNC_APP_PACKAGE_NAME)) {
+                    Log.d(TAG, "Sync app is not running. Starting it now.")
+                    startApplication(SYNC_APP_PACKAGE_NAME, SYNC_APP_LAUNCH_ACTIVITY)
+                } else {
+                    Log.d(TAG, "Sync app is already running.")
+                }
+
+                delay(CHECK_INTERVAL_MILLIS)
             }
         }
 
         return START_STICKY // Restart the service if it's killed
     }
 
-    fun startPhotos() {
+    fun startApplication(packageName: String, activityName: String) {
 
         // Start the activity
         val launchIntent = Intent()
         launchIntent.setAction(Intent.ACTION_MAIN)
         launchIntent.addCategory(Intent.CATEGORY_LAUNCHER)
         launchIntent.setComponent(
-            ComponentName(
-                PHOTOS_APP_PACKAGE_NAME,
-                "com.google.android.apps.photos.home.HomeActivity"
-            )
+            ComponentName(packageName, activityName)
         )
         launchIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
