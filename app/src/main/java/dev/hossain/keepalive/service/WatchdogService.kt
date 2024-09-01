@@ -42,6 +42,9 @@ class WatchdogService : Service() {
         private const val PHOTOS_APP_LAUNCH_ACTIVITY =
             "com.google.android.apps.photos.home.HomeActivity"
         private const val CHECK_INTERVAL_MILLIS = 1800_000L // 30 minutes x2
+
+        // Less time for debugging
+        //private const val CHECK_INTERVAL_MILLIS = 20_000L // 30 minutes x2
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -93,7 +96,7 @@ class WatchdogService : Service() {
         return START_STICKY // Restart the service if it's killed
     }
 
-    fun startApplication(packageName: String, activityName: String) {
+    private fun startApplication(packageName: String, activityName: String) {
 
         // Start the activity
         val launchIntent = Intent()
@@ -147,17 +150,6 @@ class WatchdogService : Service() {
             .build()
     }
 
-    private fun startPhotosApp(packageName: String) {
-        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        if (launchIntent != null) {
-            Log.i(TAG, "Starting Photos app with intent: $launchIntent")
-            startActivity(launchIntent)
-        } else {
-            Log.e(TAG, "Unable to find package: $packageName")
-        }
-    }
 
     // Send HTTP request to https://hc-ping.com/357a4e95-a7b3-4cd0-9506-4168fd9f1794
     private fun sendHttpPing() {
