@@ -141,8 +141,8 @@ class WatchdogService : Service() {
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Watchdog Service")
-            .setContentText("Monitoring app status")
+            .setContentTitle("Photo Auto Upload")
+            .setContentText("📸 Monitoring photo upload apps.")
             .setSmallIcon(R.drawable.baseline_radar_24)
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_LOW) // Set priority
@@ -150,10 +150,12 @@ class WatchdogService : Service() {
             .build()
     }
 
-
-    // Send HTTP request to https://hc-ping.com/357a4e95-a7b3-4cd0-9506-4168fd9f1794
+    /**
+     * Sends HTTP ping to notify that service is running.
+     */
     private fun sendHttpPing() {
-        val url = "https://hc-ping.com/357a4e95-a7b3-4cd0-9506-4168fd9f1794"
+        val ogPixelUrl = "https://hc-ping.com/357a4e95-a7b3-4cd0-9506-4168fd9f1794"
+        val gs23Url = "https://hc-ping.com/c1194e83-99d2-447b-8043-520320fc4c39"
         val client = OkHttpClient()
 
         // Get app current version
@@ -164,7 +166,7 @@ class WatchdogService : Service() {
         val userAgent = "KA/${versionName} (Android ${android.os.Build.VERSION.RELEASE}, API ${android.os.Build.VERSION.SDK_INT} ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL})"
 
         val request = Request.Builder()
-            .url(url)
+            .url(gs23Url) // TODO - make this dynamic or add UI for this to configure
             .header("User-Agent", userAgent)
             .build()
         client.newCall(request).execute().use { response ->
