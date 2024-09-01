@@ -19,6 +19,9 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okio.IOException
 import java.util.Date
 
 
@@ -71,6 +74,7 @@ class WatchdogService : Service() {
                     startApplication(PHOTOS_APP_PACKAGE_NAME, PHOTOS_APP_LAUNCH_ACTIVITY)
                 } else {
                     Log.d(TAG, "Photos app is already running.")
+                    sendHttpPing()
                 }
 
                 delay(CHECK_INTERVAL_MILLIS)
@@ -79,6 +83,7 @@ class WatchdogService : Service() {
                     startApplication(SYNC_APP_PACKAGE_NAME, SYNC_APP_LAUNCH_ACTIVITY)
                 } else {
                     Log.d(TAG, "Sync app is already running.")
+                    sendHttpPing()
                 }
 
                 delay(CHECK_INTERVAL_MILLIS)
@@ -151,6 +156,22 @@ class WatchdogService : Service() {
             startActivity(launchIntent)
         } else {
             Log.e(TAG, "Unable to find package: $packageName")
+        }
+    }
+
+    // Send HTTP request to https://hc-ping.com/357a4e95-a7b3-4cd0-9506-4168fd9f1794
+    private fun sendHttpPing() {
+        val url = "https://hc-ping.com/357a4e95-a7b3-4cd0-9506-4168fd9f1794"
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url(url)
+            .build()
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                Log.e(TAG, "Unexpected code $response", IOException("Unexpected code $response"))
+            } else {
+                Log.d(TAG, "sendHttpPing: Response: ${response.body!!.string()}")
+            }
         }
     }
 }
