@@ -155,8 +155,17 @@ class WatchdogService : Service() {
     private fun sendHttpPing() {
         val url = "https://hc-ping.com/357a4e95-a7b3-4cd0-9506-4168fd9f1794"
         val client = OkHttpClient()
+
+        // Get app current version
+        val packageInfo = packageManager.getPackageInfo(packageName, 0)
+        val versionName = packageInfo.versionName
+
+        // Add user agent with app name, version, and device info
+        val userAgent = "KA/${versionName} (Android ${android.os.Build.VERSION.RELEASE}, API ${android.os.Build.VERSION.SDK_INT} ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL})"
+
         val request = Request.Builder()
             .url(url)
+            .header("User-Agent", userAgent)
             .build()
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
