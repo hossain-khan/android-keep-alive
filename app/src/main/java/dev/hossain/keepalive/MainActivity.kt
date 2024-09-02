@@ -21,19 +21,32 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import dev.hossain.keepalive.service.WatchdogService
 import dev.hossain.keepalive.ui.theme.KeepAliveTheme
@@ -56,27 +69,24 @@ class MainActivity : ComponentActivity() {
         setContent {
             KeepAliveTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Box(
+                    Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(innerPadding)
                             .wrapContentSize(Alignment.Center)
+                            .padding(innerPadding) // Consistent padding
                     ) {
-                        Column {
-                            Image(
-                                painter = painterResource(id = R.drawable.baseline_radar_24),
-                                contentDescription = "App Icon",
-                                modifier = Modifier.padding(innerPadding)
-                            )
-                            AppHeading(
-                                title = "Keep Alive",
-                                modifier = Modifier.padding(innerPadding)
-                            )
-                            Text(
-                                text = "App that keeps photos and sync apps alive.",
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
+                        Image(
+                            painter = painterResource(id = R.drawable.baseline_radar_24),
+                            contentDescription = "App Icon",
+                        )
+                        AppHeading(
+                            title = "Keep Alive",
+                        )
+                        Text(
+                            text = "App that keeps photos and sync apps alive.",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+
                     }
 
                 }
@@ -147,7 +157,11 @@ class MainActivity : ComponentActivity() {
         if (!isBatteryOptimizationIgnored(this)) {
             showBatteryOptimizationDialog(this)
         } else {
-            Toast.makeText(this, "Battery optimization is already disabled for this app.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                "Battery optimization is already disabled for this app.",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -221,7 +235,11 @@ class MainActivity : ComponentActivity() {
 
     @SuppressLint("BatteryLife")
     private fun requestBatteryOptimizationExclusion(context: Context) {
-        Toast.makeText(context, "Please exclude this app from battery optimization.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            context,
+            "Please exclude this app from battery optimization.",
+            Toast.LENGTH_SHORT
+        ).show()
         val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
             data = Uri.parse("package:${context.packageName}")
         }
@@ -244,4 +262,61 @@ fun AppHeadingPreview() {
     KeepAliveTheme {
         AppHeading("Hello Android App")
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BottomSheetDialog(
+    showDialog: Boolean,
+    title: String,
+    description: String,
+    onAccept: () -> Unit,
+    onCancel: () -> Unit
+) {
+    if (showDialog) {
+        ModalBottomSheet(
+            onDismissRequest = onCancel
+        ) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(text = description)
+                Spacer(Modifier.height(16.dp))
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onCancel) {
+                        Text("Cancel")
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    Button(onClick = onAccept) {
+                        Text("Accept")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MyBottomSheetDialogPreview() {
+    BottomSheetDialog(
+        showDialog = true,
+        title = "My Title",
+        description = "This is a description",
+        onAccept = { /*TODO*/ },
+        onCancel = { /*TODO*/ }
+    )
 }
