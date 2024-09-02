@@ -16,12 +16,19 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import dev.hossain.keepalive.service.WatchdogService
@@ -45,10 +52,29 @@ class MainActivity : ComponentActivity() {
         setContent {
             KeepAliveTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .wrapContentSize(Alignment.Center)
+                    ) {
+                        Column {
+                            Image(
+                                painter = painterResource(id = R.drawable.baseline_radar_24),
+                                contentDescription = "App Icon",
+                                modifier = Modifier.padding(innerPadding)
+                            )
+                            AppHeading(
+                                title = "Keep Alive",
+                                modifier = Modifier.padding(innerPadding)
+                            )
+                            Text(
+                                text = "App that keeps photos and sync apps alive.",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+
                 }
             }
         }
@@ -169,17 +195,18 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
+fun AppHeading(title: String, modifier: Modifier = Modifier) {
     Text(
-        text = "Hello $name!",
-        modifier = modifier
+        text = title,
+        modifier = modifier,
+        style = MaterialTheme.typography.headlineLarge
     )
 }
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun AppHeadingPreview() {
     KeepAliveTheme {
-        Greeting("Android")
+        AppHeading("Hello Android App")
     }
 }
