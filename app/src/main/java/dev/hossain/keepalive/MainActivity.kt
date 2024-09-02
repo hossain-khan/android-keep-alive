@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.Button
@@ -77,13 +78,26 @@ class MainActivity : ComponentActivity() {
                         Image(
                             painter = painterResource(id = R.drawable.baseline_radar_24),
                             contentDescription = "App Icon",
+                            modifier =
+                                Modifier
+                                    .size(64.dp)
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(bottom = 16.dp),
                         )
                         AppHeading(
                             title = "Keep Alive",
+                            modifier =
+                                Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(bottom = 8.dp),
                         )
                         Text(
                             text = "App that keeps photos and sync apps alive.",
                             style = MaterialTheme.typography.bodyLarge,
+                            modifier =
+                                Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(bottom = 16.dp),
                         )
                     }
                 }
