@@ -2,6 +2,8 @@ package dev.hossain.keepalive
 
 import android.Manifest.permission.PACKAGE_USAGE_STATS
 import android.Manifest.permission.POST_NOTIFICATIONS
+import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
@@ -9,8 +11,10 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -139,6 +143,23 @@ class MainActivity : ComponentActivity() {
             // Permission not granted, request it
             requestOverlayPermission()
         }
+
+        if (!isBatteryOptimizationIgnored(this)) {
+            showBatteryOptimizationDialog(this)
+        } else {
+            Toast.makeText(this, "Battery optimization is already disabled for this app.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showBatteryOptimizationDialog(context: Context) {
+        AlertDialog.Builder(context)
+            .setTitle("Disable Battery Optimization")
+            .setMessage("This app requires to be excluded from battery optimizations to function properly in the background.")
+            .setPositiveButton("Exclude") { _, _ ->
+                requestBatteryOptimizationExclusion(context)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     override fun onStart() {
@@ -191,6 +212,20 @@ class MainActivity : ComponentActivity() {
             )
         }
         return mode == AppOpsManager.MODE_ALLOWED
+    }
+
+    private fun isBatteryOptimizationIgnored(context: Context): Boolean {
+        val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+        return powerManager.isIgnoringBatteryOptimizations(context.packageName)
+    }
+
+    @SuppressLint("BatteryLife")
+    private fun requestBatteryOptimizationExclusion(context: Context) {
+        Toast.makeText(context, "Please exclude this app from battery optimization.", Toast.LENGTH_SHORT).show()
+        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+            data = Uri.parse("package:${context.packageName}")
+        }
+        context.startActivity(intent)
     }
 }
 
