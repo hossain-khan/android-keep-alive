@@ -6,9 +6,7 @@ import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
@@ -52,7 +50,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import dev.hossain.keepalive.service.WatchdogService
 import dev.hossain.keepalive.ui.theme.KeepAliveTheme
 
@@ -118,20 +115,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if ((
-                    ContextCompat.checkSelfPermission(this, POST_NOTIFICATIONS)
-                        != PackageManager.PERMISSION_GRANTED
-                ) || (
-                    ContextCompat.checkSelfPermission(
-                        this,
-                        PACKAGE_USAGE_STATS,
-                    )
-                        != PackageManager.PERMISSION_GRANTED
-                )
-            ) {
-                requestPermissionLauncher.launch(arrayOf(POST_NOTIFICATIONS, PACKAGE_USAGE_STATS))
-            }
+        if (mainViewModel.arePermissionsGranted(this, mainViewModel.requiredPermissions)) {
+            Log.d(TAG, "onCreate: All other permissions granted")
+        } else {
+            Log.d(TAG, "onCreate: All other permissions not granted")
+            requestPermissionLauncher.launch(mainViewModel.requiredPermissions)
         }
 
         if (mainViewModel.hasUsageStatsPermission(this)) {
@@ -141,7 +129,7 @@ class MainActivity : ComponentActivity() {
             requestUsageStatsPermission()
         }
 
-        if (Settings.canDrawOverlays(this)) {
+        if (mainViewModel.hasOverlayPermission(this)) {
             // Permission granted, you can start the activity or service that needs this permission
         } else {
             // Permission not granted, request it
