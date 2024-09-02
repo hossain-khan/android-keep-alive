@@ -20,6 +20,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -33,6 +34,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,6 +45,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -60,6 +65,7 @@ import dev.hossain.keepalive.ui.theme.KeepAliveTheme
 class MainActivity : ComponentActivity() {
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
+    private val mainViewModel: MainViewModel by viewModels()
 
     companion object {
         private const val TAG = "MainActivity"
@@ -70,7 +76,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             KeepAliveTheme {
-                MainLandingScreen()
+                val allPermissionsGranted by mainViewModel.allPermissionsGranted.observeAsState(false)
+
+                MainLandingScreen(allPermissionsGranted = allPermissionsGranted)
             }
         }
 
@@ -238,26 +246,42 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainLandingScreen(modifier: Modifier = Modifier) {
+fun MainLandingScreen(
+    modifier: Modifier = Modifier,
+    allPermissionsGranted: Boolean = false,
+) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("Required Permission Status")
-                Spacer(modifier = Modifier.width(8.dp))
-                Icon(
-                    imageVector = Icons.Filled.Clear,
-                    // Set color to red if permission is not granted
-                    tint = MaterialTheme.colorScheme.error,
-                    contentDescription = "Icon",
-                )
+            Column {
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("Required Permission Status")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = if (allPermissionsGranted) Icons.Filled.Check else Icons.Filled.Clear,
+                        // Set color to red if permission is not granted
+                        tint = if (allPermissionsGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                        contentDescription = "Icon",
+                    )
+                }
+                if (!allPermissionsGranted) {
+                    Button(
+                        onClick = { /* Handle permission grant */ },
+                        modifier =
+                            Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(bottom = 32.dp),
+                    ) {
+                        Text("Grant Permissions")
+                    }
+                }
             }
         },
     ) { innerPadding ->
@@ -300,7 +324,15 @@ fun MainLandingScreen(modifier: Modifier = Modifier) {
 @Composable
 fun MainLandingScreenPreview() {
     KeepAliveTheme {
-        MainLandingScreen()
+        MainLandingScreen(allPermissionsGranted = true)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MainLandingScreenPreviewWithoutButton() {
+    KeepAliveTheme {
+        MainLandingScreen(allPermissionsGranted = false)
     }
 }
 
