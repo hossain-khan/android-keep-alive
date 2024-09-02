@@ -22,7 +22,6 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -62,7 +61,6 @@ class MainActivity : ComponentActivity() {
         private const val TAG = "MainActivity"
     }
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -70,10 +68,11 @@ class MainActivity : ComponentActivity() {
             KeepAliveTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .wrapContentSize(Alignment.Center)
-                            .padding(innerPadding) // Consistent padding
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .wrapContentSize(Alignment.Center)
+                                .padding(innerPadding),
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.baseline_radar_24),
@@ -84,57 +83,61 @@ class MainActivity : ComponentActivity() {
                         )
                         Text(
                             text = "App that keeps photos and sync apps alive.",
-                            style = MaterialTheme.typography.bodyLarge
+                            style = MaterialTheme.typography.bodyLarge,
                         )
-
                     }
-
                 }
             }
         }
 
-        requestPermissionLauncher = this.registerForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions()
-        ) { permissions ->
-            if (permissions[POST_NOTIFICATIONS] == true) {
-                // Permission granted, you can post notifications
-                Log.d(TAG, "onCreate: POST_NOTIFICATIONS Permission granted")
-            } else {
-                // Permission denied, handle accordingly
-                Log.d(TAG, "onCreate: POST_NOTIFICATIONS Permission denied")
-            }
+        requestPermissionLauncher =
+            this.registerForActivityResult(
+                ActivityResultContracts.RequestMultiplePermissions(),
+            ) { permissions ->
+                if (permissions[POST_NOTIFICATIONS] == true) {
+                    // Permission granted, you can post notifications
+                    Log.d(TAG, "onCreate: POST_NOTIFICATIONS Permission granted")
+                } else {
+                    // Permission denied, handle accordingly
+                    Log.d(TAG, "onCreate: POST_NOTIFICATIONS Permission denied")
+                }
 
-            if (permissions[PACKAGE_USAGE_STATS] == true) {
-                // Permission granted, you can get package usage stats
-                Log.d(TAG, "onCreate: PACKAGE_USAGE_STATS Permission granted")
-            } else {
-                // Permission denied, handle accordingly
-                Log.d(TAG, "onCreate: PACKAGE_USAGE_STATS Permission denied")
+                if (permissions[PACKAGE_USAGE_STATS] == true) {
+                    // Permission granted, you can get package usage stats
+                    Log.d(TAG, "onCreate: PACKAGE_USAGE_STATS Permission granted")
+                } else {
+                    // Permission denied, handle accordingly
+                    Log.d(TAG, "onCreate: PACKAGE_USAGE_STATS Permission denied")
+                }
             }
-        }
 
         // Initialize the ActivityResultLauncher
-        activityResultLauncher = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            if (result.resultCode == RESULT_OK) {
-                if (Settings.canDrawOverlays(this)) {
-                    // Permission granted, proceed with your action
-                    Log.d(TAG, "Overlay permission granted")
-                } else {
-                    // Permission not granted, show a message to the user
-                    Log.d(TAG, "Overlay permission denied")
+        activityResultLauncher =
+            registerForActivityResult(
+                ActivityResultContracts.StartActivityForResult(),
+            ) { result ->
+                if (result.resultCode == RESULT_OK) {
+                    if (Settings.canDrawOverlays(this)) {
+                        // Permission granted, proceed with your action
+                        Log.d(TAG, "Overlay permission granted")
+                    } else {
+                        // Permission not granted, show a message to the user
+                        Log.d(TAG, "Overlay permission denied")
+                    }
                 }
             }
-        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if ((ContextCompat.checkSelfPermission(this, POST_NOTIFICATIONS)
-                        != PackageManager.PERMISSION_GRANTED) || (ContextCompat.checkSelfPermission(
-                    this,
-                    PACKAGE_USAGE_STATS
+            if ((
+                    ContextCompat.checkSelfPermission(this, POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED
+                ) || (
+                    ContextCompat.checkSelfPermission(
+                        this,
+                        PACKAGE_USAGE_STATS,
+                    )
+                        != PackageManager.PERMISSION_GRANTED
                 )
-                        != PackageManager.PERMISSION_GRANTED)
             ) {
                 requestPermissionLauncher.launch(arrayOf(POST_NOTIFICATIONS, PACKAGE_USAGE_STATS))
             }
@@ -160,7 +163,7 @@ class MainActivity : ComponentActivity() {
             Toast.makeText(
                 this,
                 "Battery optimization is already disabled for this app.",
-                Toast.LENGTH_SHORT
+                Toast.LENGTH_SHORT,
             ).show()
         }
     }
@@ -202,29 +205,31 @@ class MainActivity : ComponentActivity() {
      * the background to improve the user experience and reduce unexpected interruptions.
      */
     private fun requestOverlayPermission() {
-        val intent = Intent(
-            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            Uri.parse("package:$packageName")
-        )
+        val intent =
+            Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName"),
+            )
         activityResultLauncher.launch(intent)
     }
 
     private fun hasUsageStatsPermission(context: Context): Boolean {
         val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            appOps.unsafeCheckOpNoThrow(
-                AppOpsManager.OPSTR_GET_USAGE_STATS,
-                android.os.Process.myUid(),
-                context.packageName
-            )
-        } else {
-            @Suppress("DEPRECATION")
-            appOps.checkOpNoThrow(
-                AppOpsManager.OPSTR_GET_USAGE_STATS,
-                android.os.Process.myUid(),
-                context.packageName
-            )
-        }
+        val mode =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                appOps.unsafeCheckOpNoThrow(
+                    AppOpsManager.OPSTR_GET_USAGE_STATS,
+                    android.os.Process.myUid(),
+                    context.packageName,
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                appOps.checkOpNoThrow(
+                    AppOpsManager.OPSTR_GET_USAGE_STATS,
+                    android.os.Process.myUid(),
+                    context.packageName,
+                )
+            }
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
@@ -238,21 +243,25 @@ class MainActivity : ComponentActivity() {
         Toast.makeText(
             context,
             "Please exclude this app from battery optimization.",
-            Toast.LENGTH_SHORT
+            Toast.LENGTH_SHORT,
         ).show()
-        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-            data = Uri.parse("package:${context.packageName}")
-        }
+        val intent =
+            Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                data = Uri.parse("package:${context.packageName}")
+            }
         context.startActivity(intent)
     }
 }
 
 @Composable
-fun AppHeading(title: String, modifier: Modifier = Modifier) {
+fun AppHeading(
+    title: String,
+    modifier: Modifier = Modifier,
+) {
     Text(
         text = title,
         modifier = modifier,
-        style = MaterialTheme.typography.headlineLarge
+        style = MaterialTheme.typography.headlineLarge,
     )
 }
 
@@ -271,21 +280,21 @@ fun BottomSheetDialog(
     title: String,
     description: String,
     onAccept: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
 ) {
     if (showDialog) {
         ModalBottomSheet(
-            onDismissRequest = onCancel
+            onDismissRequest = onCancel,
         ) {
             Column(
                 Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .padding(16.dp),
             ) {
                 Text(
                     text = title,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
+                    fontSize = 20.sp,
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(text = description)
@@ -294,7 +303,7 @@ fun BottomSheetDialog(
                     Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp),
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.End,
                 ) {
                     TextButton(onClick = onCancel) {
                         Text("Cancel")
@@ -317,6 +326,6 @@ fun MyBottomSheetDialogPreview() {
         title = "My Title",
         description = "This is a description",
         onAccept = { /*TODO*/ },
-        onCancel = { /*TODO*/ }
+        onCancel = { /*TODO*/ },
     )
 }

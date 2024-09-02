@@ -33,12 +33,15 @@ class HttpPingSender(private val context: Context) {
 
         // Add user agent with app name, version, and device info
         val userAgent =
-            "KA/${versionName} (Android ${android.os.Build.VERSION.RELEASE}, API ${android.os.Build.VERSION.SDK_INT}, ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL})"
+            "KA/$versionName (Android ${android.os.Build.VERSION.RELEASE}, " +
+                "API ${android.os.Build.VERSION.SDK_INT}, ${android.os.Build.MANUFACTURER} " +
+                "${android.os.Build.MODEL})"
 
-        val request = Request.Builder()
-            .url(pingUrl)
-            .header("User-Agent", userAgent)
-            .build()
+        val request =
+            Request.Builder()
+                .url(pingUrl)
+                .header("User-Agent", userAgent)
+                .build()
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
                 Log.e(TAG, "Unexpected code $response", IOException("Unexpected code $response"))

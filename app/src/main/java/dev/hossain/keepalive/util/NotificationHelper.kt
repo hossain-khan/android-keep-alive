@@ -23,11 +23,12 @@ class NotificationHelper(private val context: Context) {
     fun createNotificationChannel() {
         Log.d(TAG, "createNotificationChannel() called")
 
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            "Watchdog Service",
-            NotificationManager.IMPORTANCE_LOW
-        )
+        val channel =
+            NotificationChannel(
+                CHANNEL_ID,
+                "Watchdog Service",
+                NotificationManager.IMPORTANCE_LOW,
+            )
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         manager.createNotificationChannel(channel)

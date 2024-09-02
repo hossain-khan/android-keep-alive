@@ -23,13 +23,17 @@ object AppLauncher {
         startApplication(context, SYNC_APP_PACKAGE_NAME, SYNC_APP_LAUNCH_ACTIVITY)
     }
 
-    private fun startApplication(context: Context, packageName: String, activityName: String) {
+    private fun startApplication(
+        context: Context,
+        packageName: String,
+        activityName: String,
+    ) {
         // Start the activity
         val launchIntent = Intent()
         launchIntent.setAction(Intent.ACTION_MAIN)
         launchIntent.addCategory(Intent.CATEGORY_LAUNCHER)
         launchIntent.setComponent(
-            ComponentName(packageName, activityName)
+            ComponentName(packageName, activityName),
         )
         launchIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 

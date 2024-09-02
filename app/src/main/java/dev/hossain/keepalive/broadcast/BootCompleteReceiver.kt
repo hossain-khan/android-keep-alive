@@ -10,9 +10,14 @@ import dev.hossain.keepalive.service.WatchdogService
  * Receiver to start the WatchdogService on boot complete.
  */
 class BootCompleteReceiver : BroadcastReceiver() {
-    private val TAG = "BootCompleteReceiver"
+    companion object {
+        private const val TAG = "BootCompleteReceiver"
+    }
 
-    override fun onReceive(context: Context, intent: Intent) {
+    override fun onReceive(
+        context: Context,
+        intent: Intent,
+    ) {
         Log.d(TAG, "onReceive() called with: context = $context, intent = $intent")
         if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
             // Start the WatchdogService

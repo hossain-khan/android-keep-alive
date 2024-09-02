@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.IBinder
 import android.util.Log
 import dev.hossain.keepalive.util.AppChecker
-import dev.hossain.keepalive.util.AppConfig.OG_PIXEL_URL
 import dev.hossain.keepalive.util.AppLauncher
 import dev.hossain.keepalive.util.HttpPingSender
 import dev.hossain.keepalive.util.NotificationHelper
@@ -20,20 +19,17 @@ import java.util.Date
  */
 class WatchdogService : Service() {
     companion object {
-
         private const val NOTIFICATION_ID = 1
         private const val TAG = "WatchdogService"
-
 
         private const val CHECK_INTERVAL_MILLIS = 1800_000L // 30 minutes x2
 
         // Less time for debugging - 20 seconds
-        //private const val CHECK_INTERVAL_MILLIS = 20_000L
+        // private const val CHECK_INTERVAL_MILLIS = 20_000L
     }
 
     private val pingSender = HttpPingSender(this)
     private val notificationHelper = NotificationHelper(this)
-
 
     override fun onBind(intent: Intent?): IBinder? {
         Log.d(TAG, "onBind: $intent")
@@ -41,16 +37,20 @@ class WatchdogService : Service() {
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         Log.d(
             TAG,
-            "onStartCommand() called with: intent = $intent, flags = $flags, startId = $startId"
+            "onStartCommand() called with: intent = $intent, flags = $flags, startId = $startId",
         )
         notificationHelper.createNotificationChannel()
 
         startForeground(
             NOTIFICATION_ID,
-            notificationHelper.buildNotification()
+            notificationHelper.buildNotification(),
         )
 
         GlobalScope.launch {
@@ -81,6 +81,4 @@ class WatchdogService : Service() {
 
         return START_STICKY // Restart the service if it's killed
     }
-
-
 }
