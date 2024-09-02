@@ -16,7 +16,17 @@ class HttpPingSender(private val context: Context) {
 
     private val client = OkHttpClient()
 
-    fun sendHttpPing(pingUrl: String) {
+    fun sendPingToDevice() {
+        val deviceModel = android.os.Build.MODEL
+        AppConfig.phoneToUrlMap[deviceModel]?.let { pingUrl ->
+            Log.d(TAG, "sendPingToDevice: Pinging device $deviceModel with URL $pingUrl")
+            sendHttpPing(pingUrl)
+        } ?: run {
+            Log.e(TAG, "sendPingToDevice: No URL found for device $deviceModel - Not supported.")
+        }
+    }
+
+    private fun sendHttpPing(pingUrl: String) {
         // Get app current version
         val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
         val versionName = packageInfo.versionName

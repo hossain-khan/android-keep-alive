@@ -5,7 +5,7 @@ import android.content.Intent
 import android.os.IBinder
 import android.util.Log
 import dev.hossain.keepalive.util.AppChecker
-import dev.hossain.keepalive.util.AppConfig.ogPixelUrl
+import dev.hossain.keepalive.util.AppConfig.OG_PIXEL_URL
 import dev.hossain.keepalive.util.AppLauncher
 import dev.hossain.keepalive.util.HttpPingSender
 import dev.hossain.keepalive.util.NotificationHelper
@@ -58,15 +58,12 @@ class WatchdogService : Service() {
                 Log.d(TAG, "Current time: ${System.currentTimeMillis()} @ ${Date()}")
                 delay(CHECK_INTERVAL_MILLIS)
 
-                // Send heart beat ping to URL for the device
-                val watcherHeartbeat = ogPixelUrl
-
                 if (!AppChecker.isGooglePhotosRunning(this@WatchdogService)) {
                     Log.d(TAG, "Photos app is not running. Starting it now.")
                     AppLauncher.openGooglePhotos(this@WatchdogService)
                 } else {
                     Log.d(TAG, "Photos app is already running.")
-                    pingSender.sendHttpPing(watcherHeartbeat)
+                    pingSender.sendPingToDevice()
                 }
 
                 delay(30_000L) // 30 seconds
@@ -75,7 +72,7 @@ class WatchdogService : Service() {
                     AppLauncher.openSyncthing(this@WatchdogService)
                 } else {
                     Log.d(TAG, "Sync app is already running.")
-                    pingSender.sendHttpPing(watcherHeartbeat)
+                    pingSender.sendPingToDevice()
                 }
 
                 delay(CHECK_INTERVAL_MILLIS)
