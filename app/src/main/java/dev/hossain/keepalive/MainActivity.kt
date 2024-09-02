@@ -4,14 +4,12 @@ import android.Manifest.permission.PACKAGE_USAGE_STATS
 import android.Manifest.permission.POST_NOTIFICATIONS
 import android.annotation.SuppressLint
 import android.app.AlertDialog
-import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
@@ -47,7 +45,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -81,6 +78,8 @@ class MainActivity : ComponentActivity() {
                 MainLandingScreen(allPermissionsGranted = allPermissionsGranted)
             }
         }
+
+        mainViewModel.checkAllPermissions(this)
 
         requestPermissionLauncher =
             this.registerForActivityResult(
@@ -135,7 +134,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        if (hasUsageStatsPermission(this)) {
+        if (mainViewModel.hasUsageStatsPermission(this)) {
             Log.d(TAG, "onCreate: PACKAGE_USAGE_STATS Permission granted")
         } else {
             Log.d(TAG, "onCreate: PACKAGE_USAGE_STATS Permission denied")
@@ -149,7 +148,7 @@ class MainActivity : ComponentActivity() {
             requestOverlayPermission()
         }
 
-        if (!isBatteryOptimizationIgnored(this)) {
+        if (!mainViewModel.isBatteryOptimizationIgnored(this)) {
             showBatteryOptimizationDialog(this)
         } else {
             Toast.makeText(
@@ -205,31 +204,6 @@ class MainActivity : ComponentActivity() {
         activityResultLauncher.launch(intent)
     }
 
-    private fun hasUsageStatsPermission(context: Context): Boolean {
-        val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        val mode =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                appOps.unsafeCheckOpNoThrow(
-                    AppOpsManager.OPSTR_GET_USAGE_STATS,
-                    android.os.Process.myUid(),
-                    context.packageName,
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                appOps.checkOpNoThrow(
-                    AppOpsManager.OPSTR_GET_USAGE_STATS,
-                    android.os.Process.myUid(),
-                    context.packageName,
-                )
-            }
-        return mode == AppOpsManager.MODE_ALLOWED
-    }
-
-    private fun isBatteryOptimizationIgnored(context: Context): Boolean {
-        val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-        return powerManager.isIgnoringBatteryOptimizations(context.packageName)
-    }
-
     @SuppressLint("BatteryLife")
     private fun requestBatteryOptimizationExclusion(context: Context) {
         Toast.makeText(
@@ -262,12 +236,12 @@ fun MainLandingScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("Required Permission Status")
+                    Text("Required permission status")
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(
                         imageVector = if (allPermissionsGranted) Icons.Filled.Check else Icons.Filled.Clear,
                         // Set color to red if permission is not granted
-                        tint = if (allPermissionsGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                        tint = if (allPermissionsGranted) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error,
                         contentDescription = "Icon",
                     )
                 }
