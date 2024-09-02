@@ -67,40 +67,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             KeepAliveTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .wrapContentSize(Alignment.Center)
-                                .padding(innerPadding),
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.baseline_radar_24),
-                            contentDescription = "App Icon",
-                            modifier =
-                                Modifier
-                                    .size(64.dp)
-                                    .align(Alignment.CenterHorizontally)
-                                    .padding(bottom = 16.dp),
-                        )
-                        AppHeading(
-                            title = "Keep Alive",
-                            modifier =
-                                Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .padding(bottom = 8.dp),
-                        )
-                        Text(
-                            text = "App that keeps photos and sync apps alive.",
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier =
-                                Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .padding(bottom = 16.dp),
-                        )
-                    }
-                }
+                MainLandingScreen()
             }
         }
 
@@ -264,6 +231,52 @@ class MainActivity : ComponentActivity() {
                 data = Uri.parse("package:${context.packageName}")
             }
         context.startActivity(intent)
+    }
+}
+
+@Composable
+fun MainLandingScreen(modifier: Modifier = Modifier) {
+    Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .wrapContentSize(Alignment.Center)
+                    .padding(innerPadding),
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.baseline_radar_24),
+                contentDescription = "App Icon",
+                modifier =
+                    Modifier
+                        .size(64.dp)
+                        .align(Alignment.CenterHorizontally)
+                        .padding(bottom = 16.dp),
+            )
+            AppHeading(
+                title = "Keep Alive",
+                modifier =
+                    Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(bottom = 8.dp),
+            )
+            Text(
+                text = "App that keeps photos and sync apps alive.",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier =
+                    Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(bottom = 16.dp),
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MainLandingScreenPreview() {
+    KeepAliveTheme {
+        MainLandingScreen()
     }
 }
 
