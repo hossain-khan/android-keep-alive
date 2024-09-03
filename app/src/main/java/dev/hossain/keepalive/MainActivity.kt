@@ -64,6 +64,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContent {
             KeepAliveTheme {
                 val allPermissionsGranted by mainViewModel.allPermissionsGranted.observeAsState(false)
@@ -80,18 +81,18 @@ class MainActivity : ComponentActivity() {
             ) { permissions ->
                 if (permissions[POST_NOTIFICATIONS] == true) {
                     // Permission granted, you can post notifications
-                    Timber.d("onCreate: POST_NOTIFICATIONS Permission granted")
+                    Timber.d("registerForActivityResult: POST_NOTIFICATIONS Permission granted")
                 } else {
                     // Permission denied, handle accordingly
-                    Timber.d("onCreate: POST_NOTIFICATIONS Permission denied")
+                    Timber.d("registerForActivityResult: POST_NOTIFICATIONS Permission denied")
                 }
 
                 if (permissions[PACKAGE_USAGE_STATS] == true) {
                     // Permission granted, you can get package usage stats
-                    Timber.d("onCreate: PACKAGE_USAGE_STATS Permission granted")
+                    Timber.d("registerForActivityResult: PACKAGE_USAGE_STATS Permission granted")
                 } else {
                     // Permission denied, handle accordingly
-                    Timber.d("onCreate: PACKAGE_USAGE_STATS Permission denied")
+                    Timber.d("registerForActivityResult: PACKAGE_USAGE_STATS Permission denied")
                 }
             }
 
@@ -103,10 +104,10 @@ class MainActivity : ComponentActivity() {
                 if (result.resultCode == RESULT_OK) {
                     if (Settings.canDrawOverlays(this)) {
                         // Permission granted, proceed with your action
-                        Timber.d("Overlay permission granted")
+                        Timber.d("registerForActivityResult: Overlay permission granted")
                     } else {
                         // Permission not granted, show a message to the user
-                        Timber.d("Overlay permission denied")
+                        Timber.d("registerForActivityResult: Overlay permission denied")
                     }
                 }
             }
@@ -135,11 +136,7 @@ class MainActivity : ComponentActivity() {
         if (!mainViewModel.isBatteryOptimizationIgnored(this)) {
             showBatteryOptimizationDialog(this)
         } else {
-            Toast.makeText(
-                this,
-                "Battery optimization is already disabled for this app.",
-                Toast.LENGTH_SHORT,
-            ).show()
+            Timber.d("Battery optimization is already disabled for this app.")
         }
     }
 
