@@ -123,9 +123,9 @@ class MainActivity : ComponentActivity() {
         }
 
         if (mainViewModel.hasUsageStatsPermission(this)) {
-            Log.d(TAG, "onCreate: PACKAGE_USAGE_STATS Permission granted")
+            Log.d(TAG, "hasUsageStatsPermission: PACKAGE_USAGE_STATS Permission granted")
         } else {
-            Log.d(TAG, "onCreate: PACKAGE_USAGE_STATS Permission denied")
+            Log.d(TAG, "hasUsageStatsPermission: PACKAGE_USAGE_STATS Permission denied")
             requestUsageStatsPermission()
         }
 
@@ -164,6 +164,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun requestUsageStatsPermission() {
+        Log.d(TAG, "requestUsageStatsPermission: Requesting usage stats permission")
         val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
         startActivity(intent)
     }

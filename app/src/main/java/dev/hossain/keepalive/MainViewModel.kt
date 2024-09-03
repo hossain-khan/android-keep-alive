@@ -8,11 +8,16 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
 class MainViewModel : ViewModel() {
+    companion object {
+        private const val TAG = "MainViewModel"
+    }
+
     val allPermissionsGranted = MutableLiveData(false)
 
     val requiredPermissions =
@@ -25,11 +30,18 @@ class MainViewModel : ViewModel() {
     fun checkAllPermissions(context: Context) {
         val hasUsageStatsPermission = hasUsageStatsPermission(context)
         val isBatteryOptimizationIgnored = isBatteryOptimizationIgnored(context)
-        val hasOverlayPermission = hasOverlayPermission(context)
         val allOtherPermissionsGranted = arePermissionsGranted(context, requiredPermissions)
+        val hasOverlayPermission = hasOverlayPermission(context)
+        Log.d(
+            TAG,
+            "hasUsageStatsPermission=$hasUsageStatsPermission, " +
+                "isBatteryOptimizationIgnored=$isBatteryOptimizationIgnored, " +
+                "allOtherPermissionsGranted=$allOtherPermissionsGranted, " +
+                "hasOverlayPermission=$hasOverlayPermission",
+        )
         allPermissionsGranted.value = hasUsageStatsPermission &&
             isBatteryOptimizationIgnored &&
-            allOtherPermissionsGranted &&
+            // TODO: Check for other permissions
             hasOverlayPermission
     }
 
@@ -67,10 +79,13 @@ class MainViewModel : ViewModel() {
         permissions: Array<String>,
     ): Boolean {
         return permissions.all { permission ->
-            ContextCompat.checkSelfPermission(
-                context,
-                permission,
-            ) == PackageManager.PERMISSION_GRANTED
+            val checkSelfPermission =
+                ContextCompat.checkSelfPermission(
+                    context,
+                    permission,
+                )
+            Log.d(TAG, "permission=$permission | status=$checkSelfPermission")
+            checkSelfPermission == PackageManager.PERMISSION_GRANTED
         }
     }
 }
