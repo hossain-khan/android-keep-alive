@@ -244,9 +244,9 @@ fun MainLandingScreen(
             Column {
                 Row(
                     modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -263,9 +263,9 @@ fun MainLandingScreen(
                     Button(
                         onClick = { /* Handle permission grant */ },
                         modifier =
-                        Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(bottom = 32.dp),
+                            Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(bottom = 32.dp),
                     ) {
                         Text("Grant Permissions")
                     }
