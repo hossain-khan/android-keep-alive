@@ -225,7 +225,7 @@ fun MainLandingScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("Required permission status")
+                    Text("ℹ️ Required permission status")
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(
                         imageVector = if (allPermissionsGranted) Icons.Filled.Check else Icons.Filled.Clear,
