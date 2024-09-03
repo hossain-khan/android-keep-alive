@@ -12,7 +12,8 @@ import dev.hossain.keepalive.R
 import timber.log.Timber
 
 /**
- * Helper class to create notification channel and build notification.
+ * Helper class to create notification channel and build notification for the keep alive app.
+ * This is needed to keep this service running in the background all the time.
  */
 class NotificationHelper(private val context: Context) {
     companion object {
@@ -26,7 +27,7 @@ class NotificationHelper(private val context: Context) {
             NotificationChannel(
                 CHANNEL_ID,
                 "Watchdog Service",
-                NotificationManager.IMPORTANCE_LOW,
+                NotificationManager.IMPORTANCE_DEFAULT,
             )
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
