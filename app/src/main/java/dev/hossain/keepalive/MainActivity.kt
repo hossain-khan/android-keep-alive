@@ -208,38 +208,6 @@ fun MainLandingScreen(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        bottomBar = {
-            Column {
-                Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("ℹ️ Required permission status")
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(
-                        imageVector = if (allPermissionsGranted) Icons.Filled.Check else Icons.Filled.Clear,
-                        // Set color to red if permission is not granted
-                        tint = if (allPermissionsGranted) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error,
-                        contentDescription = "Icon",
-                    )
-                }
-                if (!allPermissionsGranted) {
-                    Button(
-                        onClick = { /* Handle permission grant */ },
-                        modifier =
-                            Modifier
-                                .align(Alignment.CenterHorizontally)
-                                .padding(bottom = 32.dp),
-                    ) {
-                        Text("Grant Permissions")
-                    }
-                }
-            }
-        },
     ) { innerPadding ->
         Column(
             modifier =
@@ -272,6 +240,37 @@ fun MainLandingScreen(
                         .align(Alignment.CenterHorizontally)
                         .padding(bottom = 16.dp),
             )
+            Spacer(modifier = Modifier.height(128.dp))
+            Column {
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("ℹ️ Required permission status")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = if (allPermissionsGranted) Icons.Filled.Check else Icons.Filled.Clear,
+                        // Set color to red if permission is not granted
+                        tint = if (allPermissionsGranted) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error,
+                        contentDescription = "Icon",
+                    )
+                }
+                if (!allPermissionsGranted) {
+                    Button(
+                        onClick = { /* Handle permission grant */ },
+                        modifier =
+                            Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(bottom = 32.dp),
+                    ) {
+                        Text("Grant Permissions")
+                    }
+                }
+            }
         }
     }
 }
