@@ -4,14 +4,10 @@ import android.Manifest.permission.PACKAGE_USAGE_STATS
 import android.Manifest.permission.POST_NOTIFICATIONS
 import android.annotation.SuppressLint
 import android.app.AlertDialog
-import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
@@ -20,6 +16,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,14 +29,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -47,7 +50,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import dev.hossain.keepalive.service.WatchdogService
 import dev.hossain.keepalive.ui.theme.KeepAliveTheme
 
@@ -57,6 +59,7 @@ import dev.hossain.keepalive.ui.theme.KeepAliveTheme
 class MainActivity : ComponentActivity() {
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
+    private val mainViewModel: MainViewModel by viewModels()
 
     companion object {
         private const val TAG = "MainActivity"
@@ -67,42 +70,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             KeepAliveTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .wrapContentSize(Alignment.Center)
-                                .padding(innerPadding),
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.baseline_radar_24),
-                            contentDescription = "App Icon",
-                            modifier =
-                                Modifier
-                                    .size(64.dp)
-                                    .align(Alignment.CenterHorizontally)
-                                    .padding(bottom = 16.dp),
-                        )
-                        AppHeading(
-                            title = "Keep Alive",
-                            modifier =
-                                Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .padding(bottom = 8.dp),
-                        )
-                        Text(
-                            text = "App that keeps photos and sync apps alive.",
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier =
-                                Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .padding(bottom = 16.dp),
-                        )
-                    }
-                }
+                val allPermissionsGranted by mainViewModel.allPermissionsGranted.observeAsState(false)
+
+                MainLandingScreen(allPermissionsGranted = allPermissionsGranted)
             }
         }
+
+        mainViewModel.checkAllPermissions(this)
 
         requestPermissionLauncher =
             this.registerForActivityResult(
@@ -141,37 +115,28 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if ((
-                    ContextCompat.checkSelfPermission(this, POST_NOTIFICATIONS)
-                        != PackageManager.PERMISSION_GRANTED
-                ) || (
-                    ContextCompat.checkSelfPermission(
-                        this,
-                        PACKAGE_USAGE_STATS,
-                    )
-                        != PackageManager.PERMISSION_GRANTED
-                )
-            ) {
-                requestPermissionLauncher.launch(arrayOf(POST_NOTIFICATIONS, PACKAGE_USAGE_STATS))
-            }
+        if (mainViewModel.arePermissionsGranted(this, mainViewModel.requiredPermissions)) {
+            Log.d(TAG, "onCreate: All other permissions granted")
+        } else {
+            Log.d(TAG, "onCreate: All other permissions not granted")
+            requestPermissionLauncher.launch(mainViewModel.requiredPermissions)
         }
 
-        if (hasUsageStatsPermission(this)) {
-            Log.d(TAG, "onCreate: PACKAGE_USAGE_STATS Permission granted")
+        if (mainViewModel.hasUsageStatsPermission(this)) {
+            Log.d(TAG, "hasUsageStatsPermission: PACKAGE_USAGE_STATS Permission granted")
         } else {
-            Log.d(TAG, "onCreate: PACKAGE_USAGE_STATS Permission denied")
+            Log.d(TAG, "hasUsageStatsPermission: PACKAGE_USAGE_STATS Permission denied")
             requestUsageStatsPermission()
         }
 
-        if (Settings.canDrawOverlays(this)) {
+        if (mainViewModel.hasOverlayPermission(this)) {
             // Permission granted, you can start the activity or service that needs this permission
         } else {
             // Permission not granted, request it
             requestOverlayPermission()
         }
 
-        if (!isBatteryOptimizationIgnored(this)) {
+        if (!mainViewModel.isBatteryOptimizationIgnored(this)) {
             showBatteryOptimizationDialog(this)
         } else {
             Toast.makeText(
@@ -199,6 +164,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun requestUsageStatsPermission() {
+        Log.d(TAG, "requestUsageStatsPermission: Requesting usage stats permission")
         val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
         startActivity(intent)
     }
@@ -227,31 +193,6 @@ class MainActivity : ComponentActivity() {
         activityResultLauncher.launch(intent)
     }
 
-    private fun hasUsageStatsPermission(context: Context): Boolean {
-        val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        val mode =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                appOps.unsafeCheckOpNoThrow(
-                    AppOpsManager.OPSTR_GET_USAGE_STATS,
-                    android.os.Process.myUid(),
-                    context.packageName,
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                appOps.checkOpNoThrow(
-                    AppOpsManager.OPSTR_GET_USAGE_STATS,
-                    android.os.Process.myUid(),
-                    context.packageName,
-                )
-            }
-        return mode == AppOpsManager.MODE_ALLOWED
-    }
-
-    private fun isBatteryOptimizationIgnored(context: Context): Boolean {
-        val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-        return powerManager.isIgnoringBatteryOptimizations(context.packageName)
-    }
-
     @SuppressLint("BatteryLife")
     private fun requestBatteryOptimizationExclusion(context: Context) {
         Toast.makeText(
@@ -264,6 +205,97 @@ class MainActivity : ComponentActivity() {
                 data = Uri.parse("package:${context.packageName}")
             }
         context.startActivity(intent)
+    }
+}
+
+@Composable
+fun MainLandingScreen(
+    modifier: Modifier = Modifier,
+    allPermissionsGranted: Boolean = false,
+) {
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        bottomBar = {
+            Column {
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("Required permission status")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = if (allPermissionsGranted) Icons.Filled.Check else Icons.Filled.Clear,
+                        // Set color to red if permission is not granted
+                        tint = if (allPermissionsGranted) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error,
+                        contentDescription = "Icon",
+                    )
+                }
+                if (!allPermissionsGranted) {
+                    Button(
+                        onClick = { /* Handle permission grant */ },
+                        modifier =
+                            Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(bottom = 32.dp),
+                    ) {
+                        Text("Grant Permissions")
+                    }
+                }
+            }
+        },
+    ) { innerPadding ->
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .wrapContentSize(Alignment.Center)
+                    .padding(innerPadding),
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.baseline_radar_24),
+                contentDescription = "App Icon",
+                modifier =
+                    Modifier
+                        .size(64.dp)
+                        .align(Alignment.CenterHorizontally)
+                        .padding(bottom = 16.dp),
+            )
+            AppHeading(
+                title = "Keep Alive",
+                modifier =
+                    Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(bottom = 8.dp),
+            )
+            Text(
+                text = "App that keeps photos and sync apps alive.",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier =
+                    Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(bottom = 16.dp),
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MainLandingScreenPreview() {
+    KeepAliveTheme {
+        MainLandingScreen(allPermissionsGranted = true)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MainLandingScreenPreviewWithoutButton() {
+    KeepAliveTheme {
+        MainLandingScreen(allPermissionsGranted = false)
     }
 }
 
