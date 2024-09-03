@@ -9,7 +9,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -52,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.hossain.keepalive.service.WatchdogService
 import dev.hossain.keepalive.ui.theme.KeepAliveTheme
+import timber.log.Timber
 
 /**
  * Main activity that launches the WatchdogService and requests for necessary permissions.
@@ -60,10 +60,6 @@ class MainActivity : ComponentActivity() {
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
     private val mainViewModel: MainViewModel by viewModels()
-
-    companion object {
-        private const val TAG = "MainActivity"
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,18 +80,18 @@ class MainActivity : ComponentActivity() {
             ) { permissions ->
                 if (permissions[POST_NOTIFICATIONS] == true) {
                     // Permission granted, you can post notifications
-                    Log.d(TAG, "onCreate: POST_NOTIFICATIONS Permission granted")
+                    Timber.d("onCreate: POST_NOTIFICATIONS Permission granted")
                 } else {
                     // Permission denied, handle accordingly
-                    Log.d(TAG, "onCreate: POST_NOTIFICATIONS Permission denied")
+                    Timber.d("onCreate: POST_NOTIFICATIONS Permission denied")
                 }
 
                 if (permissions[PACKAGE_USAGE_STATS] == true) {
                     // Permission granted, you can get package usage stats
-                    Log.d(TAG, "onCreate: PACKAGE_USAGE_STATS Permission granted")
+                    Timber.d("onCreate: PACKAGE_USAGE_STATS Permission granted")
                 } else {
                     // Permission denied, handle accordingly
-                    Log.d(TAG, "onCreate: PACKAGE_USAGE_STATS Permission denied")
+                    Timber.d("onCreate: PACKAGE_USAGE_STATS Permission denied")
                 }
             }
 
@@ -107,25 +103,25 @@ class MainActivity : ComponentActivity() {
                 if (result.resultCode == RESULT_OK) {
                     if (Settings.canDrawOverlays(this)) {
                         // Permission granted, proceed with your action
-                        Log.d(TAG, "Overlay permission granted")
+                        Timber.d("Overlay permission granted")
                     } else {
                         // Permission not granted, show a message to the user
-                        Log.d(TAG, "Overlay permission denied")
+                        Timber.d("Overlay permission denied")
                     }
                 }
             }
 
         if (mainViewModel.arePermissionsGranted(this, mainViewModel.requiredPermissions)) {
-            Log.d(TAG, "onCreate: All other permissions granted")
+            Timber.d("onCreate arePermissionsGranted: All other permissions granted")
         } else {
-            Log.d(TAG, "onCreate: All other permissions not granted")
+            Timber.d("onCreate arePermissionsGranted: All other permissions not granted")
             requestPermissionLauncher.launch(mainViewModel.requiredPermissions)
         }
 
         if (mainViewModel.hasUsageStatsPermission(this)) {
-            Log.d(TAG, "hasUsageStatsPermission: PACKAGE_USAGE_STATS Permission granted")
+            Timber.d("hasUsageStatsPermission: PACKAGE_USAGE_STATS Permission granted")
         } else {
-            Log.d(TAG, "hasUsageStatsPermission: PACKAGE_USAGE_STATS Permission denied")
+            Timber.d("hasUsageStatsPermission: PACKAGE_USAGE_STATS Permission denied")
             requestUsageStatsPermission()
         }
 
@@ -164,7 +160,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun requestUsageStatsPermission() {
-        Log.d(TAG, "requestUsageStatsPermission: Requesting usage stats permission")
+        Timber.d("requestUsageStatsPermission: Requesting usage stats permission")
         val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
         startActivity(intent)
     }

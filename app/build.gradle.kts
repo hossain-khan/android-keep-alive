@@ -83,6 +83,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.okhttp3)
+    implementation(libs.timber)
     implementation(platform(libs.androidx.compose.bom))
 
     testImplementation(libs.junit)
