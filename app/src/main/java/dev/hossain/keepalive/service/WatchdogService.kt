@@ -3,7 +3,6 @@ package dev.hossain.keepalive.service
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.util.Log
 import dev.hossain.keepalive.util.AppChecker
 import dev.hossain.keepalive.util.AppLauncher
 import dev.hossain.keepalive.util.HttpPingSender
@@ -12,6 +11,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.util.Date
 
 /**
@@ -20,7 +20,6 @@ import java.util.Date
 class WatchdogService : Service() {
     companion object {
         private const val NOTIFICATION_ID = 1
-        private const val TAG = "WatchdogService"
 
         private const val CHECK_INTERVAL_MILLIS = 1800_000L // 30 minutes x2
 
@@ -32,7 +31,7 @@ class WatchdogService : Service() {
     private val notificationHelper = NotificationHelper(this)
 
     override fun onBind(intent: Intent?): IBinder? {
-        Log.d(TAG, "onBind: $intent")
+        Timber.d("onBind: $intent")
         return null
     }
 
@@ -42,10 +41,7 @@ class WatchdogService : Service() {
         flags: Int,
         startId: Int,
     ): Int {
-        Log.d(
-            TAG,
-            "onStartCommand() called with: intent = $intent, flags = $flags, startId = $startId",
-        )
+        Timber.d("onStartCommand() called with: intent = $intent, flags = $flags, startId = $startId")
         notificationHelper.createNotificationChannel()
 
         startForeground(
@@ -55,23 +51,23 @@ class WatchdogService : Service() {
 
         GlobalScope.launch {
             while (true) {
-                Log.d(TAG, "Current time: ${System.currentTimeMillis()} @ ${Date()}")
+                Timber.d("Current time: " + System.currentTimeMillis() + " @ " + Date())
                 delay(CHECK_INTERVAL_MILLIS)
 
                 if (!AppChecker.isGooglePhotosRunning(this@WatchdogService)) {
-                    Log.d(TAG, "Photos app is not running. Starting it now.")
+                    Timber.d("Photos app is not running. Starting it now.")
                     AppLauncher.openGooglePhotos(this@WatchdogService)
                 } else {
-                    Log.d(TAG, "Photos app is already running.")
+                    Timber.d("Photos app is already running.")
                     pingSender.sendPingToDevice()
                 }
 
                 delay(30_000L) // 30 seconds
                 if (!AppChecker.isSyncthingRunning(this@WatchdogService)) {
-                    Log.d(TAG, "Sync app is not running. Starting it now.")
+                    Timber.d("Sync app is not running. Starting it now.")
                     AppLauncher.openSyncthing(this@WatchdogService)
                 } else {
-                    Log.d(TAG, "Sync app is already running.")
+                    Timber.d("Sync app is already running.")
                     pingSender.sendPingToDevice()
                 }
 
