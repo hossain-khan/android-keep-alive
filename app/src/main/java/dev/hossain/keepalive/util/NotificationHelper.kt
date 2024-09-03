@@ -6,22 +6,21 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import dev.hossain.keepalive.MainActivity
 import dev.hossain.keepalive.R
+import timber.log.Timber
 
 /**
  * Helper class to create notification channel and build notification.
  */
 class NotificationHelper(private val context: Context) {
     companion object {
-        private const val TAG = "NotificationHelper"
         private const val CHANNEL_ID = "WatchdogServiceChannel"
     }
 
     fun createNotificationChannel() {
-        Log.d(TAG, "createNotificationChannel() called")
+        Timber.d("createNotificationChannel() called")
 
         val channel =
             NotificationChannel(
@@ -35,7 +34,7 @@ class NotificationHelper(private val context: Context) {
     }
 
     fun buildNotification(): Notification {
-        Log.d(TAG, "buildNotification() called")
+        Timber.d("buildNotification() called")
 
         val notificationIntent = Intent(context, MainActivity::class.java)
         val pendingIntent =

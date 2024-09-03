@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import timber.log.Timber;
+
 public class AppChecker {
 
     public static boolean isGooglePhotosRunning(Context context) {
@@ -46,7 +48,7 @@ public class AppChecker {
                     return true;
                 }
             } else {
-                Log.d("AppChecker", "appList is null or empty. " + appList);
+                Timber.d("appList is null or empty. %s", appList);
             }
         }
         return false;
@@ -55,7 +57,7 @@ public class AppChecker {
     private static void printSortedMap(SortedMap<Long, UsageStats> sortedMap) {
         for (Long key : sortedMap.keySet()) {
             UsageStats usageStats = sortedMap.get(key);
-            Log.d("AppChecker", "UsageStats: " + usageStats.getPackageName() + " | " + usageStats.getLastTimeUsed());
+            Timber.d("UsageStats: " + usageStats.getPackageName() + " | " + usageStats.getLastTimeUsed());
         }
     }
 }

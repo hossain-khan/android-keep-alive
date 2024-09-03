@@ -1,28 +1,24 @@
 package dev.hossain.keepalive.util
 
 import android.content.Context
-import android.util.Log
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.IOException
+import timber.log.Timber
 
 /**
  * Sends HTTP ping to a given URL.
  */
 class HttpPingSender(private val context: Context) {
-    companion object {
-        private const val TAG = "HttpPingSender"
-    }
-
     private val client = OkHttpClient()
 
     fun sendPingToDevice() {
         val deviceModel = android.os.Build.MODEL
         AppConfig.phoneToUrlMap[deviceModel]?.let { pingUrl ->
-            Log.d(TAG, "sendPingToDevice: Pinging device $deviceModel with URL $pingUrl")
+            Timber.d("sendPingToDevice: Pinging device $deviceModel with URL $pingUrl")
             sendHttpPing(pingUrl)
         } ?: run {
-            Log.e(TAG, "sendPingToDevice: No URL found for device $deviceModel - Not supported.")
+            Timber.e("sendPingToDevice: No URL found for device $deviceModel - Not supported.")
         }
     }
 
@@ -44,9 +40,9 @@ class HttpPingSender(private val context: Context) {
                 .build()
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
-                Log.e(TAG, "Unexpected code $response", IOException("Unexpected code $response"))
+                Timber.e(IOException("Unexpected code $response"), "Unexpected code $response")
             } else {
-                Log.d(TAG, "Heartbeat Ping Sent: Response: ${response.body?.string()}")
+                Timber.d("Heartbeat Ping Sent: Response: " + response.body?.string())
             }
         }
     }
