@@ -2,7 +2,7 @@ package dev.hossain.keepalive
 
 import android.Manifest.permission.PACKAGE_USAGE_STATS
 import android.Manifest.permission.POST_NOTIFICATIONS
-import android.annotation.SuppressLint
+import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -80,6 +80,7 @@ class MainActivity : ComponentActivity() {
                 showPermissionRequestDialog = remember { mutableStateOf(false) }
                 nextPermissionType =
                     remember { mutableStateOf(PERMISSION_POST_NOTIFICATIONS) }
+                val grantedPermissionCount: Int by mainViewModel.totalApprovedPermissions.observeAsState(0)
 
                 val allPermissionsGranted: Boolean by mainViewModel.allPermissionsGranted.observeAsState(
                     false,
@@ -92,6 +93,8 @@ class MainActivity : ComponentActivity() {
                     permissionType = nextPermissionType.value,
                     showPermissionRequestDialog = showPermissionRequestDialog,
                     onRequestPermissions = { requestNextRequiredPermission() },
+                    totalRequiredCount = mainViewModel.totalPermissionRequired,
+                    grantedCount = grantedPermissionCount,
                 )
             }
         }
@@ -198,14 +201,35 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
+    override fun onResume() {
+        super.onResume()
         updatePermissionGrantedStatus()
     }
 
     private fun startWatchdogService() {
-        val serviceIntent = Intent(this, WatchdogService::class.java)
-        startService(serviceIntent)
+        if (!isServiceRunning(this, WatchdogService::class.java)) {
+            val serviceIntent = Intent(this, WatchdogService::class.java)
+            startForegroundService(serviceIntent)
+        } else {
+            Timber.d("WatchdogService is already running.")
+        }
+    }
+
+    private fun isServiceRunning(
+        context: Context,
+        serviceClass: Class<*>,
+    ): Boolean {
+        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+
+        // DEPRECATED: `getRunningServices()` method is no longer available to third party applications.
+        // For backwards compatibility, it will still return the caller's own services.
+        // So, this method is still useful for detecting if your own services are running.
+        for (service in activityManager.getRunningServices(Int.MAX_VALUE)) {
+            if (serviceClass.name == service.service.className) {
+                return true
+            }
+        }
+        return false
     }
 }
 
@@ -218,6 +242,8 @@ fun MainLandingScreen(
     permissionType: PermissionType,
     showPermissionRequestDialog: MutableState<Boolean>,
     onRequestPermissions: () -> Unit,
+    totalRequiredCount: Int,
+    grantedCount: Int,
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -263,7 +289,7 @@ fun MainLandingScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("ℹ️ Required permission status")
+                    Text("ℹ️ Required permission status \nApproved Permissions: $grantedCount of $totalRequiredCount")
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(
                         imageVector = if (allPermissionsGranted) Icons.Filled.Check else Icons.Filled.Clear,
@@ -294,38 +320,6 @@ fun MainLandingScreen(
         activityResultLauncher = activityResultLauncher,
         requestPermissionLauncher = requestPermissionLauncher,
     )
-}
-
-@SuppressLint("UnrememberedMutableState")
-@Preview(showBackground = true)
-@Composable
-fun MainLandingScreenPreview() {
-    KeepAliveTheme {
-        MainLandingScreen(
-            allPermissionsGranted = true,
-            activityResultLauncher = null,
-            requestPermissionLauncher = null,
-            permissionType = PERMISSION_POST_NOTIFICATIONS,
-            showPermissionRequestDialog = mutableStateOf(false),
-            onRequestPermissions = {},
-        )
-    }
-}
-
-@SuppressLint("UnrememberedMutableState")
-@Preview(showBackground = true)
-@Composable
-fun MainLandingScreenPreviewWithoutButton() {
-    KeepAliveTheme {
-        MainLandingScreen(
-            allPermissionsGranted = false,
-            activityResultLauncher = null,
-            requestPermissionLauncher = null,
-            permissionType = PERMISSION_POST_NOTIFICATIONS,
-            showPermissionRequestDialog = mutableStateOf(false),
-            onRequestPermissions = {},
-        )
-    }
 }
 
 @Composable
