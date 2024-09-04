@@ -1,6 +1,7 @@
 package dev.hossain.keepalive
 
 import android.app.Application
+import android.os.Build
 import dev.hossain.keepalive.log.ApiLoggingTree
 import timber.log.Timber
 
@@ -17,6 +18,10 @@ class KeepAliveApplication : Application() {
          *
          * TO BE REMOVED BEFORE PRODUCTION.
          */
-        Timber.plant(ApiLoggingTree("https://api.airtable.com/v0/appcUYTSp0zbLnARC/Logs"))
+        if (Build.MODEL.contains("sdk_gphone")) {
+            Timber.plant(ApiLoggingTree("https://api.airtable.com/v0/appcUYTSp0zbLnARC/LogsDebug"))
+        } else {
+            Timber.plant(ApiLoggingTree("https://api.airtable.com/v0/appcUYTSp0zbLnARC/Logs"))
+        }
     }
 }

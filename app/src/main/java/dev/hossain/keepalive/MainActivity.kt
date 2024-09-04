@@ -3,10 +3,8 @@ package dev.hossain.keepalive
 import android.Manifest.permission.PACKAGE_USAGE_STATS
 import android.Manifest.permission.POST_NOTIFICATIONS
 import android.annotation.SuppressLint
-import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
@@ -40,17 +38,27 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.hossain.keepalive.data.PermissionType
+import dev.hossain.keepalive.data.PermissionType.PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS
+import dev.hossain.keepalive.data.PermissionType.PERMISSION_PACKAGE_USAGE_STATS
+import dev.hossain.keepalive.data.PermissionType.PERMISSION_POST_NOTIFICATIONS
+import dev.hossain.keepalive.data.PermissionType.PERMISSION_SYSTEM_APPLICATION_OVERLAY
 import dev.hossain.keepalive.service.WatchdogService
 import dev.hossain.keepalive.ui.theme.KeepAliveTheme
+import dev.hossain.keepalive.util.AppPermissions
 import timber.log.Timber
 
 /**
@@ -60,6 +68,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
     private val mainViewModel: MainViewModel by viewModels()
+    private lateinit var showPermissionRequestDialog: MutableState<Boolean>
+    private lateinit var nextPermissionType: MutableState<PermissionType>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,13 +77,27 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             KeepAliveTheme {
-                val allPermissionsGranted by mainViewModel.allPermissionsGranted.observeAsState(false)
+                showPermissionRequestDialog = remember { mutableStateOf(false) }
+                nextPermissionType =
+                    remember { mutableStateOf(PERMISSION_POST_NOTIFICATIONS) }
 
-                MainLandingScreen(allPermissionsGranted = allPermissionsGranted)
+                val allPermissionsGranted: Boolean by mainViewModel.allPermissionsGranted.observeAsState(
+                    false,
+                )
+
+                MainLandingScreen(
+                    allPermissionsGranted = allPermissionsGranted,
+                    activityResultLauncher = activityResultLauncher,
+                    requestPermissionLauncher = requestPermissionLauncher,
+                    permissionType = nextPermissionType.value,
+                    showPermissionRequestDialog = showPermissionRequestDialog,
+                    onRequestPermissions = { requestNextRequiredPermission() },
+                )
             }
         }
 
-        mainViewModel.checkAllPermissions(this)
+        // Start the WatchdogService - this is required to monitor other apps and keep them alive.
+        startWatchdogService()
 
         requestPermissionLauncher =
             this.registerForActivityResult(
@@ -111,100 +135,89 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-
-        if (mainViewModel.arePermissionsGranted(this, mainViewModel.requiredPermissions)) {
-            Timber.d("onCreate arePermissionsGranted: All other permissions granted")
-        } else {
-            Timber.d("onCreate arePermissionsGranted: All other permissions not granted")
-            requestPermissionLauncher.launch(mainViewModel.requiredPermissions)
-        }
-
-        if (mainViewModel.hasUsageStatsPermission(this)) {
-            Timber.d("hasUsageStatsPermission: PACKAGE_USAGE_STATS Permission granted")
-        } else {
-            Timber.d("hasUsageStatsPermission: PACKAGE_USAGE_STATS Permission denied")
-            requestUsageStatsPermission()
-        }
-
-        if (mainViewModel.hasOverlayPermission(this)) {
-            // Permission granted, you can start the activity or service that needs this permission
-        } else {
-            // Permission not granted, request it
-            requestOverlayPermission()
-        }
-
-        if (!mainViewModel.isBatteryOptimizationIgnored(this)) {
-            showBatteryOptimizationDialog(this)
-        } else {
-            Timber.d("Battery optimization is already disabled for this app.")
-        }
     }
 
-    private fun showBatteryOptimizationDialog(context: Context) {
-        AlertDialog.Builder(context)
-            .setTitle("Disable Battery Optimization")
-            .setMessage("This app requires to be excluded from battery optimizations to function properly in the background.")
-            .setPositiveButton("Exclude") { _, _ ->
-                requestBatteryOptimizationExclusion(context)
+    private fun updatePermissionGrantedStatus(): Boolean {
+        mainViewModel.checkAllPermissions(this)
+
+        return mainViewModel.requiredPermissionRemaining.isEmpty()
+    }
+
+    private fun requestNextRequiredPermission() {
+        if (updatePermissionGrantedStatus()) {
+            Timber.d("requestNextRequiredPermission: All required permissions granted.")
+            Toast.makeText(this, "All required permissions granted.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        mainViewModel.requiredPermissionRemaining.first().let { permissionType: PermissionType ->
+            when (permissionType) {
+                PERMISSION_POST_NOTIFICATIONS -> {
+                    Timber.d("requestNextRequiredPermission: Requesting PERMISSION_POST_NOTIFICATIONS permission")
+                    nextPermissionType.value = PERMISSION_POST_NOTIFICATIONS
+                    showPermissionRequestDialog.value = true
+                }
+
+                PERMISSION_PACKAGE_USAGE_STATS -> {
+                    Timber.d("requestNextRequiredPermission: Requesting PERMISSION_PACKAGE_USAGE_STATS permission")
+                    nextPermissionType.value = PERMISSION_PACKAGE_USAGE_STATS
+                    showPermissionRequestDialog.value = true
+                }
+
+                PERMISSION_SYSTEM_APPLICATION_OVERLAY -> {
+                    Timber.d("requestNextRequiredPermission: Requesting PERMISSION_SYSTEM_APPLICATION_OVERLAY permission")
+                    nextPermissionType.value = PERMISSION_SYSTEM_APPLICATION_OVERLAY
+                    showPermissionRequestDialog.value = true
+                }
+
+                PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS -> {
+                    Timber.d("requestNextRequiredPermission: Requesting PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS permission")
+                    nextPermissionType.value = PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS
+                    showPermissionRequestDialog.value = true
+                }
+
+                PermissionType.PERMISSION_FOREGROUND_SERVICE -> {
+                    Timber.d("requestNextRequiredPermission: Requesting PERMISSION_FOREGROUND_SERVICE permission")
+                    nextPermissionType.value = PermissionType.PERMISSION_FOREGROUND_SERVICE
+                    showPermissionRequestDialog.value = true
+                }
+
+                PermissionType.PERMISSION_FOREGROUND_SERVICE_SPECIAL_USE -> {
+                    Timber.d("requestNextRequiredPermission: Requesting PERMISSION_FOREGROUND_SERVICE_SPECIAL_USE permission")
+                    nextPermissionType.value =
+                        PermissionType.PERMISSION_FOREGROUND_SERVICE_SPECIAL_USE
+                    showPermissionRequestDialog.value = true
+                }
+
+                PermissionType.PERMISSION_RECEIVE_BOOT_COMPLETED -> {
+                    Timber.d("requestNextRequiredPermission: Requesting PERMISSION_RECEIVE_BOOT_COMPLETED permission")
+                    nextPermissionType.value = PermissionType.PERMISSION_RECEIVE_BOOT_COMPLETED
+                    showPermissionRequestDialog.value = true
+                }
             }
-            .setNegativeButton("Cancel", null)
-            .show()
+        }
     }
 
     override fun onStart() {
         super.onStart()
-        startWatchdogService()
-    }
-
-    private fun requestUsageStatsPermission() {
-        Timber.d("requestUsageStatsPermission: Requesting usage stats permission")
-        val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-        startActivity(intent)
+        updatePermissionGrantedStatus()
     }
 
     private fun startWatchdogService() {
         val serviceIntent = Intent(this, WatchdogService::class.java)
         startService(serviceIntent)
     }
-
-    /**
-     * When your app's WindowStopped is set to true, it means that your app's activity has been stopped,
-     * which typically occurs when the app is no longer visible to the user. Starting a new activity
-     * when your app's WindowStopped is true is restricted on newer versions of Android due to the
-     * background activity launch restrictions.
-     *
-     * Understanding the Restriction
-     * Starting from Android 10 (API level 29), apps are restricted from launching activities from
-     * the background to improve the user experience and reduce unexpected interruptions.
-     */
-    private fun requestOverlayPermission() {
-        val intent =
-            Intent(
-                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:$packageName"),
-            )
-        activityResultLauncher.launch(intent)
-    }
-
-    @SuppressLint("BatteryLife")
-    private fun requestBatteryOptimizationExclusion(context: Context) {
-        Toast.makeText(
-            context,
-            "Please exclude this app from battery optimization.",
-            Toast.LENGTH_SHORT,
-        ).show()
-        val intent =
-            Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                data = Uri.parse("package:${context.packageName}")
-            }
-        context.startActivity(intent)
-    }
 }
 
 @Composable
 fun MainLandingScreen(
     modifier: Modifier = Modifier,
+    activityResultLauncher: ActivityResultLauncher<Intent>?,
+    requestPermissionLauncher: ActivityResultLauncher<Array<String>>?,
     allPermissionsGranted: Boolean = false,
+    permissionType: PermissionType,
+    showPermissionRequestDialog: MutableState<Boolean>,
+    onRequestPermissions: () -> Unit,
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -261,7 +274,7 @@ fun MainLandingScreen(
                 }
                 if (!allPermissionsGranted) {
                     Button(
-                        onClick = { /* Handle permission grant */ },
+                        onClick = { onRequestPermissions() },
                         modifier =
                             Modifier
                                 .align(Alignment.CenterHorizontally)
@@ -273,21 +286,45 @@ fun MainLandingScreen(
             }
         }
     }
+
+    PermissionDialogs(
+        context = LocalContext.current,
+        permissionType = permissionType,
+        showDialog = showPermissionRequestDialog,
+        activityResultLauncher = activityResultLauncher,
+        requestPermissionLauncher = requestPermissionLauncher,
+    )
 }
 
+@SuppressLint("UnrememberedMutableState")
 @Preview(showBackground = true)
 @Composable
 fun MainLandingScreenPreview() {
     KeepAliveTheme {
-        MainLandingScreen(allPermissionsGranted = true)
+        MainLandingScreen(
+            allPermissionsGranted = true,
+            activityResultLauncher = null,
+            requestPermissionLauncher = null,
+            permissionType = PERMISSION_POST_NOTIFICATIONS,
+            showPermissionRequestDialog = mutableStateOf(false),
+            onRequestPermissions = {},
+        )
     }
 }
 
+@SuppressLint("UnrememberedMutableState")
 @Preview(showBackground = true)
 @Composable
 fun MainLandingScreenPreviewWithoutButton() {
     KeepAliveTheme {
-        MainLandingScreen(allPermissionsGranted = false)
+        MainLandingScreen(
+            allPermissionsGranted = false,
+            activityResultLauncher = null,
+            requestPermissionLauncher = null,
+            permissionType = PERMISSION_POST_NOTIFICATIONS,
+            showPermissionRequestDialog = mutableStateOf(false),
+            onRequestPermissions = {},
+        )
     }
 }
 
@@ -365,5 +402,43 @@ fun MyBottomSheetDialogPreview() {
         description = "This is a description",
         onAccept = { /*TODO*/ },
         onCancel = { /*TODO*/ },
+    )
+}
+
+@Composable
+fun PermissionDialogs(
+    context: Context,
+    activityResultLauncher: ActivityResultLauncher<Intent>?,
+    requestPermissionLauncher: ActivityResultLauncher<Array<String>>?,
+    permissionType: PermissionType,
+    showDialog: MutableState<Boolean>,
+) {
+    val (title, description) =
+        when (permissionType) {
+            PERMISSION_POST_NOTIFICATIONS -> "Post Notifications" to "Please grant the notification permission."
+            PERMISSION_PACKAGE_USAGE_STATS -> "Usage Stats" to "Please grant the usage stats permission."
+            PERMISSION_SYSTEM_APPLICATION_OVERLAY -> "Overlay Permission" to "Please grant the overlay permission."
+            PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS -> "Battery Optimization" to "Please exclude this app from battery optimization."
+            else -> "X" to "Y"
+        }
+
+    BottomSheetDialog(
+        showDialog = showDialog.value,
+        title = title,
+        description = description,
+        onAccept = {
+            Timber.d("onAccept: for $permissionType")
+            showDialog.value = false
+            AppPermissions.requestPermission(
+                context = context,
+                activityResultLauncher = activityResultLauncher,
+                requestPermissionLauncher = requestPermissionLauncher,
+                permissionType = permissionType,
+            )
+        },
+        onCancel = {
+            Timber.d("onCancel: for $permissionType")
+            showDialog.value = false
+        },
     )
 }
