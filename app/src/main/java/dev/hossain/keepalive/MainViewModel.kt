@@ -11,10 +11,13 @@ import android.provider.Settings
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import dev.hossain.keepalive.data.PermissionType
 import timber.log.Timber
 
 class MainViewModel : ViewModel() {
     val allPermissionsGranted = MutableLiveData(false)
+
+    val requiredPermissionRemaining = mutableSetOf<PermissionType>()
 
     val requiredPermissions =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -26,16 +29,32 @@ class MainViewModel : ViewModel() {
     fun checkAllPermissions(context: Context) {
         val hasUsageStatsPermission = hasUsageStatsPermission(context)
         val isBatteryOptimizationIgnored = isBatteryOptimizationIgnored(context)
-        val allOtherPermissionsGranted = arePermissionsGranted(context, requiredPermissions)
+        val hasPackageUsageStatsPermission = isPermissionGranted(context, PACKAGE_USAGE_STATS)
         val hasOverlayPermission = hasOverlayPermission(context)
-        Timber.d(
-            "hasUsageStatsPermission=$hasUsageStatsPermission, isBatteryOptimizationIgnored=$isBatteryOptimizationIgnored, " +
-                "allOtherPermissionsGranted=$allOtherPermissionsGranted, hasOverlayPermission=$hasOverlayPermission",
-        )
-        allPermissionsGranted.value = hasUsageStatsPermission &&
-            isBatteryOptimizationIgnored &&
-            // TODO: Check for other permissions
-            hasOverlayPermission
+
+        requiredPermissionRemaining.clear()
+        if (!hasUsageStatsPermission) {
+            requiredPermissionRemaining.add(PermissionType.PERMISSION_PACKAGE_USAGE_STATS)
+        }
+        if (!isBatteryOptimizationIgnored) {
+            requiredPermissionRemaining.add(PermissionType.PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS)
+        }
+        if (!hasOverlayPermission) {
+            requiredPermissionRemaining.add(PermissionType.PERMISSION_SYSTEM_APPLICATION_OVERLAY)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasPostNotificationPermission = isPermissionGranted(context, POST_NOTIFICATIONS)
+            if (!hasPostNotificationPermission) {
+                requiredPermissionRemaining.add(PermissionType.PERMISSION_POST_NOTIFICATIONS)
+            }
+        }
+        // TODO what is the difference between this and `hasUsageStatsPermission`?
+//        if(!hasPackageUsageStatsPermission) {
+//            requiredPermissionRemaining.add(PermissionType.PERMISSION_PACKAGE_USAGE_STATS)
+//        }
+
+        Timber.d("requiredPermissionRemaining=$requiredPermissionRemaining")
+        allPermissionsGranted.value = requiredPermissionRemaining.isEmpty()
     }
 
     fun isBatteryOptimizationIgnored(context: Context): Boolean {
@@ -80,5 +99,14 @@ class MainViewModel : ViewModel() {
             Timber.d("permission=$permission | status=$checkSelfPermission")
             checkSelfPermission == PackageManager.PERMISSION_GRANTED
         }
+    }
+
+    fun isPermissionGranted(
+        context: Context,
+        permission: String,
+    ): Boolean {
+        val checkSelfPermission = ContextCompat.checkSelfPermission(context, permission)
+        Timber.d("permission=$permission | status=$checkSelfPermission")
+        return checkSelfPermission == PackageManager.PERMISSION_GRANTED
     }
 }

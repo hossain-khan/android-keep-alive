@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import dev.hossain.keepalive.util.AppConfig.PHOTOS_APP_LAUNCH_ACTIVITY
 import dev.hossain.keepalive.util.AppConfig.PHOTOS_APP_PACKAGE_NAME
 import dev.hossain.keepalive.util.AppConfig.SYNC_APP_LAUNCH_ACTIVITY
@@ -40,6 +41,36 @@ object AppLauncher {
         } catch (e: ActivityNotFoundException) {
             e.printStackTrace()
             Timber.e(e, "Unable to find activity: $launchIntent")
+        }
+    }
+
+    /**
+     * Checks if the activity is available in the package.
+     */
+    private fun isActivityAvailable(
+        context: Context,
+        packageName: String,
+        activityName: String,
+    ): Boolean {
+        val intent = Intent()
+        intent.component = ComponentName(packageName, activityName)
+        val packageManager = context.packageManager
+        val resolveInfo = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+        return resolveInfo != null
+    }
+
+    /**
+     * Checks if the app is installed.
+     */
+    private fun isAppInstalled(
+        context: Context,
+        packageName: String,
+    ): Boolean {
+        return try {
+            context.packageManager.getPackageInfo(packageName, 0)
+            true
+        } catch (e: PackageManager.NameNotFoundException) {
+            false
         }
     }
 }
