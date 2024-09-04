@@ -3,10 +3,8 @@ package dev.hossain.keepalive
 import android.Manifest.permission.PACKAGE_USAGE_STATS
 import android.Manifest.permission.POST_NOTIFICATIONS
 import android.annotation.SuppressLint
-import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
@@ -47,6 +45,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -59,6 +58,7 @@ import dev.hossain.keepalive.data.PermissionType.PERMISSION_POST_NOTIFICATIONS
 import dev.hossain.keepalive.data.PermissionType.PERMISSION_SYSTEM_APPLICATION_OVERLAY
 import dev.hossain.keepalive.service.WatchdogService
 import dev.hossain.keepalive.ui.theme.KeepAliveTheme
+import dev.hossain.keepalive.util.AppPermissions
 import timber.log.Timber
 
 /**
@@ -87,6 +87,8 @@ class MainActivity : ComponentActivity() {
 
                 MainLandingScreen(
                     allPermissionsGranted = allPermissionsGranted,
+                    activityResultLauncher = activityResultLauncher,
+                    requestPermissionLauncher = requestPermissionLauncher,
                     permissionType = nextPermissionType.value,
                     showPermissionRequestDialog = showPermissionRequestDialog,
                     onRequestPermissions = { requestNextRequiredPermission() },
@@ -94,7 +96,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        mainViewModel.checkAllPermissions(this)
+        // Start the WatchdogService - this is required to monitor other apps and keep them alive.
+        startWatchdogService()
 
         requestPermissionLauncher =
             this.registerForActivityResult(
@@ -132,39 +135,16 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+    }
 
-        if (mainViewModel.arePermissionsGranted(this, mainViewModel.requiredPermissions)) {
-            Timber.d("onCreate arePermissionsGranted: All other permissions granted")
-        } else {
-            Timber.d("onCreate arePermissionsGranted: All other permissions not granted")
-            requestPermissionLauncher.launch(mainViewModel.requiredPermissions)
-        }
+    private fun updatePermissionGrantedStatus(): Boolean {
+        mainViewModel.checkAllPermissions(this)
 
-        if (mainViewModel.hasUsageStatsPermission(this)) {
-            Timber.d("hasUsageStatsPermission: PACKAGE_USAGE_STATS Permission granted")
-        } else {
-            Timber.d("hasUsageStatsPermission: PACKAGE_USAGE_STATS Permission denied")
-            requestUsageStatsPermission()
-        }
-
-        if (mainViewModel.hasOverlayPermission(this)) {
-            // Permission granted, you can start the activity or service that needs this permission
-        } else {
-            // Permission not granted, request it
-            requestOverlayPermission()
-        }
-
-        if (!mainViewModel.isBatteryOptimizationIgnored(this)) {
-            showBatteryOptimizationDialog(this)
-        } else {
-            Timber.d("Battery optimization is already disabled for this app.")
-        }
+        return mainViewModel.requiredPermissionRemaining.isEmpty()
     }
 
     private fun requestNextRequiredPermission() {
-        mainViewModel.checkAllPermissions(this)
-
-        if (mainViewModel.requiredPermissionRemaining.isEmpty()) {
+        if (updatePermissionGrantedStatus()) {
             Timber.d("requestNextRequiredPermission: All required permissions granted.")
             Toast.makeText(this, "All required permissions granted.", Toast.LENGTH_SHORT).show()
             return
@@ -218,70 +198,22 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun showBatteryOptimizationDialog(context: Context) {
-        AlertDialog.Builder(context)
-            .setTitle("Disable Battery Optimization")
-            .setMessage("This app requires to be excluded from battery optimizations to function properly in the background.")
-            .setPositiveButton("Exclude") { _, _ ->
-                requestBatteryOptimizationExclusion(context)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
     override fun onStart() {
         super.onStart()
-        startWatchdogService()
-    }
-
-    private fun requestUsageStatsPermission() {
-        Timber.d("requestUsageStatsPermission: Requesting usage stats permission")
-        val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-        startActivity(intent)
+        updatePermissionGrantedStatus()
     }
 
     private fun startWatchdogService() {
         val serviceIntent = Intent(this, WatchdogService::class.java)
         startService(serviceIntent)
     }
-
-    /**
-     * When your app's WindowStopped is set to true, it means that your app's activity has been stopped,
-     * which typically occurs when the app is no longer visible to the user. Starting a new activity
-     * when your app's WindowStopped is true is restricted on newer versions of Android due to the
-     * background activity launch restrictions.
-     *
-     * Understanding the Restriction
-     * Starting from Android 10 (API level 29), apps are restricted from launching activities from
-     * the background to improve the user experience and reduce unexpected interruptions.
-     */
-    private fun requestOverlayPermission() {
-        val intent =
-            Intent(
-                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:$packageName"),
-            )
-        activityResultLauncher.launch(intent)
-    }
-
-    @SuppressLint("BatteryLife")
-    private fun requestBatteryOptimizationExclusion(context: Context) {
-        Toast.makeText(
-            context,
-            "Please exclude this app from battery optimization.",
-            Toast.LENGTH_SHORT,
-        ).show()
-        val intent =
-            Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                data = Uri.parse("package:${context.packageName}")
-            }
-        context.startActivity(intent)
-    }
 }
 
 @Composable
 fun MainLandingScreen(
     modifier: Modifier = Modifier,
+    activityResultLauncher: ActivityResultLauncher<Intent>?,
+    requestPermissionLauncher: ActivityResultLauncher<Array<String>>?,
     allPermissionsGranted: Boolean = false,
     permissionType: PermissionType,
     showPermissionRequestDialog: MutableState<Boolean>,
@@ -355,7 +287,13 @@ fun MainLandingScreen(
         }
     }
 
-    PermissionDialogs(permissionType, showPermissionRequestDialog)
+    PermissionDialogs(
+        context = LocalContext.current,
+        permissionType = permissionType,
+        showDialog = showPermissionRequestDialog,
+        activityResultLauncher = activityResultLauncher,
+        requestPermissionLauncher = requestPermissionLauncher,
+    )
 }
 
 @SuppressLint("UnrememberedMutableState")
@@ -365,6 +303,8 @@ fun MainLandingScreenPreview() {
     KeepAliveTheme {
         MainLandingScreen(
             allPermissionsGranted = true,
+            activityResultLauncher = null,
+            requestPermissionLauncher = null,
             permissionType = PERMISSION_POST_NOTIFICATIONS,
             showPermissionRequestDialog = mutableStateOf(false),
             onRequestPermissions = {},
@@ -379,6 +319,8 @@ fun MainLandingScreenPreviewWithoutButton() {
     KeepAliveTheme {
         MainLandingScreen(
             allPermissionsGranted = false,
+            activityResultLauncher = null,
+            requestPermissionLauncher = null,
             permissionType = PERMISSION_POST_NOTIFICATIONS,
             showPermissionRequestDialog = mutableStateOf(false),
             onRequestPermissions = {},
@@ -465,6 +407,9 @@ fun MyBottomSheetDialogPreview() {
 
 @Composable
 fun PermissionDialogs(
+    context: Context,
+    activityResultLauncher: ActivityResultLauncher<Intent>?,
+    requestPermissionLauncher: ActivityResultLauncher<Array<String>>?,
     permissionType: PermissionType,
     showDialog: MutableState<Boolean>,
 ) {
@@ -474,7 +419,7 @@ fun PermissionDialogs(
             PERMISSION_PACKAGE_USAGE_STATS -> "Usage Stats" to "Please grant the usage stats permission."
             PERMISSION_SYSTEM_APPLICATION_OVERLAY -> "Overlay Permission" to "Please grant the overlay permission."
             PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS -> "Battery Optimization" to "Please exclude this app from battery optimization."
-            else -> "" to ""
+            else -> "X" to "Y"
         }
 
     BottomSheetDialog(
@@ -484,10 +429,53 @@ fun PermissionDialogs(
         onAccept = {
             Timber.d("onAccept: for $permissionType")
             showDialog.value = false
+            requestPermission(
+                context = context,
+                activityResultLauncher = activityResultLauncher,
+                requestPermissionLauncher = requestPermissionLauncher,
+                permissionType = permissionType,
+            )
         },
         onCancel = {
             Timber.d("onCancel: for $permissionType")
             showDialog.value = false
         },
     )
+}
+
+@SuppressLint("NewApi")
+fun requestPermission(
+    context: Context,
+    activityResultLauncher: ActivityResultLauncher<Intent>?,
+    requestPermissionLauncher: ActivityResultLauncher<Array<String>>?,
+    permissionType: PermissionType,
+) {
+    Timber.d("requestPermission: for $permissionType")
+    when (permissionType) {
+        PERMISSION_POST_NOTIFICATIONS -> {
+            // Request for notification permission
+            AppPermissions.requestPostNotificationPermission(requestPermissionLauncher!!)
+        }
+
+        PERMISSION_PACKAGE_USAGE_STATS -> {
+            // Request for usage stats permission
+            AppPermissions.requestUsageStatsPermission(context)
+        }
+
+        PERMISSION_SYSTEM_APPLICATION_OVERLAY -> {
+            // Request for overlay permission
+            activityResultLauncher?.let {
+                AppPermissions.requestOverlayPermission(context, it)
+            }
+        }
+
+        PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS -> {
+            // Request for battery optimization exclusion
+            AppPermissions.requestBatteryOptimizationExclusion(context)
+        }
+
+        else -> {
+            // Do nothing
+        }
+    }
 }

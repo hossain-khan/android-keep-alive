@@ -38,20 +38,20 @@ class MainViewModel : ViewModel() {
         val hasOverlayPermission = hasOverlayPermission(context)
 
         requiredPermissionRemaining.clear()
-        if (!hasUsageStatsPermission) {
-            requiredPermissionRemaining.add(PermissionType.PERMISSION_PACKAGE_USAGE_STATS)
-        }
-        if (!isBatteryOptimizationIgnored) {
-            requiredPermissionRemaining.add(PermissionType.PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS)
-        }
-        if (!hasOverlayPermission) {
-            requiredPermissionRemaining.add(PermissionType.PERMISSION_SYSTEM_APPLICATION_OVERLAY)
-        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val hasPostNotificationPermission = isPermissionGranted(context, POST_NOTIFICATIONS)
             if (!hasPostNotificationPermission) {
                 requiredPermissionRemaining.add(PermissionType.PERMISSION_POST_NOTIFICATIONS)
             }
+        }
+        if (!isBatteryOptimizationIgnored) {
+            requiredPermissionRemaining.add(PermissionType.PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS)
+        }
+        if (!hasUsageStatsPermission) {
+            requiredPermissionRemaining.add(PermissionType.PERMISSION_PACKAGE_USAGE_STATS)
+        }
+        if (!hasOverlayPermission) {
+            requiredPermissionRemaining.add(PermissionType.PERMISSION_SYSTEM_APPLICATION_OVERLAY)
         }
         // TODO what is the difference between this and `hasUsageStatsPermission`?
 //        if(!hasPackageUsageStatsPermission) {
