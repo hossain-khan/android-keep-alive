@@ -10,6 +10,11 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.annotation.RequiresApi
+import dev.hossain.keepalive.data.PermissionType
+import dev.hossain.keepalive.data.PermissionType.PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS
+import dev.hossain.keepalive.data.PermissionType.PERMISSION_PACKAGE_USAGE_STATS
+import dev.hossain.keepalive.data.PermissionType.PERMISSION_POST_NOTIFICATIONS
+import dev.hossain.keepalive.data.PermissionType.PERMISSION_SYSTEM_APPLICATION_OVERLAY
 import timber.log.Timber
 
 object AppPermissions {
@@ -65,5 +70,42 @@ object AppPermissions {
     fun requestPostNotificationPermission(requestPermissionLauncher: ActivityResultLauncher<Array<String>>) {
         Timber.d("requestPostNotificationPermission: Requesting post notification permission")
         requestPermissionLauncher.launch(arrayOf(POST_NOTIFICATIONS))
+    }
+
+    @SuppressLint("NewApi")
+    fun requestPermission(
+        context: Context,
+        activityResultLauncher: ActivityResultLauncher<Intent>?,
+        requestPermissionLauncher: ActivityResultLauncher<Array<String>>?,
+        permissionType: PermissionType,
+    ) {
+        Timber.d("requestPermission: for $permissionType")
+        when (permissionType) {
+            PERMISSION_POST_NOTIFICATIONS -> {
+                // Request for notification permission
+                AppPermissions.requestPostNotificationPermission(requestPermissionLauncher!!)
+            }
+
+            PERMISSION_PACKAGE_USAGE_STATS -> {
+                // Request for usage stats permission
+                AppPermissions.requestUsageStatsPermission(context)
+            }
+
+            PERMISSION_SYSTEM_APPLICATION_OVERLAY -> {
+                // Request for overlay permission
+                activityResultLauncher?.let {
+                    AppPermissions.requestOverlayPermission(context, it)
+                }
+            }
+
+            PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS -> {
+                // Request for battery optimization exclusion
+                AppPermissions.requestBatteryOptimizationExclusion(context)
+            }
+
+            else -> {
+                // Do nothing
+            }
+        }
     }
 }

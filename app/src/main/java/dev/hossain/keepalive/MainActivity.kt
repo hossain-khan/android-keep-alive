@@ -429,7 +429,7 @@ fun PermissionDialogs(
         onAccept = {
             Timber.d("onAccept: for $permissionType")
             showDialog.value = false
-            requestPermission(
+            AppPermissions.requestPermission(
                 context = context,
                 activityResultLauncher = activityResultLauncher,
                 requestPermissionLauncher = requestPermissionLauncher,
@@ -441,41 +441,4 @@ fun PermissionDialogs(
             showDialog.value = false
         },
     )
-}
-
-@SuppressLint("NewApi")
-fun requestPermission(
-    context: Context,
-    activityResultLauncher: ActivityResultLauncher<Intent>?,
-    requestPermissionLauncher: ActivityResultLauncher<Array<String>>?,
-    permissionType: PermissionType,
-) {
-    Timber.d("requestPermission: for $permissionType")
-    when (permissionType) {
-        PERMISSION_POST_NOTIFICATIONS -> {
-            // Request for notification permission
-            AppPermissions.requestPostNotificationPermission(requestPermissionLauncher!!)
-        }
-
-        PERMISSION_PACKAGE_USAGE_STATS -> {
-            // Request for usage stats permission
-            AppPermissions.requestUsageStatsPermission(context)
-        }
-
-        PERMISSION_SYSTEM_APPLICATION_OVERLAY -> {
-            // Request for overlay permission
-            activityResultLauncher?.let {
-                AppPermissions.requestOverlayPermission(context, it)
-            }
-        }
-
-        PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS -> {
-            // Request for battery optimization exclusion
-            AppPermissions.requestBatteryOptimizationExclusion(context)
-        }
-
-        else -> {
-            // Do nothing
-        }
-    }
 }
