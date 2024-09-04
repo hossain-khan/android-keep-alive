@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Keep ALive"
+rootProject.name = "Keep Alive"
 include(":app")
