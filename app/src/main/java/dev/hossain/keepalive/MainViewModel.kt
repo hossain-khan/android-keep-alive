@@ -18,11 +18,20 @@ class MainViewModel : ViewModel() {
     val allPermissionsGranted = MutableLiveData(false)
 
     /**
+     * This number needs to be dynamic based on the permissions required.
+     * We could leverage the number of ENUMS in [PermissionType] to calculate this.
+     * Some cleanup required later.
+     */
+    val totalPermissionRequired = 4
+    val totalApprovedPermissions = MutableLiveData(0)
+
+    /**
      * Permissions that are required but not granted yet.
      * Having empty set after [checkAllPermissions] means all required permissions are granted.
      * @see checkAllPermissions
      */
     val requiredPermissionRemaining = mutableSetOf<PermissionType>()
+    val grantedPermissions = mutableSetOf<PermissionType>()
 
     val requiredPermissions =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -42,16 +51,24 @@ class MainViewModel : ViewModel() {
             val hasPostNotificationPermission = isPermissionGranted(context, POST_NOTIFICATIONS)
             if (!hasPostNotificationPermission) {
                 requiredPermissionRemaining.add(PermissionType.PERMISSION_POST_NOTIFICATIONS)
+            } else {
+                grantedPermissions.add(PermissionType.PERMISSION_POST_NOTIFICATIONS)
             }
         }
         if (!isBatteryOptimizationIgnored) {
             requiredPermissionRemaining.add(PermissionType.PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS)
+        } else {
+            grantedPermissions.add(PermissionType.PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS)
         }
         if (!hasUsageStatsPermission) {
             requiredPermissionRemaining.add(PermissionType.PERMISSION_PACKAGE_USAGE_STATS)
+        } else {
+            grantedPermissions.add(PermissionType.PERMISSION_PACKAGE_USAGE_STATS)
         }
         if (!hasOverlayPermission) {
             requiredPermissionRemaining.add(PermissionType.PERMISSION_SYSTEM_APPLICATION_OVERLAY)
+        } else {
+            grantedPermissions.add(PermissionType.PERMISSION_SYSTEM_APPLICATION_OVERLAY)
         }
         // TODO what is the difference between this and `hasUsageStatsPermission`?
 //        if(!hasPackageUsageStatsPermission) {
@@ -59,6 +76,7 @@ class MainViewModel : ViewModel() {
 //        }
 
         Timber.d("requiredPermissionRemaining=$requiredPermissionRemaining")
+        totalApprovedPermissions.value = grantedPermissions.size
         allPermissionsGranted.value = requiredPermissionRemaining.isEmpty()
     }
 
