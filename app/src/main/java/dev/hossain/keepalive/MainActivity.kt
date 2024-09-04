@@ -14,6 +14,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -80,7 +83,9 @@ class MainActivity : ComponentActivity() {
                 showPermissionRequestDialog = remember { mutableStateOf(false) }
                 nextPermissionType =
                     remember { mutableStateOf(PERMISSION_POST_NOTIFICATIONS) }
-                val grantedPermissionCount: Int by mainViewModel.totalApprovedPermissions.observeAsState(0)
+                val grantedPermissionCount: Int by mainViewModel.totalApprovedPermissions.observeAsState(
+                    0,
+                )
 
                 val allPermissionsGranted: Boolean by mainViewModel.allPermissionsGranted.observeAsState(
                     false,
@@ -215,6 +220,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun isServiceRunning(
         context: Context,
         serviceClass: Class<*>,
@@ -298,15 +304,19 @@ fun MainLandingScreen(
                         contentDescription = "Icon",
                     )
                 }
-                if (!allPermissionsGranted) {
+                AnimatedVisibility(
+                    visible = !allPermissionsGranted,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                    modifier =
+                        Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(bottom = 32.dp),
+                ) {
                     Button(
                         onClick = { onRequestPermissions() },
-                        modifier =
-                            Modifier
-                                .align(Alignment.CenterHorizontally)
-                                .padding(bottom = 32.dp),
                     ) {
-                        Text("Grant Permissions")
+                        Text("Grant Permission")
                     }
                 }
             }
