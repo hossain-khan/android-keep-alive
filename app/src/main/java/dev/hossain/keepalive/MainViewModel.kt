@@ -17,6 +17,11 @@ import timber.log.Timber
 class MainViewModel : ViewModel() {
     val allPermissionsGranted = MutableLiveData(false)
 
+    /**
+     * Permissions that are required but not granted yet.
+     * Having empty set after [checkAllPermissions] means all required permissions are granted.
+     * @see checkAllPermissions
+     */
     val requiredPermissionRemaining = mutableSetOf<PermissionType>()
 
     val requiredPermissions =
