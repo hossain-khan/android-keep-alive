@@ -1,6 +1,7 @@
 package dev.hossain.keepalive.ui.screen
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import androidx.datastore.core.DataStore
 import androidx.lifecycle.LiveData
@@ -34,10 +35,14 @@ class AppViewModel(private val dataStore: DataStore<List<AppInfo>>) : ViewModel(
         }
     }
 
-    // Load the installed apps from the system
+    // Load the installed apps from the system, excluding system apps
     fun getInstalledApps(context: Context): List<AppInfo> {
         val pm = context.packageManager
         return pm.getInstalledApplications(PackageManager.GET_META_DATA)
+            .filter {
+                    app ->
+                (app.flags and ApplicationInfo.FLAG_SYSTEM) == 0 && (app.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0
+            }
             .map { app -> AppInfo(app.packageName, app.loadLabel(pm).toString()) }
     }
 }
