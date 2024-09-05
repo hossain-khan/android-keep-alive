@@ -10,7 +10,6 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -54,12 +53,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import dev.hossain.keepalive.data.PermissionType
 import dev.hossain.keepalive.data.PermissionType.PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS
 import dev.hossain.keepalive.data.PermissionType.PERMISSION_PACKAGE_USAGE_STATS
 import dev.hossain.keepalive.data.PermissionType.PERMISSION_POST_NOTIFICATIONS
 import dev.hossain.keepalive.data.PermissionType.PERMISSION_SYSTEM_APPLICATION_OVERLAY
 import dev.hossain.keepalive.service.WatchdogService
+import dev.hossain.keepalive.ui.Screen
+import dev.hossain.keepalive.ui.screen.SettingsScreen
 import dev.hossain.keepalive.ui.theme.KeepAliveTheme
 import dev.hossain.keepalive.util.AppPermissions
 import timber.log.Timber
@@ -76,7 +81,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
 
         setContent {
             KeepAliveTheme {
@@ -91,16 +95,25 @@ class MainActivity : ComponentActivity() {
                     false,
                 )
 
-                MainLandingScreen(
-                    allPermissionsGranted = allPermissionsGranted,
-                    activityResultLauncher = activityResultLauncher,
-                    requestPermissionLauncher = requestPermissionLauncher,
-                    permissionType = nextPermissionType.value,
-                    showPermissionRequestDialog = showPermissionRequestDialog,
-                    onRequestPermissions = { requestNextRequiredPermission() },
-                    totalRequiredCount = mainViewModel.totalPermissionRequired,
-                    grantedCount = grantedPermissionCount,
-                )
+                val navController: NavHostController = rememberNavController()
+
+                // In your NavHost
+                NavHost(navController = navController, startDestination = Screen.Home.route) {
+                    composable(Screen.Home.route) {
+                        MainLandingScreen(
+                            navController = navController,
+                            allPermissionsGranted = allPermissionsGranted,
+                            activityResultLauncher = activityResultLauncher,
+                            requestPermissionLauncher = requestPermissionLauncher,
+                            permissionType = nextPermissionType.value,
+                            showPermissionRequestDialog = showPermissionRequestDialog,
+                            onRequestPermissions = { requestNextRequiredPermission() },
+                            totalRequiredCount = mainViewModel.totalPermissionRequired,
+                            grantedCount = grantedPermissionCount,
+                        )
+                    }
+                    composable(Screen.Settings.route) { SettingsScreen(navController) }
+                }
             }
         }
 
@@ -242,6 +255,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainLandingScreen(
     modifier: Modifier = Modifier,
+    navController: NavHostController,
     activityResultLauncher: ActivityResultLauncher<Intent>?,
     requestPermissionLauncher: ActivityResultLauncher<Array<String>>?,
     allPermissionsGranted: Boolean = false,
@@ -317,6 +331,21 @@ fun MainLandingScreen(
                         onClick = { onRequestPermissions() },
                     ) {
                         Text("Grant Permission")
+                    }
+                }
+                AnimatedVisibility(
+                    visible = allPermissionsGranted,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                    modifier =
+                        Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(bottom = 32.dp),
+                ) {
+                    Button(
+                        onClick = { navController.navigate(Screen.Settings.route) },
+                    ) {
+                        Text("Configure Immortal Apps")
                     }
                 }
             }
