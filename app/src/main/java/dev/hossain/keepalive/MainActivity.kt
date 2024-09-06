@@ -112,7 +112,7 @@ class MainActivity : ComponentActivity() {
                             grantedCount = grantedPermissionCount,
                         )
                     }
-                    composable(Screen.Settings.route) { SettingsScreen(navController) }
+                    composable(Screen.AppSettings.route) { SettingsScreen(navController) }
                 }
             }
         }
@@ -343,7 +343,7 @@ fun MainLandingScreen(
                             .padding(bottom = 32.dp),
                 ) {
                     Button(
-                        onClick = { navController.navigate(Screen.Settings.route) },
+                        onClick = { navController.navigate(Screen.AppSettings.route) },
                     ) {
                         Text("Configure Immortal Apps")
                     }
