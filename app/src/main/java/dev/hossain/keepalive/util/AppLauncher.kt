@@ -22,6 +22,20 @@ object AppLauncher {
         startApplication(context, SYNC_APP_PACKAGE_NAME, SYNC_APP_LAUNCH_ACTIVITY)
     }
 
+    fun openApp(
+        context: Context,
+        packageName: String,
+    ) {
+        val packageManager = context.packageManager
+        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+        if (launchIntent != null) {
+            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(launchIntent)
+        } else {
+            Timber.e("Unable to find launch intent for package: $packageName")
+        }
+    }
+
     private fun startApplication(
         context: Context,
         packageName: String,

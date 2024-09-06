@@ -80,8 +80,10 @@ class ApiLoggingTree(private val endpointUrl: String) : Timber.Tree() {
                     call: okhttp3.Call,
                     response: okhttp3.Response,
                 ) {
-                    if (!response.isSuccessful) {
-                        Timber.e("Failed to send log to API: ${response.message}")
+                    response.use { // This ensures the response body is closed
+                        if (!response.isSuccessful) {
+                            Timber.e("Failed to send log to API: ${response.message}")
+                        }
                     }
                 }
             },
