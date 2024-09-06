@@ -4,10 +4,12 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import dev.hossain.keepalive.data.AppDataStore
-import dev.hossain.keepalive.util.AppChecker
+import dev.hossain.keepalive.util.AppConfig.PHOTOS_APP_PACKAGE_NAME
+import dev.hossain.keepalive.util.AppConfig.SYNC_APP_PACKAGE_NAME
 import dev.hossain.keepalive.util.AppLauncher
 import dev.hossain.keepalive.util.HttpPingSender
 import dev.hossain.keepalive.util.NotificationHelper
+import dev.hossain.keepalive.util.RecentAppChecker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -63,9 +65,12 @@ class WatchdogService : Service() {
 
             while (true) {
                 Timber.d("Current time: " + System.currentTimeMillis() + " @ " + Date())
+
                 delay(CHECK_INTERVAL_MILLIS)
 
-                if (!AppChecker.isGooglePhotosRunning(this@WatchdogService)) {
+                val recentlyRunApps = RecentAppChecker.getRecentlyRunningAppStats(this@WatchdogService)
+
+                if (!RecentAppChecker.isAppRunningRecently(recentlyRunApps, PHOTOS_APP_PACKAGE_NAME)) {
                     Timber.d("Photos app is not running. Starting it now.")
                     AppLauncher.openGooglePhotos(this@WatchdogService)
                 } else {
@@ -74,7 +79,7 @@ class WatchdogService : Service() {
                 }
 
                 delay(30_000L) // 30 seconds
-                if (!AppChecker.isSyncthingRunning(this@WatchdogService)) {
+                if (!RecentAppChecker.isAppRunningRecently(recentlyRunApps, SYNC_APP_PACKAGE_NAME)) {
                     Timber.d("Sync app is not running. Starting it now.")
                     AppLauncher.openSyncthing(this@WatchdogService)
                 } else {
@@ -83,7 +88,7 @@ class WatchdogService : Service() {
                 }
 
                 appsList.forEach {
-                    if (!AppChecker.isAppRunning(this@WatchdogService, it.packageName)) {
+                    if (!RecentAppChecker.isAppRunningRecently(recentlyRunApps, it.packageName)) {
                         Timber.d("${it.appName} app is not running. Starting it now.")
                         AppLauncher.openApp(this@WatchdogService, it.packageName)
                     } else {
