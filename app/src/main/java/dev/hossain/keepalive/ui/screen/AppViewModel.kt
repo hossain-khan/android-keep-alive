@@ -35,14 +35,20 @@ class AppViewModel(private val dataStore: DataStore<List<AppInfo>>) : ViewModel(
         }
     }
 
+    fun removeApp(appInfo: AppInfo) {
+        viewModelScope.launch {
+            val currentList = appList.value ?: emptyList()
+            dataStore.updateData { currentList - appInfo }
+        }
+    }
+
     // Load the installed apps from the system, excluding system apps
     fun getInstalledApps(context: Context): List<AppInfo> {
         val pm = context.packageManager
         return pm.getInstalledApplications(PackageManager.GET_META_DATA)
-            .filter {
-                    app ->
-                (app.flags and ApplicationInfo.FLAG_SYSTEM) == 0 && (app.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0
-            }
+            .filter { app -> (app.flags and ApplicationInfo.FLAG_SYSTEM) == 0 }
             .map { app -> AppInfo(app.packageName, app.loadLabel(pm).toString()) }
+            .distinctBy { it.packageName }
+            .sortedBy { it.appName }
     }
 }

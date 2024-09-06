@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -47,7 +48,12 @@ fun SettingsScreen(navController: NavHostController) {
     val dataStore = appDataStore(context)
     val viewModel = remember { AppViewModel(dataStore) }
 
-    AppListScreen(navController, viewModel, context)
+    AppListScreen(
+        navController = navController,
+        viewModel = viewModel,
+        context = context,
+        modifier = Modifier.padding(horizontal = 16.dp)
+    )
 }
 
 @Composable
@@ -55,31 +61,31 @@ fun AppListScreen(
     navController: NavHostController,
     viewModel: AppViewModel,
     context: Context,
+    modifier: Modifier = Modifier,
 ) {
     val appList by viewModel.appList.observeAsState(emptyList())
     val selectedApps by viewModel.selectedApps.observeAsState(emptySet())
     val installedApps = viewModel.getInstalledApps(context)
     val showDialog = remember { mutableStateOf(false) }
 
-    Column {
-        // List of Apps (from datastore)
+    Column(modifier = modifier) {
         LazyColumn {
-            items(appList) { app ->
+            items(appList, key = { it.packageName }) { app ->
                 AppListItem(
                     appInfo = app,
                     isSelected = selectedApps.contains(app),
                     onAppSelected = { viewModel.toggleAppSelection(it) },
+                    onDelete = { viewModel.removeApp(it) },
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Button to add app from installed apps
-        Button(onClick = {
-            // Logic to show a dialog to select an app from installed apps
-            showDialog.value = true
-        }) {
+        Button(
+            onClick = { showDialog.value = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Text("Add App")
         }
 
@@ -101,6 +107,7 @@ fun AppListItem(
     appInfo: AppInfo,
     isSelected: Boolean,
     onAppSelected: (AppInfo) -> Unit,
+    onDelete: ((AppInfo) -> Unit)? = null,
 ) {
     Row(
         modifier =
@@ -110,7 +117,6 @@ fun AppListItem(
                 .padding(16.dp)
                 .background(if (isSelected) Color.LightGray else Color.Transparent),
     ) {
-        // Load app icon using package id
         val context = LocalContext.current
         val icon = remember { context.packageManager.getApplicationIcon(appInfo.packageName) }
 
@@ -122,9 +128,15 @@ fun AppListItem(
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(text = appInfo.appName)
             Text(text = appInfo.packageName, style = MaterialTheme.typography.bodySmall)
+        }
+
+        if (isSelected) {
+            Button(onClick = { onDelete?.invoke(appInfo) }) {
+                Text("Delete")
+            }
         }
     }
 }
