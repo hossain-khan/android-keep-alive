@@ -14,10 +14,10 @@ class BootCompleteReceiver : BroadcastReceiver() {
         context: Context,
         intent: Intent,
     ) {
-        Timber.d("onReceive() called with: context = $context, intent = $intent")
+        Timber.d("BootCompleteReceiver onReceive() called with: context = $context, intent = $intent")
         if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
             // Start the WatchdogService
-            Timber.d("onReceive: Starting WatchdogService")
+            Timber.d("BootCompleteReceiver onReceive: Starting WatchdogService")
             val serviceIntent = Intent(context, WatchdogService::class.java)
             context.startForegroundService(serviceIntent)
         }
