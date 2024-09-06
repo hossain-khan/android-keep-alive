@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
@@ -23,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -42,7 +44,7 @@ fun SettingsScreen(navController: NavHostController) {
         navController = navController,
         viewModel = viewModel,
         context = context,
-        modifier = Modifier.padding(horizontal = 16.dp),
+        modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
     )
 }
 
@@ -59,14 +61,29 @@ fun AppListScreen(
     val showDialog = remember { mutableStateOf(false) }
 
     Column(modifier = modifier) {
+        Text(
+            text = "Apps that are kept running:",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(vertical = 8.dp),
+        )
         LazyColumn {
-            items(appList, key = { it.packageName }) { app ->
-                AppListItem(
-                    appInfo = app,
-                    isSelected = selectedApps.contains(app),
-                    onAppSelected = { viewModel.toggleAppSelection(it) },
-                    onDelete = { viewModel.removeApp(it) },
-                )
+            if (appList.isEmpty()) {
+                item {
+                    Text(
+                        text = "No apps are added to the watch list.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                }
+            } else {
+                items(appList, key = { it.packageName }) { app ->
+                    AppListItem(
+                        appInfo = app,
+                        isSelected = selectedApps.contains(app),
+                        onAppSelected = { viewModel.toggleAppSelection(it) },
+                        onDelete = { viewModel.removeApp(it) },
+                    )
+                }
             }
         }
 
@@ -74,9 +91,15 @@ fun AppListScreen(
 
         Button(
             onClick = { showDialog.value = true },
-            modifier = Modifier.fillMaxWidth(),
+            modifier =
+                Modifier
+                    .wrapContentWidth()
+                    .align(Alignment.CenterHorizontally),
         ) {
-            Text("Add App")
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Add App")
+                Text("Add a new app to the watchlist.", style = MaterialTheme.typography.labelSmall)
+            }
         }
 
         if (showDialog.value) {

@@ -1,6 +1,8 @@
 package dev.hossain.keepalive.util
 
 object AppConfig {
+    const val DEFAULT_APP_CHECK_INTERVAL = 30
+
     // List of supported devices - hardcoded for now.
     const val PHONE_OG_PIXEL = "Pixel XL"
     const val PHONE_GS23 = "SM-S911W"

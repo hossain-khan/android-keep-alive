@@ -64,6 +64,7 @@ import dev.hossain.keepalive.data.PermissionType.PERMISSION_POST_NOTIFICATIONS
 import dev.hossain.keepalive.data.PermissionType.PERMISSION_SYSTEM_APPLICATION_OVERLAY
 import dev.hossain.keepalive.service.WatchdogService
 import dev.hossain.keepalive.ui.Screen
+import dev.hossain.keepalive.ui.screen.AppConfigScreen
 import dev.hossain.keepalive.ui.screen.SettingsScreen
 import dev.hossain.keepalive.ui.theme.KeepAliveTheme
 import dev.hossain.keepalive.util.AppPermissions
@@ -112,7 +113,8 @@ class MainActivity : ComponentActivity() {
                             grantedCount = grantedPermissionCount,
                         )
                     }
-                    composable(Screen.Settings.route) { SettingsScreen(navController) }
+                    composable(Screen.AppConfigs.route) { AppConfigScreen(navController, applicationContext) }
+                    composable(Screen.AppSettings.route) { SettingsScreen(navController) }
                 }
             }
         }
@@ -342,10 +344,21 @@ fun MainLandingScreen(
                             .align(Alignment.CenterHorizontally)
                             .padding(bottom = 32.dp),
                 ) {
-                    Button(
-                        onClick = { navController.navigate(Screen.Settings.route) },
+                    Column(
+                        modifier = Modifier.wrapContentSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Text("Configure Immortal Apps")
+                        Button(
+                            onClick = { navController.navigate(Screen.AppSettings.route) },
+                        ) {
+                            Text("Configure Immortal Apps")
+                        }
+                        Button(
+                            onClick = { navController.navigate(Screen.AppConfigs.route) },
+                        ) {
+                            Text("App Configurations")
+                        }
                     }
                 }
             }
