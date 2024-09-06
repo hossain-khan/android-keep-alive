@@ -29,22 +29,13 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
-import androidx.datastore.core.DataStore
-import androidx.datastore.core.DataStoreFactory
-import androidx.datastore.dataStoreFile
 import androidx.navigation.NavHostController
-
-fun appDataStore(context: Context): DataStore<List<AppInfo>> {
-    return DataStoreFactory.create(
-        serializer = AppListSerializer,
-        produceFile = { context.dataStoreFile("apps_prefs.json") },
-    )
-}
+import dev.hossain.keepalive.data.AppDataStore
 
 @Composable
 fun SettingsScreen(navController: NavHostController) {
     val context = LocalContext.current
-    val dataStore = appDataStore(context)
+    val dataStore = AppDataStore.store(context)
     val viewModel = remember { AppViewModel(dataStore) }
 
     AppListScreen(
