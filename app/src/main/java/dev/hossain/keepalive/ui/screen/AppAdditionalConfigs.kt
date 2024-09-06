@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import dev.hossain.keepalive.data.SettingsRepository
+import dev.hossain.keepalive.util.AppConfig.DEFAULT_APP_CHECK_INTERVAL
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -38,7 +39,7 @@ fun AppConfigScreen(
     val coroutineScope = rememberCoroutineScope()
 
     // Reading DataStore values
-    val appCheckInterval by settingsRepository.appCheckIntervalFlow.collectAsState(initial = 30)
+    val appCheckInterval by settingsRepository.appCheckIntervalFlow.collectAsState(initial = DEFAULT_APP_CHECK_INTERVAL)
     val isHealthCheckEnabled by settingsRepository.enableHealthCheckFlow.collectAsState(initial = false)
     val healthCheckUUID by settingsRepository.healthCheckUUIDFlow.collectAsState(initial = "")
 
@@ -48,6 +49,7 @@ fun AppConfigScreen(
     var appCheckIntervalValue by remember { mutableStateOf(appCheckInterval.toFloat()) }
     var isHealthCheckEnabledValue by remember { mutableStateOf(isHealthCheckEnabled) }
     var healthCheckUUIDValue by remember { mutableStateOf(healthCheckUUID) }
+    var healthCheckUUIDError by remember { mutableStateOf<String?>(null) }
 
     Column(modifier = Modifier.padding(16.dp)) {
         Text(
@@ -105,20 +107,36 @@ fun AppConfigScreen(
 
         // Health Check Ping UUID (only enabled when healthcheck is enabled)
         if (isHealthCheckEnabledValue) {
-            OutlinedTextField(
-                value = healthCheckUUIDValue,
-                onValueChange = {
-                    healthCheckUUIDValue = it
-                    coroutineScope.launch {
-                        settingsRepository.saveHealthCheckUUID(it)
-                    }
-                },
-                label = { Text("Health Check Ping UUID") },
-                placeholder = { Text("UUID format: xyz-mn-ab-pq-hijkl") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-            )
+            Column {
+                OutlinedTextField(
+                    value = healthCheckUUIDValue,
+                    onValueChange = {
+                        healthCheckUUIDValue = it
+                        if (isValidUUID(it)) {
+                            healthCheckUUIDError = null
+                            coroutineScope.launch {
+                                settingsRepository.saveHealthCheckUUID(it)
+                            }
+                        } else {
+                            healthCheckUUIDError = "Invalid UUID format, please copy the UUID from healthchecks.io"
+                        }
+                    },
+                    label = { Text("Health Check Ping UUID") },
+                    placeholder = { Text("UUID format: xyz-mn-ab-pq-hijkl") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    isError = healthCheckUUIDError != null,
+                )
+                if (healthCheckUUIDError != null) {
+                    Text(
+                        text = healthCheckUUIDError ?: "",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(start = 16.dp, top = 4.dp),
+                    )
+                }
+            }
         }
     }
 
@@ -133,4 +151,9 @@ fun AppConfigScreen(
     LaunchedEffect(healthCheckUUID) {
         healthCheckUUIDValue = healthCheckUUID
     }
+}
+
+fun isValidUUID(uuid: String): Boolean {
+    val uuidRegex = "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$".toRegex()
+    return uuid.matches(uuidRegex)
 }
