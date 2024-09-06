@@ -1,6 +1,9 @@
 package dev.hossain.keepalive.util
 
 import android.content.Context
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.IOException
@@ -38,11 +41,17 @@ class HttpPingSender(private val context: Context) {
                 .url(pingUrl)
                 .header("User-Agent", userAgent)
                 .build()
-        client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) {
-                Timber.e(IOException("Unexpected code $response"), "Unexpected code $response")
-            } else {
-                Timber.d("Heartbeat Ping Sent: Response: " + response.body?.string())
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        Timber.e(IOException("Unexpected code $response"), "Unexpected code $response")
+                    } else {
+                        Timber.d("Heartbeat Ping Sent: Response: " + response.body?.string())
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Network request failed")
             }
         }
     }
