@@ -1,6 +1,12 @@
 package dev.hossain.keepalive.ui.screen
 
 import android.content.Context
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,6 +26,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -56,6 +63,7 @@ fun AppListScreen(
     modifier: Modifier = Modifier,
 ) {
     val appList by viewModel.appList.observeAsState(emptyList())
+    val visibleItems = remember { mutableStateOf(appList.toSet()) }
     val selectedApps by viewModel.selectedApps.observeAsState(emptySet())
     val installedApps = viewModel.getInstalledApps(context)
     val showDialog = remember { mutableStateOf(false) }
@@ -77,14 +85,35 @@ fun AppListScreen(
                 }
             } else {
                 items(appList, key = { it.packageName }) { app ->
-                    AppListItem(
-                        appInfo = app,
-                        isSelected = selectedApps.contains(app),
-                        onAppSelected = { viewModel.toggleAppSelection(it) },
-                        onDelete = { viewModel.removeApp(it) },
-                    )
+                    AnimatedVisibility(
+                        visible = app in visibleItems.value,
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically(),
+                    ) {
+                        AppListItem(
+                            appInfo = app,
+                            isSelected = selectedApps.contains(app),
+                            onAppSelected = {
+                                viewModel.addApp(it)
+                                // Update visibleItems when an item is added
+                                visibleItems.value += it
+                                showDialog.value = false
+                            },
+                            onDelete = {
+                                viewModel.removeApp(it)
+                                // Update visibleItems when an item is added
+                                visibleItems.value -= it
+                                showDialog.value = false
+                            },
+                            modifier = Modifier.animateContentSize().animateItem(),
+                        )
+                    }
                 }
             }
+        }
+        // Update visibleItems when appList changes (e.g., item removed)
+        LaunchedEffect(appList) {
+            visibleItems.value = appList.toSet()
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -121,10 +150,11 @@ fun AppListItem(
     isSelected: Boolean,
     onAppSelected: (AppInfo) -> Unit,
     onDelete: ((AppInfo) -> Unit)? = null,
+    modifier: Modifier = Modifier,
 ) {
     Row(
         modifier =
-            Modifier
+            modifier
                 .fillMaxWidth()
                 .clickable { onAppSelected(appInfo) }
                 .padding(16.dp)
