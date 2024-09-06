@@ -1,6 +1,7 @@
 package dev.hossain.keepalive.ui.screen
 
 import android.content.Context
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -26,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import dev.hossain.keepalive.data.SettingsRepository
 import dev.hossain.keepalive.util.AppConfig.DEFAULT_APP_CHECK_INTERVAL
 import kotlinx.coroutines.launch
@@ -33,6 +36,7 @@ import timber.log.Timber
 
 @Composable
 fun AppConfigScreen(
+    navController: NavController,
     context: Context,
     settingsRepository: SettingsRepository = SettingsRepository(context),
 ) {
@@ -59,14 +63,18 @@ fun AppConfigScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // App Check Interval Setting
-        Text(text = "App Check Interval")
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(text = "${appCheckIntervalValue.toInt()} minutes") // Show selected interval
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(text = "App Check Interval")
+            Text(text = "${appCheckIntervalValue.toInt()} minutes")
+        }
         Slider(
             value = appCheckIntervalValue,
             onValueChange = { appCheckIntervalValue = it },
             valueRange = 10f..180f,
-            steps = 180 / 5,
+            steps = (180 - 10) / 5 - 1,
             modifier = Modifier.fillMaxWidth(),
             onValueChangeFinished = {
                 // Save the value when the user stops dragging the slider
@@ -96,7 +104,7 @@ fun AppConfigScreen(
                         """
                         |When enabled, the app will send a ping to the server with the UUID. Ping sent to `https://hc-ping.com/{UUID}`.
                         |Ping will be sent at specified interval and only when your selected app(s) are validated to be alive or restart by this app.
-                        """.trimIndent(),
+                        """.trimMargin(),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray,
                 )
@@ -137,6 +145,16 @@ fun AppConfigScreen(
                     )
                 }
             }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Done Button
+        Button(
+            onClick = { navController.popBackStack() },
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+        ) {
+            Text("Done")
         }
     }
 

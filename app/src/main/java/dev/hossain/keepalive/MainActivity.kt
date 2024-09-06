@@ -113,7 +113,7 @@ class MainActivity : ComponentActivity() {
                             grantedCount = grantedPermissionCount,
                         )
                     }
-                    composable(Screen.AppConfigs.route) { AppConfigScreen(context = applicationContext) }
+                    composable(Screen.AppConfigs.route) { AppConfigScreen(navController, applicationContext) }
                     composable(Screen.AppSettings.route) { SettingsScreen(navController) }
                 }
             }
