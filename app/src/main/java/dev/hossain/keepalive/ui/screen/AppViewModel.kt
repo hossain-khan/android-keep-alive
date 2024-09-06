@@ -12,6 +12,11 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
+/**
+ * ViewModel for managing the list of applications and their selection state.
+ *
+ * @property dataStore The DataStore instance for persisting the list of applications.
+ */
 class AppViewModel(private val dataStore: DataStore<List<AppInfo>>) : ViewModel() {
     // LiveData for observing the list of apps
     val appList: LiveData<List<AppInfo>> = dataStore.data.map { it }.asLiveData()
@@ -20,6 +25,11 @@ class AppViewModel(private val dataStore: DataStore<List<AppInfo>>) : ViewModel(
     private val _selectedApps = MutableLiveData<Set<AppInfo>>(emptySet())
     val selectedApps: LiveData<Set<AppInfo>> = _selectedApps
 
+    /**
+     * Toggles the selection state of an application.
+     *
+     * @param appInfo The AppInfo object representing the application to be toggled.
+     */
     fun toggleAppSelection(appInfo: AppInfo) {
         _selectedApps.value =
             _selectedApps.value?.toMutableSet()?.apply {
@@ -27,7 +37,11 @@ class AppViewModel(private val dataStore: DataStore<List<AppInfo>>) : ViewModel(
             }
     }
 
-    // Function to add new app to datastore
+    /**
+     * Adds a new application to the DataStore.
+     *
+     * @param appInfo The AppInfo object representing the application to be added.
+     */
     fun addApp(appInfo: AppInfo) {
         viewModelScope.launch {
             val currentList = appList.value ?: emptyList()
@@ -35,6 +49,11 @@ class AppViewModel(private val dataStore: DataStore<List<AppInfo>>) : ViewModel(
         }
     }
 
+    /**
+     * Removes an application from the DataStore.
+     *
+     * @param appInfo The AppInfo object representing the application to be removed.
+     */
     fun removeApp(appInfo: AppInfo) {
         viewModelScope.launch {
             val currentList = appList.value ?: emptyList()
