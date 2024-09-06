@@ -44,7 +44,7 @@ fun SettingsScreen(navController: NavHostController) {
         navController = navController,
         viewModel = viewModel,
         context = context,
-        modifier = Modifier.padding(horizontal = 16.dp),
+        modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
     )
 }
 
@@ -63,14 +63,14 @@ fun AppListScreen(
     Column(modifier = modifier) {
         Text(
             text = "Apps that are kept running:",
-            style = MaterialTheme.typography.titleSmall,
+            style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(vertical = 8.dp),
         )
         LazyColumn {
             if (appList.isEmpty()) {
                 item {
                     Text(
-                        text = "No apps are added watch list yet to keep running.",
+                        text = "No apps are added to the watch list.",
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(16.dp),
                     )
