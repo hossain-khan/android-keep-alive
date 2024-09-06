@@ -26,7 +26,7 @@ public class AppChecker {
     /**
      * Check if the app is running in foreground.
      */
-    private static boolean isAppRunning(Context context, String packageName) {
+    public static boolean isAppRunning(Context context, String packageName) {
         UsageStatsManager usageStatsManager = (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
 
         long time = System.currentTimeMillis();
