@@ -25,10 +25,10 @@ class WatchdogService : Service() {
     companion object {
         private const val NOTIFICATION_ID = 1
 
-        //private const val CHECK_INTERVAL_MILLIS = 1800_000L // 30 minutes x2
+        private const val CHECK_INTERVAL_MILLIS = 1800_000L // 30 minutes x2
 
         // Less time for debugging - 20 seconds
-        private const val CHECK_INTERVAL_MILLIS = 20_000L
+        // private const val CHECK_INTERVAL_MILLIS = 20_000L
     }
 
     private val serviceJob = SupervisorJob()
@@ -56,8 +56,6 @@ class WatchdogService : Service() {
         )
 
         val dataStore = AppDataStore.store(context = applicationContext)
-
-
 
         serviceScope.launch {
             val appsList = dataStore.data.first()
