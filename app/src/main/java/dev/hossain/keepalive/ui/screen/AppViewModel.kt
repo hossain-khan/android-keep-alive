@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 
 class AppViewModel(private val dataStore: DataStore<List<AppInfo>>) : ViewModel() {
     // LiveData for observing the list of apps
-    val appList = dataStore.data.map { it }.asLiveData()
+    val appList: LiveData<List<AppInfo>> = dataStore.data.map { it }.asLiveData()
 
     // List of selected apps
     private val _selectedApps = MutableLiveData<Set<AppInfo>>(emptySet())
@@ -49,10 +49,15 @@ class AppViewModel(private val dataStore: DataStore<List<AppInfo>>) : ViewModel(
      * @return A sorted list of AppInfo objects representing the installed applications.
      */
     fun getInstalledApps(context: Context): List<AppInfo> {
+        val alreadyAddedApps: List<AppInfo> = appList.value ?: emptyList()
         val pm = context.packageManager
         val thisAppPackageName = context.packageName
         return pm.getInstalledApplications(PackageManager.GET_META_DATA)
-            .filter { app -> (app.flags and ApplicationInfo.FLAG_SYSTEM) == 0 && app.packageName != thisAppPackageName }
+            .filter { app ->
+                ((app.flags and ApplicationInfo.FLAG_SYSTEM) == 0) &&
+                    (app.packageName != thisAppPackageName) &&
+                    !alreadyAddedApps.any { it.packageName == app.packageName }
+            }
             .map { app -> AppInfo(app.packageName, app.loadLabel(pm).toString()) }
             .distinctBy { it.packageName }
             .sortedBy { it.appName }
