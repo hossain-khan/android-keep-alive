@@ -42,11 +42,17 @@ class AppViewModel(private val dataStore: DataStore<List<AppInfo>>) : ViewModel(
         }
     }
 
-    // Load the installed apps from the system, excluding system apps
+    /**
+     * Retrieves a list of installed applications on the device, excluding system apps and the current app.
+     *
+     * @param context The context used to access the package manager.
+     * @return A sorted list of AppInfo objects representing the installed applications.
+     */
     fun getInstalledApps(context: Context): List<AppInfo> {
         val pm = context.packageManager
+        val thisAppPackageName = context.packageName
         return pm.getInstalledApplications(PackageManager.GET_META_DATA)
-            .filter { app -> (app.flags and ApplicationInfo.FLAG_SYSTEM) == 0 }
+            .filter { app -> (app.flags and ApplicationInfo.FLAG_SYSTEM) == 0 && app.packageName != thisAppPackageName }
             .map { app -> AppInfo(app.packageName, app.loadLabel(pm).toString()) }
             .distinctBy { it.packageName }
             .sortedBy { it.appName }
