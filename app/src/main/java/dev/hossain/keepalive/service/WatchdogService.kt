@@ -39,6 +39,9 @@ class WatchdogService : Service() {
     private val pingSender = HttpPingSender(this)
     private val notificationHelper = NotificationHelper(this)
 
+    // Used to tracking the instance of the service
+    private var serviceStartId: Int? = null
+
     override fun onBind(intent: Intent?): IBinder? {
         Timber.d("onBind: $intent")
         return null
@@ -50,6 +53,7 @@ class WatchdogService : Service() {
         startId: Int,
     ): Int {
         Timber.d("onStartCommand() called with: intent = $intent, flags = $flags, startId = $startId")
+        serviceStartId = startId
         notificationHelper.createNotificationChannel()
 
         startForeground(
@@ -64,7 +68,7 @@ class WatchdogService : Service() {
             Timber.d("DataStore State: $appsList")
 
             while (true) {
-                Timber.d("Current time: " + System.currentTimeMillis() + " @ " + Date())
+                Timber.d("[Start ID: $serviceStartId] Current time: " + System.currentTimeMillis() + " @ " + Date())
 
                 delay(CHECK_INTERVAL_MILLIS)
 
@@ -89,10 +93,10 @@ class WatchdogService : Service() {
 
                 appsList.forEach {
                     if (!RecentAppChecker.isAppRunningRecently(recentlyRunApps, it.packageName)) {
-                        Timber.d("${it.appName} app is not running. Starting it now.")
+                        Timber.d("[Start ID: $serviceStartId] ${it.appName} app is not running. Starting it now.")
                         AppLauncher.openApp(this@WatchdogService, it.packageName)
                     } else {
-                        Timber.d("${it.appName} app is already running.")
+                        Timber.d("[Start ID: $serviceStartId] ${it.appName} app is already running.")
                         pingSender.sendPingToDevice()
                     }
 
@@ -109,6 +113,8 @@ class WatchdogService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+
+        Timber.d("onDestroy: Service is being destroyed. Service ID: $serviceStartId ($this)")
 
         // Cancel the scope to clean up resources
         serviceScope.cancel()

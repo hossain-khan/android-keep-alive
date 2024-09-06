@@ -37,7 +37,7 @@ class ApiLoggingTree(private val endpointUrl: String) : Timber.Tree() {
         message: String,
         t: Throwable?,
     ): String {
-        val logMessage = "Priority: $priority\nTag: $tag\nMessage: $message\nThrowable: ${t?.localizedMessage}"
+        val logMessage = "Priority: ${priority.toLogType()}\nTag: $tag\nMessage: $message\nThrowable: ${t?.localizedMessage}"
         val fields =
             JSONObject().apply {
                 put("Device", Build.MODEL)
@@ -88,5 +88,17 @@ class ApiLoggingTree(private val endpointUrl: String) : Timber.Tree() {
                 }
             },
         )
+    }
+
+    private fun Int.toLogType(): String {
+        return when (this) {
+            2 -> "VERBOSE"
+            3 -> "DEBUG"
+            4 -> "INFO"
+            5 -> "WARN"
+            6 -> "ERROR"
+            7 -> "ASSERT"
+            else -> "UNKNOWN"
+        }
     }
 }
