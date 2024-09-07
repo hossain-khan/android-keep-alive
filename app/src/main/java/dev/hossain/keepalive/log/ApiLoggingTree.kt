@@ -11,6 +11,7 @@ import timber.log.Timber
 import java.io.IOException
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 /**
@@ -25,11 +26,12 @@ class ApiLoggingTree(
     private val client = OkHttpClient()
     private val logQueue = ConcurrentLinkedQueue<String>()
     private val executor = Executors.newSingleThreadScheduledExecutor()
+    private var scheduledTask: ScheduledFuture<*>? = null
 
     init {
         if (isEnabled) {
             // Schedule a task to send logs with a fixed delay
-            executor.scheduleWithFixedDelay({ flushLogs() }, 1, 2, TimeUnit.SECONDS)
+            scheduledTask = executor.scheduleWithFixedDelay({ flushLogs() }, 1, 2, TimeUnit.SECONDS)
         }
     }
 
@@ -45,6 +47,10 @@ class ApiLoggingTree(
 
         val logMessage = createLogMessage(priority, tag, message, t)
         logQueue.add(logMessage)
+
+        if (scheduledTask == null || scheduledTask?.isCancelled == true) {
+            scheduledTask = executor.scheduleWithFixedDelay({ flushLogs() }, 1, 2, TimeUnit.SECONDS)
+        }
     }
 
     private fun createLogMessage(
@@ -78,6 +84,10 @@ class ApiLoggingTree(
             if (log != null) {
                 sendLogToApi(log)
             }
+        }
+
+        if (logQueue.isEmpty()) {
+            scheduledTask?.cancel(false)
         }
     }
 
