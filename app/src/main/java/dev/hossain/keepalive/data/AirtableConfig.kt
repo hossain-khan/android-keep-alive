@@ -1,5 +1,7 @@
 package dev.hossain.keepalive.data
 
+import dev.hossain.keepalive.util.Validator.isValidUrl
+
 data class AirtableConfig(
     val isEnabled: Boolean,
     val token: String,
@@ -8,10 +10,5 @@ data class AirtableConfig(
     // Check if the Airtable configuration is valid
     fun isValid(): Boolean {
         return isEnabled && token.isNotBlank() && isValidUrl(dataUrl)
-    }
-
-    private fun isValidUrl(url: String): Boolean {
-        val urlRegex = "^(https?|ftp)://[^\\s/$.?#].[^\\s]*$".toRegex()
-        return url.matches(urlRegex)
     }
 }

@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import dev.hossain.keepalive.data.SettingsRepository
 import dev.hossain.keepalive.util.AppConfig.DEFAULT_APP_CHECK_INTERVAL_MIN
+import dev.hossain.keepalive.util.Validator.isValidUUID
+import dev.hossain.keepalive.util.Validator.isValidUrl
 import kotlinx.coroutines.launch
 
 @Composable
@@ -288,14 +290,4 @@ fun AppConfigScreen(
     LaunchedEffect(airtableDataUrl) {
         airtableDataUrlValue = airtableDataUrl
     }
-}
-
-fun isValidUrl(url: String): Boolean {
-    val urlRegex = "^(https?|ftp)://[^\\s/$.?#].[^\\s]*$".toRegex()
-    return url.matches(urlRegex)
-}
-
-fun isValidUUID(uuid: String): Boolean {
-    val uuidRegex = "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$".toRegex()
-    return uuid.matches(uuidRegex)
 }
