@@ -9,25 +9,29 @@ import org.json.JSONArray
 import org.json.JSONObject
 import timber.log.Timber
 import java.io.IOException
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 /**
  * Custom Timber tree that sends log to an API endpoint.
  * Allows the log to be monitored remotely to analyze the app behavior.
  */
 class ApiLoggingTree(
-    /**
-     * Airtable API token.
-     * - https://airtable.com/create/tokens
-     */
+    private val isEnabled: Boolean,
     private val authToken: String,
-    /**
-     * Airtable API endpoint URL.
-     *
-     * NOTE: The API is limited to 5 requests per second per base. If you exceed this rate, you will receive a 429 status code and will need to wait 30 seconds before subsequent requests will succeed.
-     */
     private val endpointUrl: String,
 ) : Timber.Tree() {
     private val client = OkHttpClient()
+    private val logQueue = ConcurrentLinkedQueue<String>()
+    private val executor = Executors.newSingleThreadScheduledExecutor()
+
+    init {
+        if (isEnabled) {
+            // Schedule a task to send logs with a fixed delay
+            executor.scheduleWithFixedDelay({ flushLogs() }, 1, 2, TimeUnit.SECONDS)
+        }
+    }
 
     override fun log(
         priority: Int,
@@ -35,11 +39,14 @@ class ApiLoggingTree(
         message: String,
         t: Throwable?,
     ) {
+        if (!isEnabled) {
+            return
+        }
+
         val logMessage = createLogMessage(priority, tag, message, t)
-        sendLogToApi(logMessage)
+        logQueue.add(logMessage)
     }
 
-    // NOTE: No PII (Personally Identifiable Information) is logged.
     private fun createLogMessage(
         priority: Int,
         tag: String?,
@@ -65,13 +72,21 @@ class ApiLoggingTree(
         }.toString()
     }
 
+    private fun flushLogs() {
+        while (logQueue.isNotEmpty()) {
+            val log = logQueue.poll()
+            if (log != null) {
+                sendLogToApi(log)
+            }
+        }
+    }
+
     private fun sendLogToApi(logMessage: String) {
         val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
         val body = logMessage.toRequestBody(mediaType)
         val request =
             Request.Builder()
                 .url(endpointUrl)
-                // WARNING: Exposed token that is used for development only. Will be revoked before production.
                 .addHeader("Authorization", "Bearer $authToken")
                 .post(body)
                 .build()
