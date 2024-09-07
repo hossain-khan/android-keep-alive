@@ -73,10 +73,13 @@ class AppViewModel(private val dataStore: DataStore<List<AppInfo>>) : ViewModel(
 
         return pm.getInstalledApplications(PackageManager.GET_META_DATA)
             .filter { app ->
-                (app.packageName != thisAppPackageName) &&
-                    !alreadyAddedApps.any { it.packageName == app.packageName } &&
-                    // Check if the app has any activities - to filter out services and receivers
-                    pm.getPackageInfo(app.packageName, PackageManager.GET_ACTIVITIES).activities?.isNotEmpty() == true
+                // Check if the app has a launchable activity
+                val hasLaunchableActivity = pm.getLaunchIntentForPackage(app.packageName) != null
+
+                // Allow apps with launchable activities, exclude service-only apps
+                hasLaunchableActivity &&
+                    (app.packageName != thisAppPackageName) &&
+                    !alreadyAddedApps.any { it.packageName == app.packageName }
             }
             .map { app -> AppInfo(app.packageName, app.loadLabel(pm).toString()) }
             .distinctBy { it.packageName }
