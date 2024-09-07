@@ -5,23 +5,9 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import dev.hossain.keepalive.util.AppConfig.PHOTOS_APP_LAUNCH_ACTIVITY
-import dev.hossain.keepalive.util.AppConfig.PHOTOS_APP_PACKAGE_NAME
-import dev.hossain.keepalive.util.AppConfig.SYNC_APP_LAUNCH_ACTIVITY
-import dev.hossain.keepalive.util.AppConfig.SYNC_APP_PACKAGE_NAME
 import timber.log.Timber
 
 object AppLauncher {
-    fun openGooglePhotos(context: Context) {
-        Timber.i("openGooglePhotos")
-        startApplication(context, PHOTOS_APP_PACKAGE_NAME, PHOTOS_APP_LAUNCH_ACTIVITY)
-    }
-
-    fun openSyncthing(context: Context) {
-        Timber.i("openSyncthing")
-        startApplication(context, SYNC_APP_PACKAGE_NAME, SYNC_APP_LAUNCH_ACTIVITY)
-    }
-
     fun openApp(
         context: Context,
         packageName: String,

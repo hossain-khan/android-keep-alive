@@ -5,12 +5,12 @@ import android.content.Intent
 import android.os.IBinder
 import dev.hossain.keepalive.data.AppDataStore
 import dev.hossain.keepalive.data.SettingsRepository
-import dev.hossain.keepalive.util.AppConfig.PHOTOS_APP_PACKAGE_NAME
-import dev.hossain.keepalive.util.AppConfig.SYNC_APP_PACKAGE_NAME
+import dev.hossain.keepalive.util.AppConfig.DELAY_BETWEEN_MULTIPLE_APP_CHECKS_MS
 import dev.hossain.keepalive.util.AppLauncher
 import dev.hossain.keepalive.util.HttpPingSender
 import dev.hossain.keepalive.util.NotificationHelper
 import dev.hossain.keepalive.util.RecentAppChecker
+import dev.hossain.keepalive.util.Validator.isValidUUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.Date
+import java.util.concurrent.TimeUnit
 
 /**
  * Service that keeps an eye on the apps configured by user and restarts if it's killed.
@@ -27,11 +28,6 @@ import java.util.Date
 class WatchdogService : Service() {
     companion object {
         private const val NOTIFICATION_ID = 1
-
-        private const val CHECK_INTERVAL_MILLIS = 1800_000L // 30 minutes x2
-
-        // Less time for debugging - 20 seconds
-        // private const val CHECK_INTERVAL_MILLIS = 20_000L
     }
 
     private val serviceJob = SupervisorJob()
@@ -71,64 +67,45 @@ class WatchdogService : Service() {
 
             while (true) {
                 Timber.d("[Start ID: $serviceStartId] Current time: " + System.currentTimeMillis() + " @ " + Date())
-                appSettings.appCheckIntervalFlow.first().let {
-                    Timber.d("[Start ID: $serviceStartId] App check interval: $it minutes")
-                }
-                appSettings.healthCheckUUIDFlow.first().let {
-                    Timber.d("[Start ID: $serviceStartId] Health check UUID: $it")
-                }
-                appSettings.enableHealthCheckFlow.first().let {
-                    Timber.d("[Start ID: $serviceStartId] Health check enabled: $it")
-                }
-                appSettings.enableRemoteLoggingFlow.first().let {
-                    Timber.d("[Start ID: $serviceStartId] Remote logging enabled: $it")
-                }
-                appSettings.airtableTokenFlow.first().let {
-                    Timber.d("[Start ID: $serviceStartId] Airtable token: $it")
-                }
-                appSettings.airtableDataUrlFlow.first().let {
-                    Timber.d("[Start ID: $serviceStartId] Airtable data URL: $it")
-                }
 
-                delay(CHECK_INTERVAL_MILLIS)
+                appSettings.appCheckIntervalFlow.first().let {
+                    Timber.d("Next check will be done in $it minutes.")
+                    delay(TimeUnit.MINUTES.toMillis(it.toLong()))
+                }
 
                 val recentlyRunApps = RecentAppChecker.getRecentlyRunningAppStats(this@WatchdogService)
 
-                if (!RecentAppChecker.isAppRunningRecently(recentlyRunApps, PHOTOS_APP_PACKAGE_NAME)) {
-                    Timber.d("Photos app is not running. Starting it now.")
-                    AppLauncher.openGooglePhotos(this@WatchdogService)
-                } else {
-                    Timber.d("Photos app is already running.")
-                    pingSender.sendPingToDevice()
-                }
-
-                delay(30_000L) // 30 seconds
-                if (!RecentAppChecker.isAppRunningRecently(recentlyRunApps, SYNC_APP_PACKAGE_NAME)) {
-                    Timber.d("Sync app is not running. Starting it now.")
-                    AppLauncher.openSyncthing(this@WatchdogService)
-                } else {
-                    Timber.d("Sync app is already running.")
-                    pingSender.sendPingToDevice()
-                }
-
                 appsList.forEach {
                     if (!RecentAppChecker.isAppRunningRecently(recentlyRunApps, it.packageName)) {
-                        Timber.d("[Start ID: $serviceStartId] ${it.appName} app is not running. Starting it now.")
+                        Timber.d(
+                            "[Start ID: $serviceStartId] ${it.appName} app is not running. " +
+                                "Attempting to start it now.",
+                        )
                         AppLauncher.openApp(this@WatchdogService, it.packageName)
                     } else {
-                        Timber.d("[Start ID: $serviceStartId] ${it.appName} app is already running.")
-                        pingSender.sendPingToDevice()
+                        // If app is already running, send health check ping
+                        conditionallySendHealthCheck(appSettings)
                     }
 
-                    delay(10_000L) // 10 seconds
+                    delay(DELAY_BETWEEN_MULTIPLE_APP_CHECKS_MS)
                 }
-
-                delay(CHECK_INTERVAL_MILLIS)
             }
         }
 
         // Restart the service if it's killed
         return START_STICKY
+    }
+
+    private suspend fun conditionallySendHealthCheck(appSettings: SettingsRepository) {
+        val healthCheckEnabled = appSettings.enableHealthCheckFlow.first()
+        val healthCheckUUID = appSettings.healthCheckUUIDFlow.first()
+
+        if (healthCheckEnabled && isValidUUID(healthCheckUUID)) {
+            Timber.d("Health check is enabled. Sending health check ping.")
+            pingSender.sendPingToDevice(healthCheckUUID)
+        } else {
+            Timber.d("Health check is disabled or UUID is not set. Skipping health check ping.")
+        }
     }
 
     override fun onDestroy() {
