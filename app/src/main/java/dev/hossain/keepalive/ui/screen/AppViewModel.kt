@@ -1,7 +1,6 @@
 package dev.hossain.keepalive.ui.screen
 
 import android.content.Context
-import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import androidx.datastore.core.DataStore
 import androidx.lifecycle.LiveData
@@ -71,11 +70,13 @@ class AppViewModel(private val dataStore: DataStore<List<AppInfo>>) : ViewModel(
         val alreadyAddedApps: List<AppInfo> = appList.value ?: emptyList()
         val pm = context.packageManager
         val thisAppPackageName = context.packageName
+
         return pm.getInstalledApplications(PackageManager.GET_META_DATA)
             .filter { app ->
-                ((app.flags and ApplicationInfo.FLAG_SYSTEM) == 0) &&
-                    (app.packageName != thisAppPackageName) &&
-                    !alreadyAddedApps.any { it.packageName == app.packageName }
+                (app.packageName != thisAppPackageName) &&
+                    !alreadyAddedApps.any { it.packageName == app.packageName } &&
+                    // Check if the app has any activities - to filter out services and receivers
+                    pm.getPackageInfo(app.packageName, PackageManager.GET_ACTIVITIES).activities?.isNotEmpty() == true
             }
             .map { app -> AppInfo(app.packageName, app.loadLabel(pm).toString()) }
             .distinctBy { it.packageName }
