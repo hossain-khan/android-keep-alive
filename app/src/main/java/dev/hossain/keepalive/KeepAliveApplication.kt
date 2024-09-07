@@ -23,14 +23,19 @@ class KeepAliveApplication : Application() {
         applicationScope.launch {
             settingsRepository.airtableConfig.first { airtableConfig ->
                 if (airtableConfig.isValid()) {
-                    Timber.d("Airtable configuration is valid. Planting remote logging tree.")
-                    Timber.plant(
-                        ApiLoggingTree(
-                            isEnabled = airtableConfig.isValid(),
-                            authToken = airtableConfig.token,
-                            endpointUrl = airtableConfig.dataUrl,
-                        ),
-                    )
+                    val isApiLoggingTreePlanted = Timber.forest().any { it is ApiLoggingTree }
+                    if (!isApiLoggingTreePlanted) {
+                        Timber.d("Airtable configuration is valid. Planting remote logging tree.")
+                        Timber.plant(
+                            ApiLoggingTree(
+                                isEnabled = airtableConfig.isValid(),
+                                authToken = airtableConfig.token,
+                                endpointUrl = airtableConfig.dataUrl,
+                            ),
+                        )
+                    } else {
+                        Timber.d("ApiLoggingTree is already planted. Skipping planting.")
+                    }
                 } else {
                     Timber.d("Airtable configuration is invalid or not set. Skipping remote logging tree.")
                 }
