@@ -294,7 +294,7 @@ fun MainLandingScreen(
                         .padding(bottom = 8.dp),
             )
             Text(
-                text = "App that keeps photos and sync apps alive.",
+                text = "App that keeps other apps alive 💓",
                 style = MaterialTheme.typography.bodyLarge,
                 modifier =
                     Modifier

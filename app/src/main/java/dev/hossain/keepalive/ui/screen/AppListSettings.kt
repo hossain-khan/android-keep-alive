@@ -66,6 +66,13 @@ fun AppListScreen(
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(vertical = 8.dp),
         )
+        Text(
+            text =
+                "These apps will be periodically checked if they were recently run, " +
+                    "if not, they will be restarted based on app configuration you choose.",
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.Gray,
+        )
         LazyColumn {
             if (appList.isEmpty()) {
                 item {
