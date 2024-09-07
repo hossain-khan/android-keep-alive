@@ -4,6 +4,15 @@ A simple app to keep specific apps alive by checking if they are running. If not
 ![Keep Alive App](assets/screenshots/app-demo-screenshots.png)
 
 
+## 🛑 **STOP** 🛑 - Know before you use ✋
+This app is designed with a very specific use case in mind. It is important to understand what this app does and how.
+
+* App is designed to be **_always_** running in the foreground to watch and restart other applications.
+* App is **NOT** optimized for battery. Ideally, this should not be used on your primary phone that you use daily.
+* App contains some additional features like [Remote Logging](REMOTE-MONITORING.md) and Heartbeat due to my personal needs. However, the app can be used without using those features.
+* See the permission section below to better understand the app.
+
+
 ## 🔐 Questionable permissions required ⚠️
 
 Here is the list of permissions needed for the service class ([`WatchdogService`](https://github.com/hossain-khan/android-keep-alive/blob/main/app/src/main/java/dev/hossain/keepalive/service/WatchdogService.kt)). [Source: [Stackoverflow](https://android.stackexchange.com/a/258241/5002)]
