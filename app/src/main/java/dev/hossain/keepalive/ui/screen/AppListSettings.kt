@@ -128,7 +128,7 @@ fun AppListItem(
                 .fillMaxWidth()
                 .clickable { onAppSelected(appInfo) }
                 .padding(16.dp)
-                .background(if (isSelected) Color.LightGray else Color.Transparent),
+                .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent),
     ) {
         val context = LocalContext.current
         val icon = remember { context.packageManager.getApplicationIcon(appInfo.packageName) }
