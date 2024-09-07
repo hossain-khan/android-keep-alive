@@ -12,12 +12,21 @@ import java.io.IOException
 
 /**
  * Custom Timber tree that sends log to an API endpoint.
- * I needed this during development to capture logs to analyze the app behavior.
- * This will allow me to ensure the functionality is working as expected.
- *
- * TO BE REMOVED BEFORE PRODUCTION.
+ * Allows the log to be monitored remotely to analyze the app behavior.
  */
-class ApiLoggingTree(private val endpointUrl: String) : Timber.Tree() {
+class ApiLoggingTree(
+    /**
+     * Airtable API token.
+     * - https://airtable.com/create/tokens
+     */
+    private val authToken: String,
+    /**
+     * Airtable API endpoint URL.
+     *
+     * NOTE: The API is limited to 5 requests per second per base. If you exceed this rate, you will receive a 429 status code and will need to wait 30 seconds before subsequent requests will succeed.
+     */
+    private val endpointUrl: String,
+) : Timber.Tree() {
     private val client = OkHttpClient()
 
     override fun log(
@@ -63,7 +72,7 @@ class ApiLoggingTree(private val endpointUrl: String) : Timber.Tree() {
             Request.Builder()
                 .url(endpointUrl)
                 // WARNING: Exposed token that is used for development only. Will be revoked before production.
-                .addHeader("Authorization", "Bearer patUZtdmJOhvqUkkt.146538e55ff830103df98000dec37899cf3cdede09a2e9bbb3c4214048351702")
+                .addHeader("Authorization", "Bearer $authToken")
                 .post(body)
                 .build()
 
@@ -100,5 +109,18 @@ class ApiLoggingTree(private val endpointUrl: String) : Timber.Tree() {
             7 -> "ASSERT"
             else -> "UNKNOWN"
         }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ApiLoggingTree
+
+        return endpointUrl == other.endpointUrl
+    }
+
+    override fun hashCode(): Int {
+        return endpointUrl.hashCode()
     }
 }

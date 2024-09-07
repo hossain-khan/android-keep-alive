@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dev.hossain.keepalive.util.AppConfig.DEFAULT_APP_CHECK_INTERVAL_MIN
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
 // Define keys for the preferences
@@ -63,6 +64,16 @@ class SettingsRepository(private val context: Context) {
             .map { preferences ->
                 preferences[AIRTABLE_DATA_URL] ?: "" // Default to empty string
             }
+
+    // Combine remote logging enabled state, Airtable token, and Airtable data URL from DataStore
+    val airtableConfig: Flow<AirtableConfig> =
+        combine(
+            enableRemoteLoggingFlow,
+            airtableTokenFlow,
+            airtableDataUrlFlow,
+        ) { isRemoteLoggingEnabled, airtableToken, airtableDataUrl ->
+            AirtableConfig(isRemoteLoggingEnabled, airtableToken, airtableDataUrl)
+        }
 
     // Save values in DataStore
     suspend fun saveAppCheckInterval(interval: Int) {
