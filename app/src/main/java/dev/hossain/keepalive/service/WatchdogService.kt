@@ -62,15 +62,20 @@ class WatchdogService : Service() {
         val appSettings = SettingsRepository(applicationContext)
 
         serviceScope.launch {
-            val appsList = dataStore.data.first()
-            Timber.d("DataStore State: $appsList")
-
             while (true) {
                 Timber.d("[Start ID: $serviceStartId] Current time: " + System.currentTimeMillis() + " @ " + Date())
-
+                val appsList = dataStore.data.first()
                 appSettings.appCheckIntervalFlow.first().let {
                     Timber.d("Next check will be done in $it minutes.")
                     delay(TimeUnit.MINUTES.toMillis(it.toLong()))
+
+                    // For debug/development use smaller value see changes frequently
+                    // delay(20_000L)
+                }
+
+                if (appsList.isEmpty()) {
+                    Timber.w("No apps configured yet. Skipping the check.")
+                    continue
                 }
 
                 val recentlyRunApps = RecentAppChecker.getRecentlyRunningAppStats(this@WatchdogService)
