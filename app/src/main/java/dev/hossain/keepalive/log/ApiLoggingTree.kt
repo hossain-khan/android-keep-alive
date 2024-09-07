@@ -20,6 +20,19 @@ import java.util.concurrent.ConcurrentLinkedQueue
 /**
  * Custom Timber tree that sends log to an API endpoint.
  * Allows the log to be monitored remotely to analyze the app behavior.
+ *
+ * Create account in Airtable and create a base.
+ * - https://airtable.com/signup
+ *
+ * Create your own auth token.
+ * - https://airtable.com/create/tokens
+ *
+ * Get the API endpoint URL by selecting workspace from this page
+ * - https://airtable.com/developers/web/api/introduction
+ *
+ * Create a table in Airtable with following fields:
+ * - Device (Single line text)
+ * - Log (Long text)
  */
 class ApiLoggingTree(
     private val isEnabled: Boolean,
