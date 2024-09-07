@@ -9,16 +9,29 @@ import org.json.JSONArray
 import org.json.JSONObject
 import timber.log.Timber
 import java.io.IOException
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 /**
  * Custom Timber tree that sends log to an API endpoint.
- * I needed this during development to capture logs to analyze the app behavior.
- * This will allow me to ensure the functionality is working as expected.
- *
- * TO BE REMOVED BEFORE PRODUCTION.
+ * Allows the log to be monitored remotely to analyze the app behavior.
  */
-class ApiLoggingTree(private val endpointUrl: String) : Timber.Tree() {
+class ApiLoggingTree(
+    private val isEnabled: Boolean,
+    private val authToken: String,
+    private val endpointUrl: String,
+) : Timber.Tree() {
     private val client = OkHttpClient()
+    private val logQueue = ConcurrentLinkedQueue<String>()
+    private val executor = Executors.newSingleThreadScheduledExecutor()
+
+    init {
+        if (isEnabled) {
+            // Schedule a task to send logs with a fixed delay
+            executor.scheduleWithFixedDelay({ flushLogs() }, 1, 2, TimeUnit.SECONDS)
+        }
+    }
 
     override fun log(
         priority: Int,
@@ -26,11 +39,14 @@ class ApiLoggingTree(private val endpointUrl: String) : Timber.Tree() {
         message: String,
         t: Throwable?,
     ) {
+        if (!isEnabled) {
+            return
+        }
+
         val logMessage = createLogMessage(priority, tag, message, t)
-        sendLogToApi(logMessage)
+        logQueue.add(logMessage)
     }
 
-    // NOTE: No PII (Personally Identifiable Information) is logged.
     private fun createLogMessage(
         priority: Int,
         tag: String?,
@@ -56,14 +72,22 @@ class ApiLoggingTree(private val endpointUrl: String) : Timber.Tree() {
         }.toString()
     }
 
+    private fun flushLogs() {
+        while (logQueue.isNotEmpty()) {
+            val log = logQueue.poll()
+            if (log != null) {
+                sendLogToApi(log)
+            }
+        }
+    }
+
     private fun sendLogToApi(logMessage: String) {
         val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
         val body = logMessage.toRequestBody(mediaType)
         val request =
             Request.Builder()
                 .url(endpointUrl)
-                // WARNING: Exposed token that is used for development only. Will be revoked before production.
-                .addHeader("Authorization", "Bearer patUZtdmJOhvqUkkt.146538e55ff830103df98000dec37899cf3cdede09a2e9bbb3c4214048351702")
+                .addHeader("Authorization", "Bearer $authToken")
                 .post(body)
                 .build()
 
@@ -100,5 +124,18 @@ class ApiLoggingTree(private val endpointUrl: String) : Timber.Tree() {
             7 -> "ASSERT"
             else -> "UNKNOWN"
         }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ApiLoggingTree
+
+        return endpointUrl == other.endpointUrl
+    }
+
+    override fun hashCode(): Int {
+        return endpointUrl.hashCode()
     }
 }

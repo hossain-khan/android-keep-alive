@@ -4,6 +4,7 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import dev.hossain.keepalive.data.AppDataStore
+import dev.hossain.keepalive.data.SettingsRepository
 import dev.hossain.keepalive.util.AppConfig.PHOTOS_APP_PACKAGE_NAME
 import dev.hossain.keepalive.util.AppConfig.SYNC_APP_PACKAGE_NAME
 import dev.hossain.keepalive.util.AppLauncher
@@ -21,7 +22,7 @@ import timber.log.Timber
 import java.util.Date
 
 /**
- * Service that keeps an eye on the Google Photos and Sync app and restarts if it's killed.
+ * Service that keeps an eye on the apps configured by user and restarts if it's killed.
  */
 class WatchdogService : Service() {
     companion object {
@@ -62,6 +63,7 @@ class WatchdogService : Service() {
         )
 
         val dataStore = AppDataStore.store(context = applicationContext)
+        val appSettings = SettingsRepository(applicationContext)
 
         serviceScope.launch {
             val appsList = dataStore.data.first()
@@ -69,6 +71,24 @@ class WatchdogService : Service() {
 
             while (true) {
                 Timber.d("[Start ID: $serviceStartId] Current time: " + System.currentTimeMillis() + " @ " + Date())
+                appSettings.appCheckIntervalFlow.first().let {
+                    Timber.d("[Start ID: $serviceStartId] App check interval: $it minutes")
+                }
+                appSettings.healthCheckUUIDFlow.first().let {
+                    Timber.d("[Start ID: $serviceStartId] Health check UUID: $it")
+                }
+                appSettings.enableHealthCheckFlow.first().let {
+                    Timber.d("[Start ID: $serviceStartId] Health check enabled: $it")
+                }
+                appSettings.enableRemoteLoggingFlow.first().let {
+                    Timber.d("[Start ID: $serviceStartId] Remote logging enabled: $it")
+                }
+                appSettings.airtableTokenFlow.first().let {
+                    Timber.d("[Start ID: $serviceStartId] Airtable token: $it")
+                }
+                appSettings.airtableDataUrlFlow.first().let {
+                    Timber.d("[Start ID: $serviceStartId] Airtable data URL: $it")
+                }
 
                 delay(CHECK_INTERVAL_MILLIS)
 
