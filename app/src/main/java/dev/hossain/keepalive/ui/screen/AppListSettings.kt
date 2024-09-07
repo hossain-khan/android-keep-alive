@@ -102,6 +102,15 @@ fun AppListScreen(
             }
         }
 
+        Spacer(modifier = Modifier.height(8.dp))
+        // Done Button
+        Button(
+            onClick = { navController.popBackStack() },
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+        ) {
+            Text("Done")
+        }
+
         if (showDialog.value) {
             ShowAppSelectionDialog(
                 installedApps = installedApps,

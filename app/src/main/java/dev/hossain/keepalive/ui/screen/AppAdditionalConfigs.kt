@@ -80,6 +80,15 @@ fun AppConfigScreen(
             Text(text = "App Check Interval")
             Text(text = "${appCheckIntervalValue.toInt()} minutes")
         }
+        Text(
+            text =
+                """
+            |This app will check if configured apps have been recently used or opened.`.
+            |If not, it will re-start those apps to foreground so that the app and it's services can run again.
+                """.trimMargin(),
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.Gray,
+        )
         Slider(
             value = appCheckIntervalValue,
             onValueChange = { appCheckIntervalValue = it },
@@ -157,7 +166,7 @@ fun AppConfigScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         // Enable Remote Logging Setting
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -170,6 +179,7 @@ fun AppConfigScreen(
                     }
                 },
             )
+
             Column {
                 Text(text = "Enable Remote Logging")
                 Text(
