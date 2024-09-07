@@ -37,11 +37,28 @@ import java.util.concurrent.ConcurrentLinkedQueue
 class ApiLoggingTree(
     private val isEnabled: Boolean,
     private val authToken: String,
+    /**
+     * Airtable API endpoint URL.
+     *
+     * Example: https://api.airtable.com/v0/appXXXXXXXXX/Table%20Name
+     *
+     * Subject to rate limit:
+     * https://airtable.com/developers/web/api/rate-limits
+     */
     private val endpointUrl: String,
 ) : Timber.Tree() {
     private val client = OkHttpClient()
     private val logQueue = ConcurrentLinkedQueue<String>()
     private var flushJob: Job? = null
+
+    companion object {
+        /**
+         * The API is limited to 5 requests per second per base.
+         * If you exceed these rates, you will receive a 429 status code and will need to
+         * wait 30 seconds before subsequent requests will succeed.
+         */
+        private const val MAX_LOG_COUNT_PER_SECOND = 5
+    }
 
     init {
         if (isEnabled) {
@@ -103,10 +120,12 @@ class ApiLoggingTree(
     }
 
     private fun flushLogs() {
-        while (logQueue.isNotEmpty()) {
+        var sentLogCount = 0
+        while (logQueue.isNotEmpty() && sentLogCount < MAX_LOG_COUNT_PER_SECOND) {
             val log = logQueue.poll()
             if (log != null) {
                 sendLogToApi(log)
+                sentLogCount++
             }
         }
 
