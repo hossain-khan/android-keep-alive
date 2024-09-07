@@ -1,7 +1,8 @@
 package dev.hossain.keepalive.util
 
 object AppConfig {
-    const val DEFAULT_APP_CHECK_INTERVAL = 30
+    const val MINIMUM_APP_CHECK_INTERVAL_MIN = 5
+    const val DEFAULT_APP_CHECK_INTERVAL_MIN = 30
 
     // List of supported devices - hardcoded for now.
     const val PHONE_OG_PIXEL = "Pixel XL"
