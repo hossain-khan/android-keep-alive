@@ -9,4 +9,4 @@ Here is a demo of the app logging on the Aritable data sheet
 
 
 ## How to configure Airtable
-The feature is not added yet in the app. See https://github.com/hossain-khan/android-keep-alive/issues/26
+TBA - Work in progress
