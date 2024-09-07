@@ -37,6 +37,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -85,36 +86,35 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             KeepAliveTheme {
-                showPermissionRequestDialog = remember { mutableStateOf(false) }
-                nextPermissionType =
-                    remember { mutableStateOf(PERMISSION_POST_NOTIFICATIONS) }
-                val grantedPermissionCount: Int by mainViewModel.totalApprovedPermissions.observeAsState(
-                    0,
-                )
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    showPermissionRequestDialog = remember { mutableStateOf(false) }
+                    nextPermissionType = remember { mutableStateOf(PERMISSION_POST_NOTIFICATIONS) }
+                    val grantedPermissionCount by mainViewModel.totalApprovedPermissions.observeAsState(0)
+                    val allPermissionsGranted by mainViewModel.allPermissionsGranted.observeAsState(false)
+                    val navController: NavHostController = rememberNavController()
 
-                val allPermissionsGranted: Boolean by mainViewModel.allPermissionsGranted.observeAsState(
-                    false,
-                )
-
-                val navController: NavHostController = rememberNavController()
-
-                // In your NavHost
-                NavHost(navController = navController, startDestination = Screen.Home.route) {
-                    composable(Screen.Home.route) {
-                        MainLandingScreen(
-                            navController = navController,
-                            allPermissionsGranted = allPermissionsGranted,
-                            activityResultLauncher = activityResultLauncher,
-                            requestPermissionLauncher = requestPermissionLauncher,
-                            permissionType = nextPermissionType.value,
-                            showPermissionRequestDialog = showPermissionRequestDialog,
-                            onRequestPermissions = { requestNextRequiredPermission() },
-                            totalRequiredCount = mainViewModel.totalPermissionRequired,
-                            grantedCount = grantedPermissionCount,
-                        )
+                    NavHost(navController = navController, startDestination = Screen.Home.route) {
+                        composable(Screen.Home.route) {
+                            MainLandingScreen(
+                                navController = navController,
+                                allPermissionsGranted = allPermissionsGranted,
+                                activityResultLauncher = activityResultLauncher,
+                                requestPermissionLauncher = requestPermissionLauncher,
+                                permissionType = nextPermissionType.value,
+                                showPermissionRequestDialog = showPermissionRequestDialog,
+                                onRequestPermissions = { requestNextRequiredPermission() },
+                                totalRequiredCount = mainViewModel.totalPermissionRequired,
+                                grantedCount = grantedPermissionCount,
+                            )
+                        }
+                        composable(Screen.AppConfigs.route) {
+                            AppConfigScreen(
+                                navController,
+                                applicationContext,
+                            )
+                        }
+                        composable(Screen.AppSettings.route) { SettingsScreen(navController) }
                     }
-                    composable(Screen.AppConfigs.route) { AppConfigScreen(navController, applicationContext) }
-                    composable(Screen.AppSettings.route) { SettingsScreen(navController) }
                 }
             }
         }

@@ -68,7 +68,7 @@ fun AppConfigScreen(
             text = "App Configurations",
             style = MaterialTheme.typography.headlineSmall,
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         // App Check Interval Setting
         Row(
