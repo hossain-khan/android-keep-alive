@@ -67,7 +67,8 @@ fun AppListScreen(
             modifier = Modifier.padding(vertical = 8.dp),
         )
         Text(
-            text = "These apps will be periodically checked if they were recently run, " +
+            text =
+                "These apps will be periodically checked if they were recently run, " +
                     "if not, they will be restarted based on app configuration you choose.",
             style = MaterialTheme.typography.bodySmall,
             color = Color.Gray,
