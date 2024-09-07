@@ -42,8 +42,8 @@ class NotificationHelper(private val context: Context) {
             PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
 
         return NotificationCompat.Builder(context, CHANNEL_ID)
-            .setContentTitle("Photo Auto Upload")
-            .setContentText("📸 Monitoring photo upload apps.")
+            .setContentTitle("App Watchdog")
+            .setContentText("Monitoring your apps to keep it alive.")
             .setSmallIcon(R.drawable.baseline_radar_24)
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_LOW)
