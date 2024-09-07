@@ -1,6 +1,12 @@
 package dev.hossain.keepalive.log
 
 import android.os.Build
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -10,9 +16,6 @@ import org.json.JSONObject
 import timber.log.Timber
 import java.io.IOException
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
 
 /**
  * Custom Timber tree that sends log to an API endpoint.
@@ -25,13 +28,11 @@ class ApiLoggingTree(
 ) : Timber.Tree() {
     private val client = OkHttpClient()
     private val logQueue = ConcurrentLinkedQueue<String>()
-    private val executor = Executors.newSingleThreadScheduledExecutor()
-    private var scheduledTask: ScheduledFuture<*>? = null
+    private var flushJob: Job? = null
 
     init {
         if (isEnabled) {
-            // Schedule a task to send logs with a fixed delay
-            scheduledTask = executor.scheduleWithFixedDelay({ flushLogs() }, 1, 2, TimeUnit.SECONDS)
+            startFlushJob()
         }
     }
 
@@ -48,9 +49,19 @@ class ApiLoggingTree(
         val logMessage = createLogMessage(priority, tag, message, t)
         logQueue.add(logMessage)
 
-        if (scheduledTask == null || scheduledTask?.isCancelled == true) {
-            scheduledTask = executor.scheduleWithFixedDelay({ flushLogs() }, 1, 2, TimeUnit.SECONDS)
+        if (flushJob == null || flushJob?.isCancelled == true) {
+            startFlushJob()
         }
+    }
+
+    private fun startFlushJob() {
+        flushJob =
+            CoroutineScope(Dispatchers.IO).launch {
+                while (isActive) {
+                    flushLogs()
+                    delay(2000L) // Delay for 2 seconds
+                }
+            }
     }
 
     private fun createLogMessage(
@@ -87,7 +98,7 @@ class ApiLoggingTree(
         }
 
         if (logQueue.isEmpty()) {
-            scheduledTask?.cancel(false)
+            flushJob?.cancel()
         }
     }
 
