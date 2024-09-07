@@ -15,14 +15,8 @@ import timber.log.Timber
 class HttpPingSender(private val context: Context) {
     private val client = OkHttpClient()
 
-    fun sendPingToDevice() {
-        val deviceModel = android.os.Build.MODEL
-        AppConfig.phoneToUrlMap[deviceModel]?.let { pingUrl ->
-            Timber.d("sendPingToDevice: Pinging device $deviceModel with URL $pingUrl")
-            sendHttpPing(pingUrl)
-        } ?: run {
-            Timber.e("sendPingToDevice: No URL found for device $deviceModel - Not supported.")
-        }
+    fun sendPingToDevice(pingUUID: String) {
+        sendHttpPing("https://hc-ping.com/$pingUUID")
     }
 
     private fun sendHttpPing(pingUrl: String) {
@@ -31,6 +25,7 @@ class HttpPingSender(private val context: Context) {
         val versionName = packageInfo.versionName
 
         // Add user agent with app name, version, and device info
+        // Example: `KA/1.6 (Android 14, API 34, samsung SM-S911W)`
         val userAgent =
             "KA/$versionName (Android ${android.os.Build.VERSION.RELEASE}, " +
                 "API ${android.os.Build.VERSION.SDK_INT}, ${android.os.Build.MANUFACTURER} " +
@@ -51,7 +46,7 @@ class HttpPingSender(private val context: Context) {
                     }
                 }
             } catch (e: Exception) {
-                Timber.e(e, "Network request failed")
+                Timber.e(e, "Health check network request failed")
             }
         }
     }

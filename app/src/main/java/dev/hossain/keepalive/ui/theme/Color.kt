@@ -2,6 +2,8 @@ package dev.hossain.keepalive.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+// https://m3.material.io/styles/color/static/baseline
+
 val Purple80 = Color(0xFFD0BCFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)
 val Pink80 = Color(0xFFEFB8C8)
