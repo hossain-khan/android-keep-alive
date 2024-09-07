@@ -47,6 +47,3 @@ Here are the permissions needed for the app along with a short summary of why th
    - **Reason**: Required to draw overlays on top of other apps, which is necessary for certain UI elements or notifications that need to be displayed over other apps. And also start other apps from the background service.
 
 Most of the permissions listed above are discouraged and or restricted. Please be sure to use the app with caution.
-
-
-## 
