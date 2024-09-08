@@ -35,6 +35,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * Create a table in Airtable with following fields:
  * - Device (Single line text)
  * - Log (Long text)
+ *
+ * See additional guide on the [GitHub repository](https://github.com/hossain-khan/android-keep-alive/blob/main/REMOTE-MONITORING.md).
  */
 class ApiLoggingTree(
     private val isEnabled: Boolean,
@@ -60,6 +62,16 @@ class ApiLoggingTree(
          * wait 30 seconds before subsequent requests will succeed.
          */
         private const val MAX_LOG_COUNT_PER_SECOND = 5
+
+        /**
+         * Cell name for saving device information. Cell type: single line text
+         */
+        private const val COLUMN_NAME_DEVICE = "Device"
+
+        /**
+         * Cell name for saving log message. Cell type: long text
+         */
+        private const val COLUMN_NAME_LOG = "Log"
     }
 
     init {
@@ -91,11 +103,17 @@ class ApiLoggingTree(
             CoroutineScope(Dispatchers.IO).launch {
                 while (isActive) {
                     flushLogs()
-                    delay(2000L) // Delay for 2 seconds
+
+                    // https://airtable.com/developers/web/api/rate-limits
+                    delay(1_100L)
                 }
             }
     }
 
+    /**
+     * Creates log message in JSON format based on following specification:
+     * - https://airtable.com/developers/web/api/create-records
+     */
     private fun createLogMessage(
         priority: Int,
         tag: String?,
@@ -104,7 +122,6 @@ class ApiLoggingTree(
     ): String {
         val logMessage =
             buildString {
-                append("App: ${BuildConfig.VERSION_NAME}\n")
                 append("Priority: ${priority.toLogType()}\n")
                 if (tag != null) {
                     append("Tag: $tag\n")
@@ -113,11 +130,13 @@ class ApiLoggingTree(
                 if (throwable != null) {
                     append("Throwable: ${throwable.localizedMessage}")
                 }
+                append("App Version: ${BuildConfig.VERSION_NAME}\n")
             }
+
         val fields =
             JSONObject().apply {
-                put("Device", Build.MODEL)
-                put("Log", logMessage)
+                put(COLUMN_NAME_DEVICE, Build.MODEL)
+                put(COLUMN_NAME_LOG, logMessage)
             }
         val record =
             JSONObject().apply {
@@ -132,13 +151,17 @@ class ApiLoggingTree(
         }.toString()
     }
 
-    private fun flushLogs() {
+    private suspend fun flushLogs() {
         var sentLogCount = 0
         while (logQueue.isNotEmpty() && sentLogCount < MAX_LOG_COUNT_PER_SECOND) {
             val log = logQueue.poll()
             if (log != null) {
                 sendLogToApi(log)
                 sentLogCount++
+
+                // This delay is added to ensure the order of log is maintained.
+                // However, there is no guarantee that the log will be sent in order.
+                delay(100L)
             }
         }
 
@@ -172,7 +195,10 @@ class ApiLoggingTree(
                 ) {
                     response.use { // This ensures the response body is closed
                         if (!response.isSuccessful) {
-                            Timber.e("Failed to send log to API: ${response.message}")
+                            Timber.e(
+                                "Log is rejected: HTTP code: ${response.code}, " +
+                                    "message: ${response.message}, body: ${response.body?.string()}",
+                            )
                         }
                     }
                 }

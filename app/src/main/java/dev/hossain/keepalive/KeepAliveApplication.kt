@@ -37,7 +37,11 @@ class KeepAliveApplication : Application() {
                         Timber.d("ApiLoggingTree is already planted. Skipping planting.")
                     }
                 } else {
-                    Timber.d("Airtable configuration is invalid or not set. Skipping remote logging tree.")
+                    Timber.d("Airtable configuration is invalid or not enabled. Disable remote logging.")
+                    val apiLoggingTree = Timber.forest().firstOrNull { it is ApiLoggingTree }
+                    apiLoggingTree?.let {
+                        Timber.uproot(it)
+                    }
                 }
                 return@first false
             }
