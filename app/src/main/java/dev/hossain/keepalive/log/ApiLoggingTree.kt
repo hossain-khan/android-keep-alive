@@ -122,7 +122,6 @@ class ApiLoggingTree(
     ): String {
         val logMessage =
             buildString {
-                append("App: ${BuildConfig.VERSION_NAME}\n")
                 append("Priority: ${priority.toLogType()}\n")
                 if (tag != null) {
                     append("Tag: $tag\n")
@@ -131,6 +130,7 @@ class ApiLoggingTree(
                 if (throwable != null) {
                     append("Throwable: ${throwable.localizedMessage}")
                 }
+                append("App Version: ${BuildConfig.VERSION_NAME}\n")
             }
 
         val fields =
