@@ -103,7 +103,9 @@ class ApiLoggingTree(
             CoroutineScope(Dispatchers.IO).launch {
                 while (isActive) {
                     flushLogs()
-                    delay(1_000L)
+
+                    // https://airtable.com/developers/web/api/rate-limits
+                    delay(1_100L)
                 }
             }
     }
@@ -193,7 +195,10 @@ class ApiLoggingTree(
                 ) {
                     response.use { // This ensures the response body is closed
                         if (!response.isSuccessful) {
-                            Timber.e("Failed to send log to API: ${response.message}")
+                            Timber.e(
+                                "Log is rejected: HTTP code: ${response.code}, " +
+                                    "message: ${response.message}, body: ${response.body?.string()}",
+                            )
                         }
                     }
                 }
