@@ -35,6 +35,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * Create a table in Airtable with following fields:
  * - Device (Single line text)
  * - Log (Long text)
+ *
+ * See additional guide on the [GitHub repository](https://github.com/hossain-khan/android-keep-alive/blob/main/REMOTE-MONITORING.md).
  */
 class ApiLoggingTree(
     private val isEnabled: Boolean,
@@ -60,6 +62,16 @@ class ApiLoggingTree(
          * wait 30 seconds before subsequent requests will succeed.
          */
         private const val MAX_LOG_COUNT_PER_SECOND = 5
+
+        /**
+         * Cell name for saving device information. Cell type: single line text
+         */
+        private const val COLUMN_NAME_DEVICE = "Device"
+
+        /**
+         * Cell name for saving log message. Cell type: long text
+         */
+        private const val COLUMN_NAME_LOG = "Log"
     }
 
     init {
@@ -96,6 +108,10 @@ class ApiLoggingTree(
             }
     }
 
+    /**
+     * Creates log message in JSON format based on following specification:
+     * - https://airtable.com/developers/web/api/create-records
+     */
     private fun createLogMessage(
         priority: Int,
         tag: String?,
@@ -114,10 +130,11 @@ class ApiLoggingTree(
                     append("Throwable: ${throwable.localizedMessage}")
                 }
             }
+
         val fields =
             JSONObject().apply {
-                put("Device", Build.MODEL)
-                put("Log", logMessage)
+                put(COLUMN_NAME_DEVICE, Build.MODEL)
+                put(COLUMN_NAME_LOG, logMessage)
             }
         val record =
             JSONObject().apply {
