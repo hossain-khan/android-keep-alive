@@ -2,6 +2,7 @@ package dev.hossain.keepalive.log
 
 import android.os.Build
 import android.util.Log
+import dev.hossain.keepalive.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -103,6 +104,7 @@ class ApiLoggingTree(
     ): String {
         val logMessage =
             buildString {
+                append("App: ${BuildConfig.VERSION_NAME}\n")
                 append("Priority: ${priority.toLogType()}\n")
                 if (tag != null) {
                     append("Tag: $tag\n")
