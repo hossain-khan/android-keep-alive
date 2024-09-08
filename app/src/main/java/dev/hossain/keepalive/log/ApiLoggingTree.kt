@@ -91,7 +91,7 @@ class ApiLoggingTree(
             CoroutineScope(Dispatchers.IO).launch {
                 while (isActive) {
                     flushLogs()
-                    delay(2000L) // Delay for 2 seconds
+                    delay(1_000L)
                 }
             }
     }
@@ -132,13 +132,17 @@ class ApiLoggingTree(
         }.toString()
     }
 
-    private fun flushLogs() {
+    private suspend fun flushLogs() {
         var sentLogCount = 0
         while (logQueue.isNotEmpty() && sentLogCount < MAX_LOG_COUNT_PER_SECOND) {
             val log = logQueue.poll()
             if (log != null) {
                 sendLogToApi(log)
                 sentLogCount++
+
+                // This delay is added to ensure the order of log is maintained.
+                // However, there is no guarantee that the log will be sent in order.
+                delay(100L)
             }
         }
 
