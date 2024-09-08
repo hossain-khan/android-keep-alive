@@ -1,8 +1,5 @@
 package dev.hossain.keepalive.log
 
-import android.os.Build
-import android.util.Log
-import dev.hossain.keepalive.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -52,8 +49,9 @@ class ApiLoggingTree(
     private val endpointUrl: String,
 ) : Timber.Tree() {
     private val client = OkHttpClient()
-    private val logQueue = ConcurrentLinkedQueue<String>()
+    private val logQueue = ConcurrentLinkedQueue<LogMessage>()
     private var flushJob: Job? = null
+    private var logSequence = 1
 
     companion object {
         /**
@@ -64,14 +62,10 @@ class ApiLoggingTree(
         private const val MAX_LOG_COUNT_PER_SECOND = 5
 
         /**
-         * Cell name for saving device information. Cell type: single line text
+         * The API is limited to 10 records per request.
+         * - https://airtable.com/developers/web/api/create-records
          */
-        private const val COLUMN_NAME_DEVICE = "Device"
-
-        /**
-         * Cell name for saving log message. Cell type: long text
-         */
-        private const val COLUMN_NAME_LOG = "Log"
+        private const val MAX_RECORDS_PER_REQUEST = 10
     }
 
     init {
@@ -90,8 +84,7 @@ class ApiLoggingTree(
             return
         }
 
-        val logMessage = createLogMessage(priority, tag, message, t)
-        logQueue.add(logMessage)
+        logQueue.add(LogMessage(priority, tag, message, t, logSequence++))
 
         if (flushJob == null || flushJob?.isCancelled == true) {
             startFlushJob()
@@ -113,50 +106,39 @@ class ApiLoggingTree(
     /**
      * Creates log message in JSON format based on following specification:
      * - https://airtable.com/developers/web/api/create-records
+     *
+     * Your request body should include an array of up to 10 record objects.
+     * - https://airtable.com/developers/web/api/create-records
      */
-    private fun createLogMessage(
-        priority: Int,
-        tag: String?,
-        message: String,
-        throwable: Throwable?,
-    ): String {
-        val logMessage =
-            buildString {
-                append("Priority: ${priority.toLogType()}\n")
-                if (tag != null) {
-                    append("Tag: $tag\n")
-                }
-                append("Message: $message\n")
-                if (throwable != null) {
-                    append("Throwable: ${throwable.localizedMessage}")
-                }
-                append("App Version: ${BuildConfig.VERSION_NAME}\n")
-            }
+    private fun createLogMessage(logs: List<LogMessage>): String? {
+        if (logs.isEmpty()) {
+            return null
+        }
 
-        val fields =
-            JSONObject().apply {
-                put(COLUMN_NAME_DEVICE, Build.MODEL)
-                put(COLUMN_NAME_LOG, logMessage)
-            }
-        val record =
-            JSONObject().apply {
-                put("fields", fields)
-            }
-        val records =
-            JSONArray().apply {
-                put(record)
-            }
+        val records = JSONArray().apply { logs.forEach { put(it.toLogRecord()) } }
         return JSONObject().apply {
             put("records", records)
         }.toString()
     }
 
-    private suspend fun flushLogs() {
-        var sentLogCount = 0
-        while (logQueue.isNotEmpty() && sentLogCount < MAX_LOG_COUNT_PER_SECOND) {
+    private fun getMaximumAllowedLogs(): List<LogMessage> {
+        val logs = mutableListOf<LogMessage>()
+        while (logQueue.isNotEmpty() && logs.size < MAX_RECORDS_PER_REQUEST) {
             val log = logQueue.poll()
             if (log != null) {
-                sendLogToApi(log)
+                logs.add(log)
+            }
+        }
+        return logs
+    }
+
+    private suspend fun flushLogs() {
+        var sentLogCount = 0
+
+        while (sentLogCount < MAX_LOG_COUNT_PER_SECOND) {
+            val jsonPayload = createLogMessage(getMaximumAllowedLogs())
+            if (jsonPayload != null) {
+                sendLogToApi(jsonPayload)
                 sentLogCount++
 
                 // This delay is added to ensure the order of log is maintained.
@@ -170,9 +152,9 @@ class ApiLoggingTree(
         }
     }
 
-    private fun sendLogToApi(logMessage: String) {
+    private fun sendLogToApi(logPayloadJson: String) {
         val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
-        val body = logMessage.toRequestBody(mediaType)
+        val body = logPayloadJson.toRequestBody(mediaType)
         val request =
             Request.Builder()
                 .url(endpointUrl)
@@ -204,18 +186,6 @@ class ApiLoggingTree(
                 }
             },
         )
-    }
-
-    private fun Int.toLogType(): String {
-        return when (this) {
-            Log.VERBOSE -> "VERBOSE"
-            Log.DEBUG -> "DEBUG"
-            Log.INFO -> "INFO"
-            Log.WARN -> "WARN"
-            Log.ERROR -> "ERROR"
-            Log.ASSERT -> "ASSERT"
-            else -> "UNKNOWN"
-        }
     }
 
     override fun equals(other: Any?): Boolean {
