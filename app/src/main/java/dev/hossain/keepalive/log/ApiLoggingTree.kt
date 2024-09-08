@@ -1,6 +1,8 @@
 package dev.hossain.keepalive.log
 
 import android.os.Build
+import android.util.Log
+import dev.hossain.keepalive.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -98,9 +100,20 @@ class ApiLoggingTree(
         priority: Int,
         tag: String?,
         message: String,
-        t: Throwable?,
+        throwable: Throwable?,
     ): String {
-        val logMessage = "Priority: ${priority.toLogType()}\nTag: $tag\nMessage: $message\nThrowable: ${t?.localizedMessage}"
+        val logMessage =
+            buildString {
+                append("App: ${BuildConfig.VERSION_NAME}\n")
+                append("Priority: ${priority.toLogType()}\n")
+                if (tag != null) {
+                    append("Tag: $tag\n")
+                }
+                append("Message: $message\n")
+                if (throwable != null) {
+                    append("Throwable: ${throwable.localizedMessage}")
+                }
+            }
         val fields =
             JSONObject().apply {
                 put("Device", Build.MODEL)
@@ -169,12 +182,12 @@ class ApiLoggingTree(
 
     private fun Int.toLogType(): String {
         return when (this) {
-            2 -> "VERBOSE"
-            3 -> "DEBUG"
-            4 -> "INFO"
-            5 -> "WARN"
-            6 -> "ERROR"
-            7 -> "ASSERT"
+            Log.VERBOSE -> "VERBOSE"
+            Log.DEBUG -> "DEBUG"
+            Log.INFO -> "INFO"
+            Log.WARN -> "WARN"
+            Log.ERROR -> "ERROR"
+            Log.ASSERT -> "ASSERT"
             else -> "UNKNOWN"
         }
     }
