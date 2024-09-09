@@ -7,10 +7,26 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!--
+    **`android.permission.POST_NOTIFICATIONS`:** Prior to Android 13, this permission was granted automatically
+    when the app was installed. From Android 13 onwards, apps need to request this permission at runtime.
+    -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- https://developer.android.com/training/package-visibility -->
+
+    <!--
+    **`android.permission.QUERY_ALL_PACKAGES`:** This permission is considered high-risk and requires special handling.
+    Apps requesting this permission need to declare it in the manifest and be granted access through a special process,
+    typically involving user interaction in the device settings or through Google Play's app review process.
+    https://developer.android.com/training/package-visibility
+    -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
+
+    <!--
+    **`android.permission.PACKAGE_USAGE_STATS`:** This is a protected permission that allows access to sensitive user data.
+    Users need to grant this permission manually through the device settings, usually in the "Special app access" or "Battery usage" sections.
+    -->
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
@@ -20,10 +36,13 @@
         Make sure your app has the required permission to start activities from the background.
         From Android 10 (API level 29), apps need the SYSTEM_ALERT_WINDOW permission to launch activities from the background.
 
-        When your app's WindowStopped is set to true, it means that your app's activity has been stopped, which typically occurs when the app is no longer visible to the user. Starting a new activity when your app's WindowStopped is true is restricted on newer versions of Android due to the background activity launch restrictions.
+        When your app's WindowStopped is set to true, it means that your app's activity has been stopped,
+        which typically occurs when the app is no longer visible to the user. Starting a new activity when
+        your app's WindowStopped is true is restricted on newer versions of Android due to the background activity launch restrictions.
 
         Understanding the Restriction
-        Starting from Android 10 (API level 29), apps are restricted from launching activities from the background to improve the user experience and reduce unexpected interruptions.
+        Starting from Android 10 (API level 29), apps are restricted from launching activities from the background
+        to improve the user experience and reduce unexpected interruptions.
     -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
