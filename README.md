@@ -17,7 +17,7 @@ This app is designed with a very specific use case in mind. It is important to u
 
 ## 🔐 Questionable permissions required ⚠️
 
-Here is the list of permissions needed for the service class ([`WatchdogService`](https://github.com/hossain-khan/android-keep-alive/blob/main/app/src/main/java/dev/hossain/keepalive/service/WatchdogService.kt)). [Source: [Stackoverflow](https://android.stackexchange.com/a/258241/5002)]
+Here is the list of permissions needed for the service class ([`WatchdogService`](https://github.com/hossain-khan/android-keep-alive/blob/main/app/src/main/java/dev/hossain/keepalive/service/WatchdogService.kt)). [Source: [`AndroidManifest.xml`](https://github.com/hossain-khan/android-keep-alive/blob/main/app/src/main/AndroidManifest.xml)]
 
 Here are the permissions needed for the app along with a short summary of why they are needed:
 
