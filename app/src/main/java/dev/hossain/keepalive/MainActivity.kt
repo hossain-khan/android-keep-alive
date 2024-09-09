@@ -198,25 +198,6 @@ class MainActivity : ComponentActivity() {
                     nextPermissionType.value = PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS
                     showPermissionRequestDialog.value = true
                 }
-
-                PermissionType.PERMISSION_FOREGROUND_SERVICE -> {
-                    Timber.d("requestNextRequiredPermission: Requesting PERMISSION_FOREGROUND_SERVICE permission")
-                    nextPermissionType.value = PermissionType.PERMISSION_FOREGROUND_SERVICE
-                    showPermissionRequestDialog.value = true
-                }
-
-                PermissionType.PERMISSION_FOREGROUND_SERVICE_SPECIAL_USE -> {
-                    Timber.d("requestNextRequiredPermission: Requesting PERMISSION_FOREGROUND_SERVICE_SPECIAL_USE permission")
-                    nextPermissionType.value =
-                        PermissionType.PERMISSION_FOREGROUND_SERVICE_SPECIAL_USE
-                    showPermissionRequestDialog.value = true
-                }
-
-                PermissionType.PERMISSION_RECEIVE_BOOT_COMPLETED -> {
-                    Timber.d("requestNextRequiredPermission: Requesting PERMISSION_RECEIVE_BOOT_COMPLETED permission")
-                    nextPermissionType.value = PermissionType.PERMISSION_RECEIVE_BOOT_COMPLETED
-                    showPermissionRequestDialog.value = true
-                }
             }
         }
     }
