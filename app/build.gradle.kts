@@ -30,8 +30,8 @@ android {
          * or you can override View.onWindowVisibilityChanged() to get notified whenever the visibility changes.
          */
         targetSdk = 34
-        versionCode = 9
-        versionName = "1.8"
+        versionCode = 10
+        versionName = "1.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
