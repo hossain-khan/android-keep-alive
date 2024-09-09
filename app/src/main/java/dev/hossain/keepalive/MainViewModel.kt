@@ -6,6 +6,8 @@ import android.app.AppOpsManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Build.VERSION.SDK_INT
+import android.os.Build.VERSION_CODES.TIRAMISU
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.core.content.ContextCompat
@@ -18,11 +20,10 @@ class MainViewModel : ViewModel() {
     val allPermissionsGranted = MutableLiveData(false)
 
     /**
-     * This number needs to be dynamic based on the permissions required.
-     * We could leverage the number of ENUMS in [PermissionType] to calculate this.
-     * Some cleanup required later.
+     * Total number of permissions required by the app.
+     * On [TIRAMISU] and above, it includes [POST_NOTIFICATIONS] permission.
      */
-    val totalPermissionRequired = 4
+    val totalPermissionRequired = if (SDK_INT >= TIRAMISU) PermissionType.entries.size else PermissionType.entries.size - 1
     val totalApprovedPermissions = MutableLiveData(0)
 
     /**
@@ -34,7 +35,7 @@ class MainViewModel : ViewModel() {
     val grantedPermissions = mutableSetOf<PermissionType>()
 
     val requiredPermissions =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (SDK_INT >= TIRAMISU) {
             arrayOf(POST_NOTIFICATIONS, PACKAGE_USAGE_STATS)
         } else {
             arrayOf(PACKAGE_USAGE_STATS)
@@ -43,11 +44,10 @@ class MainViewModel : ViewModel() {
     fun checkAllPermissions(context: Context) {
         val hasUsageStatsPermission = hasUsageStatsPermission(context)
         val isBatteryOptimizationIgnored = isBatteryOptimizationIgnored(context)
-        val hasPackageUsageStatsPermission = isPermissionGranted(context, PACKAGE_USAGE_STATS)
         val hasOverlayPermission = hasOverlayPermission(context)
 
         requiredPermissionRemaining.clear()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (SDK_INT >= TIRAMISU) {
             val hasPostNotificationPermission = isPermissionGranted(context, POST_NOTIFICATIONS)
             if (!hasPostNotificationPermission) {
                 requiredPermissionRemaining.add(PermissionType.PERMISSION_POST_NOTIFICATIONS)
@@ -70,25 +70,21 @@ class MainViewModel : ViewModel() {
         } else {
             grantedPermissions.add(PermissionType.PERMISSION_SYSTEM_APPLICATION_OVERLAY)
         }
-        // TODO what is the difference between this and `hasUsageStatsPermission`?
-//        if(!hasPackageUsageStatsPermission) {
-//            requiredPermissionRemaining.add(PermissionType.PERMISSION_PACKAGE_USAGE_STATS)
-//        }
 
         Timber.d("requiredPermissionRemaining=$requiredPermissionRemaining")
         totalApprovedPermissions.value = grantedPermissions.size
         allPermissionsGranted.value = requiredPermissionRemaining.isEmpty()
     }
 
-    fun isBatteryOptimizationIgnored(context: Context): Boolean {
+    private fun isBatteryOptimizationIgnored(context: Context): Boolean {
         val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
         return powerManager.isIgnoringBatteryOptimizations(context.packageName)
     }
 
-    fun hasUsageStatsPermission(context: Context): Boolean {
+    private fun hasUsageStatsPermission(context: Context): Boolean {
         val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
         val mode =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (SDK_INT >= Build.VERSION_CODES.Q) {
                 appOps.unsafeCheckOpNoThrow(
                     AppOpsManager.OPSTR_GET_USAGE_STATS,
                     android.os.Process.myUid(),
@@ -105,7 +101,7 @@ class MainViewModel : ViewModel() {
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
-    fun hasOverlayPermission(context: Context): Boolean {
+    private fun hasOverlayPermission(context: Context): Boolean {
         return Settings.canDrawOverlays(context)
     }
 
@@ -124,7 +120,7 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun isPermissionGranted(
+    private fun isPermissionGranted(
         context: Context,
         permission: String,
     ): Boolean {

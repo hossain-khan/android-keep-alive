@@ -198,25 +198,6 @@ class MainActivity : ComponentActivity() {
                     nextPermissionType.value = PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS
                     showPermissionRequestDialog.value = true
                 }
-
-                PermissionType.PERMISSION_FOREGROUND_SERVICE -> {
-                    Timber.d("requestNextRequiredPermission: Requesting PERMISSION_FOREGROUND_SERVICE permission")
-                    nextPermissionType.value = PermissionType.PERMISSION_FOREGROUND_SERVICE
-                    showPermissionRequestDialog.value = true
-                }
-
-                PermissionType.PERMISSION_FOREGROUND_SERVICE_SPECIAL_USE -> {
-                    Timber.d("requestNextRequiredPermission: Requesting PERMISSION_FOREGROUND_SERVICE_SPECIAL_USE permission")
-                    nextPermissionType.value =
-                        PermissionType.PERMISSION_FOREGROUND_SERVICE_SPECIAL_USE
-                    showPermissionRequestDialog.value = true
-                }
-
-                PermissionType.PERMISSION_RECEIVE_BOOT_COMPLETED -> {
-                    Timber.d("requestNextRequiredPermission: Requesting PERMISSION_RECEIVE_BOOT_COMPLETED permission")
-                    nextPermissionType.value = PermissionType.PERMISSION_RECEIVE_BOOT_COMPLETED
-                    showPermissionRequestDialog.value = true
-                }
             }
         }
     }
@@ -461,11 +442,21 @@ fun PermissionDialogs(
 ) {
     val (title, description) =
         when (permissionType) {
-            PERMISSION_POST_NOTIFICATIONS -> "Post Notifications" to "Please grant the notification permission."
-            PERMISSION_PACKAGE_USAGE_STATS -> "Usage Stats" to "Please grant the usage stats permission."
-            PERMISSION_SYSTEM_APPLICATION_OVERLAY -> "Overlay Permission" to "Please grant the overlay permission."
-            PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS -> "Battery Optimization" to "Please exclude this app from battery optimization."
-            else -> "X" to "Y"
+            PERMISSION_POST_NOTIFICATIONS ->
+                "Post Notifications" to "Please grant the notification permission." +
+                    "\nThis is essential for notifying you about ongoing watchdog activity. " +
+                    "It also allows the app to always run in the background."
+            PERMISSION_PACKAGE_USAGE_STATS ->
+                "Usage Stats" to "Please grant the usage stats permission." +
+                    "\nThe permission allows the app to access usage statistics, " +
+                    "which is necessary for knowing if specific apps have been recently used."
+            PERMISSION_SYSTEM_APPLICATION_OVERLAY ->
+                "Overlay Permission" to "Please grant the overlay permission." +
+                    "\nThe permission allows this app to start the apps you configure from the background service."
+            PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS ->
+                "Battery Optimization" to "Please exclude this app from battery optimization." +
+                    "\nThis ensures the app and it's `WatchdogService` can run continuously without being restricted by the system."
+            else -> "Unknown" to "Please ignore this permission request."
         }
 
     BottomSheetDialog(
