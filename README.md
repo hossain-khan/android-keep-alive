@@ -3,9 +3,6 @@
 # Keep Alive 💓
 A simple app to keep specific apps alive by checking if they are running. If not, they will be started for you.
 
-![Keep Alive App](assets/screenshots/app-demo-screenshots.png)
-
-
 ## 🛑 **STOP** 🛑 - Know before you use ✋
 This app is designed with a very specific use case in mind. It is important to understand what this app does and how.
 
@@ -22,6 +19,8 @@ This app is designed with a very specific use case in mind. It is important to u
 3. Add app that you want to be checked periodically
 4. Done ✔️
     1. This app will always run in the foreground, continuously checking if your selected apps are active. If any are not, it will automatically restart them for you.  
+
+![Keep Alive App](assets/screenshots/app-demo-screenshots.png)
 
 ## 🔐 Questionable permissions required ⚠️
 
