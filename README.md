@@ -1,7 +1,7 @@
 [![Android CI](https://github.com/hossain-khan/android-keep-alive/actions/workflows/android.yml/badge.svg)](https://github.com/hossain-khan/android-keep-alive/actions/workflows/android.yml) [![License](https://badgen.net/github/license/hossain-khan/android-keep-alive)](https://github.com/hossain-khan/android-keep-alive/blob/main/LICENSE) [![releases](https://badgen.net/github/release/hossain-khan/android-keep-alive)](https://github.com/hossain-khan/android-keep-alive/releases)
 
 # Keep Alive 💓
-A simple app to keep specific apps alive by checking if they are running. If not, they will be launched.
+A simple app to keep specific apps alive by checking if they are running. If not, they will be started for you.
 
 ![Keep Alive App](assets/screenshots/app-demo-screenshots.png)
 
@@ -10,16 +10,24 @@ A simple app to keep specific apps alive by checking if they are running. If not
 This app is designed with a very specific use case in mind. It is important to understand what this app does and how.
 
 * App is designed to be **_always_** running in the foreground to watch and restart other applications.
-* App is **NOT** optimized for battery. Ideally, this should not be used on your primary phone that you use daily.
+* App is **NOT** optimized for battery. Ideally, this **should not** be used on your primary phone that you use daily.
 * App contains some additional features like [Remote Logging](REMOTE-MONITORING.md) and [Heartbeat](REMOTE-HEARTBEAT.md) due to my personal needs. However, the app can be used without using those features.
 * See the permission section below to better understand the app.
 
+### 📚 How to use the app
+1. Launch the app and accept all the required permissions.
+2. Once all permission are active, you will see 2 options
+    1. Configure apps that should be running
+    2. Configure app settings like interval of checking for app
+3. Add app that you want to be checked periodically
+4. Done ✔️
+    1. This app will always run in the foreground, continuously checking if your selected apps are active. If any are not, it will automatically restart them for you.  
 
 ## 🔐 Questionable permissions required ⚠️
 
 Here is the list of permissions needed for the service class ([`WatchdogService`](https://github.com/hossain-khan/android-keep-alive/blob/main/app/src/main/java/dev/hossain/keepalive/service/WatchdogService.kt)). [Source: [`AndroidManifest.xml`](https://github.com/hossain-khan/android-keep-alive/blob/main/app/src/main/AndroidManifest.xml)]
 
-Here are the permissions needed for the app along with a short summary of why they are needed:
+Here are the permissions needed for the app along with a summary of why they are needed:
 
 1. **`android.permission.INTERNET`**:
    - **Reason**: Required to send logs to an API endpoint and send heartbeat check. Both are optional and configurable in the app.
