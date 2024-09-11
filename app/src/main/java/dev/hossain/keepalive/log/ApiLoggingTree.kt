@@ -52,6 +52,7 @@ class ApiLoggingTree(
     private val logQueue = ConcurrentLinkedQueue<LogMessage>()
     private var flushJob: Job? = null
     private var logSequence = 1
+    private var apiFailureCount = 0
 
     companion object {
         /**
@@ -66,6 +67,12 @@ class ApiLoggingTree(
          * - https://airtable.com/developers/web/api/create-records
          */
         private const val MAX_RECORDS_PER_REQUEST = 10
+
+        /**
+         * Maximum subsequent API failure count before stopping the flush job.
+         * This is safeguard to prevent the job turning into a DDoS attack.
+         */
+        private const val MAX_SUBSEQUENT_API_FAILURE_COUNT = 10
     }
 
     init {
@@ -86,7 +93,7 @@ class ApiLoggingTree(
 
         logQueue.add(LogMessage(priority, tag, message, t, logSequence++))
 
-        if (flushJob == null || flushJob?.isCancelled == true) {
+        if ((flushJob == null || flushJob?.isCancelled == true) && !apiFailureCount.exceededFailureCount()) {
             startFlushJob()
         }
     }
@@ -95,6 +102,11 @@ class ApiLoggingTree(
         flushJob =
             CoroutineScope(Dispatchers.IO).launch {
                 while (isActive) {
+                    if (apiFailureCount.exceededFailureCount()) {
+                        Timber.e("Flushing job stopped due to repeated failures.")
+                        break
+                    }
+
                     flushLogs()
 
                     // https://airtable.com/developers/web/api/rate-limits
@@ -169,6 +181,7 @@ class ApiLoggingTree(
                     e: IOException,
                 ) {
                     Timber.e("Failed to send log to API: ${e.localizedMessage}")
+                    apiFailureCount++
                 }
 
                 override fun onResponse(
@@ -181,11 +194,19 @@ class ApiLoggingTree(
                                 "Log is rejected: HTTP code: ${response.code}, " +
                                     "message: ${response.message}, body: ${response.body?.string()}",
                             )
+                            apiFailureCount++
+                        } else {
+                            // Reset failure count on successful response.
+                            apiFailureCount = 0
                         }
                     }
                 }
             },
         )
+    }
+
+    private fun Int.exceededFailureCount(): Boolean {
+        return this >= MAX_SUBSEQUENT_API_FAILURE_COUNT
     }
 
     override fun equals(other: Any?): Boolean {
