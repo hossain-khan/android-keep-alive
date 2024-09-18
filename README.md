@@ -7,7 +7,8 @@ A simple app to keep specific apps alive by checking if they are running. If not
 This app is designed with a very specific use case in mind. It is important to understand what this app does and how.
 
 * App is designed to be **_always_** running in the foreground to watch and restart other applications.
-* App is **NOT** optimized for battery. Ideally, this **should not** be used on your primary phone that you use daily.
+* App is **NOT** optimized for battery and will cause high battery 🪫 drain. Ideally, this **should not** be used on your primary phone that you use daily.
+    * ℹ️ I use this on a secondary phone plugged into a power cable 24/7.
 * App contains some additional features like [Remote Logging](REMOTE-MONITORING.md) and [Heartbeat](REMOTE-HEARTBEAT.md) due to my personal needs. However, the app can be used without using those features.
 * See the permission section below to better understand the app.
 
