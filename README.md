@@ -3,6 +3,8 @@
 # Keep Alive 💓
 A simple app to keep specific apps alive by checking if they are running. If not, they will be started for you.
 
+> ⚠️ _DISCLAIMER: The app is mostly generated with AI (copilot, gemini, chatgpt, etc). It doesn't follow any best practices. See [CONTRIBUTING](CONTRIBUTING.md) guide for more info._
+
 ## 🛑 **STOP** 🛑 - Know before you use ✋
 This app is designed with a very specific use case in mind. It is important to understand what this app does and how.
 
