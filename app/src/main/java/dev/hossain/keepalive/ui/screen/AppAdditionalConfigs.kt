@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import dev.hossain.keepalive.data.SettingsRepository
 import dev.hossain.keepalive.util.AppConfig.DEFAULT_APP_CHECK_INTERVAL_MIN
+import dev.hossain.keepalive.util.AppConfig.DEFAULT_APP_CHECK_INTERVAL_SEC
 import dev.hossain.keepalive.util.Validator.isValidUUID
 import dev.hossain.keepalive.util.Validator.isValidUrl
 import kotlinx.coroutines.launch
@@ -46,7 +47,7 @@ fun AppConfigScreen(
     val coroutineScope = rememberCoroutineScope()
 
     // Reading DataStore values
-    val appCheckInterval by settingsRepository.appCheckIntervalFlow.collectAsState(initial = DEFAULT_APP_CHECK_INTERVAL_MIN)
+    val appCheckInterval by settingsRepository.appCheckIntervalFlow.collectAsState(initial = DEFAULT_APP_CHECK_INTERVAL_SEC)
     val isHealthCheckEnabled by settingsRepository.enableHealthCheckFlow.collectAsState(initial = false)
     val healthCheckUUID by settingsRepository.healthCheckUUIDFlow.collectAsState(initial = "")
 
@@ -80,7 +81,7 @@ fun AppConfigScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(text = "App Check Interval")
-            Text(text = "${appCheckIntervalValue.toInt()} minutes")
+            Text(text = "${appCheckIntervalValue.toInt()} seconds")
         }
         Text(
             text =
@@ -94,8 +95,8 @@ fun AppConfigScreen(
         Slider(
             value = appCheckIntervalValue,
             onValueChange = { appCheckIntervalValue = it },
-            valueRange = 10f..180f,
-            steps = (180 - 10) / 5 - 1,
+            valueRange = 1f..120f,
+            steps = 120-1,
             modifier = Modifier.fillMaxWidth(),
             onValueChangeFinished = {
                 // Save the value when the user stops dragging the slider

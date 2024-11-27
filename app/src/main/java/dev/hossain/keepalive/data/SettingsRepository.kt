@@ -6,7 +6,9 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dev.hossain.keepalive.util.AppConfig.DEFAULT_APP_CHECK_INTERVAL_MIN
+import dev.hossain.keepalive.util.AppConfig.DEFAULT_APP_CHECK_INTERVAL_SEC
 import dev.hossain.keepalive.util.AppConfig.MINIMUM_APP_CHECK_INTERVAL_MIN
+import dev.hossain.keepalive.util.AppConfig.MINIMUM_APP_CHECK_INTERVAL_SEC
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -28,8 +30,8 @@ class SettingsRepository(private val context: Context) {
     val appCheckIntervalFlow: Flow<Int> =
         context.dataStore.data
             .map { preferences ->
-                val interval = preferences[APP_CHECK_INTERVAL] ?: DEFAULT_APP_CHECK_INTERVAL_MIN
-                if (interval < MINIMUM_APP_CHECK_INTERVAL_MIN) MINIMUM_APP_CHECK_INTERVAL_MIN else interval
+                val interval = preferences[APP_CHECK_INTERVAL] ?: DEFAULT_APP_CHECK_INTERVAL_SEC
+                if (interval < MINIMUM_APP_CHECK_INTERVAL_SEC) MINIMUM_APP_CHECK_INTERVAL_SEC else interval
             }
 
     // Retrieve health check enabled state from DataStore
