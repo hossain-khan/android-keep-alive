@@ -6,6 +6,7 @@ import android.os.IBinder
 import dev.hossain.keepalive.data.AppDataStore
 import dev.hossain.keepalive.data.SettingsRepository
 import dev.hossain.keepalive.util.AppConfig.DELAY_BETWEEN_MULTIPLE_APP_CHECKS_MS
+import dev.hossain.keepalive.util.AppConfig.DELAY_BETWEEN_MULTIPLE_APP_FAST_CHECKS_MS
 import dev.hossain.keepalive.util.AppLauncher
 import dev.hossain.keepalive.util.HttpPingSender
 import dev.hossain.keepalive.util.NotificationHelper
@@ -66,8 +67,8 @@ class WatchdogService : Service() {
                 Timber.d("[Start ID: $serviceStartId] Current time: " + System.currentTimeMillis() + " @ " + Date())
                 val appsList = dataStore.data.first()
                 appSettings.appCheckIntervalFlow.first().let {
-                    Timber.d("Next check will be done in $it minutes.")
-                    delay(TimeUnit.MINUTES.toMillis(it.toLong()))
+                    Timber.d("Next check will be done in $it seconds.")
+                    delay(TimeUnit.SECONDS.toMillis(it.toLong()))
 
                     // For debug/development use smaller value see changes frequently
                     // delay(20_000L)
@@ -92,7 +93,7 @@ class WatchdogService : Service() {
                         conditionallySendHealthCheck(appSettings)
                     }
 
-                    delay(DELAY_BETWEEN_MULTIPLE_APP_CHECKS_MS)
+                    delay(DELAY_BETWEEN_MULTIPLE_APP_FAST_CHECKS_MS)
                 }
             }
         }

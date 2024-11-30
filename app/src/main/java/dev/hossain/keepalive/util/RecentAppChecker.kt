@@ -3,6 +3,7 @@ package dev.hossain.keepalive.util
 import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
 import android.content.Context
+import dev.hossain.keepalive.util.AppConfig.RECENT_APP_RUN_FRESHNESS_DURATION_MS
 import timber.log.Timber
 import java.util.SortedMap
 import java.util.TreeMap
@@ -19,13 +20,13 @@ object RecentAppChecker {
 
     fun getRecentlyRunningAppStats(
         context: Context,
-        timeSinceMs: Long = 600_000,
+        timeSinceMs: Long = RECENT_APP_RUN_FRESHNESS_DURATION_MS,
     ): List<UsageStats> {
         val usageStatsManager =
             context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
 
         val endTime = System.currentTimeMillis()
-        val beginTime = endTime - 1000 * 1000
+        val beginTime = endTime - (60 * 1000) // last 1 minute history
         val appList =
             usageStatsManager.queryUsageStats(
                 UsageStatsManager.INTERVAL_BEST,
