@@ -15,11 +15,18 @@ class BootCompleteReceiver : BroadcastReceiver() {
         intent: Intent,
     ) {
         Timber.d("BootCompleteReceiver onReceive() called with: context = $context, intent = $intent")
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
+
+        // Use device protected storage context
+        val directBootContext: Context = context.createDeviceProtectedStorageContext()
+
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED ||
+            intent.action == Intent.ACTION_LOCKED_BOOT_COMPLETED ||
+            intent.action == Intent.ACTION_MY_PACKAGE_REPLACED
+        ) {
             // Start the WatchdogService
             Timber.d("BootCompleteReceiver onReceive: Starting WatchdogService")
-            val serviceIntent = Intent(context, WatchdogService::class.java)
-            context.startForegroundService(serviceIntent)
+            val serviceIntent = Intent(directBootContext, WatchdogService::class.java)
+            directBootContext.startForegroundService(serviceIntent)
         }
     }
 }
