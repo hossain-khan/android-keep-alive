@@ -14,6 +14,11 @@ This app is designed with a very specific use case in mind. It is important to u
 * App contains some additional features like [Remote Logging](REMOTE-MONITORING.md) and [Heartbeat](REMOTE-HEARTBEAT.md) due to my personal needs. However, the app can be used without using those features.
 * See the permission section below to better understand the app.
 
+### Limitations 💔
+Despite having many needed permissions, this app may still not work due to the strict security of Android. 
+* One known issue is related to receiving `RECEIVE_BOOT_COMPLETED` event that is needed to start the watchdog service of this app. However, the `RECEIVE_BOOT_COMPLETED` event is not delivered until user unlocks the device after phone is restarted or incase phone got soft-started because of very low memory pressure.
+  * In that case, this "Keep Alive" app will fail to start configured apps until the device is unlocked manually. (See https://github.com/hossain-khan/android-keep-alive/issues/70 for technical details)
+
 ### 📚 How to use the app
 1. Launch the app and accept all the required permissions.
 2. Once all permission are active, you will see 2 options
@@ -25,7 +30,7 @@ This app is designed with a very specific use case in mind. It is important to u
 
 ![Keep Alive App](assets/screenshots/app-demo-screenshots.png)
 
-## 🔐 Questionable permissions required ⚠️
+## 🔐 Sensitive permissions required ⚠️
 
 Here is the list of permissions needed for the service class ([`WatchdogService`](https://github.com/hossain-khan/android-keep-alive/blob/main/app/src/main/java/dev/hossain/keepalive/service/WatchdogService.kt)). [Source: [`AndroidManifest.xml`](https://github.com/hossain-khan/android-keep-alive/blob/main/app/src/main/AndroidManifest.xml)]
 
