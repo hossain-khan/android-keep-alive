@@ -11,7 +11,7 @@ This app is designed with a very specific use case in mind. It is important to u
 * App is designed to be **_always_** running in the foreground to watch and restart other applications.
 * App is **NOT** optimized for battery and will cause high battery 🪫 drain. Ideally, this **should not** be used on your primary phone that you use daily.
     * ℹ️ I use this on a secondary phone plugged into a power cable 24/7.
-* App contains some additional features like [Remote Logging](REMOTE-MONITORING.md) and [Heartbeat](REMOTE-HEARTBEAT.md) due to my personal needs. However, the app can be used without using those features.
+* App contains some additional features like [Remote Logging](REMOTE-MONITORING.md) and [Heartbeat](REMOTE-HEARTBEAT.md) due to my personal needs. However, the app can be used without enabling those features.
 * See the permission section below to better understand the app.
 
 ### Limitations 💔
