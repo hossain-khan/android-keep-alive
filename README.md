@@ -66,5 +66,5 @@ Here are the permissions needed for the app along with a summary of why they are
 Most of the permissions listed above are discouraged and or restricted. Please be sure to use the app with caution.
 
 ---
-> \* = _The app uses Android's standard explicit intent to start app using it's package-id. Intent is sent to Android OS re-run the app, however, it's up to Android OS to run the app. Something to keep in mind._
+> \* = _The app uses Android's standard explicit intent to start app using it's app package-id. Intent is sent to Android OS re-run the app, however, it's up to Android OS to run the app. Something to keep in mind._
 ---
