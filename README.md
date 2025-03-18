@@ -1,7 +1,7 @@
 [![Android CI](https://github.com/hossain-khan/android-keep-alive/actions/workflows/android.yml/badge.svg)](https://github.com/hossain-khan/android-keep-alive/actions/workflows/android.yml) [![License](https://badgen.net/github/license/hossain-khan/android-keep-alive)](https://github.com/hossain-khan/android-keep-alive/blob/main/LICENSE) [![releases](https://badgen.net/github/release/hossain-khan/android-keep-alive)](https://github.com/hossain-khan/android-keep-alive/releases)
 
 # Keep Alive 💓
-A simple app to keep specific apps alive by checking if they are running. If not, they will be started for you.
+A simple app to keep specific apps alive by checking if they are running. If not, they will be attempted<sup>*</sup> to start for you.
 
 > ⚠️ _DISCLAIMER: The app is mostly generated with AI (copilot, gemini, chatgpt, etc). It doesn't follow any best practices. See [CONTRIBUTING](CONTRIBUTING.md) guide for more info._
 
@@ -64,3 +64,7 @@ Here are the permissions needed for the app along with a summary of why they are
    - **Reason**: Required to draw overlays on top of other apps, which is necessary for certain UI elements or notifications that need to be displayed over other apps. And also start other apps from the background service.
 
 Most of the permissions listed above are discouraged and or restricted. Please be sure to use the app with caution.
+
+---
+> \* = _The app uses Android's standard explicit intent to start app using it's package-id. Intent is sent to Android OS re-run the app, however, it's up to Android OS to run the app. Something to keep in mind._
+---
