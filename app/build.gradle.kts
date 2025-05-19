@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
@@ -39,6 +41,20 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            val props = Properties()
+            val secretPropsFile = rootProject.file("secret.properties")
+            if (secretPropsFile.exists()) {
+                props.load(secretPropsFile.inputStream())
+            }
+            storeFile = file(props["KEYSTORE_FILE"] ?: "")
+            storePassword = props["KEYSTORE_PASSWORD"] as String?
+            keyAlias = props["KEY_ALIAS"] as String?
+            keyPassword = props["KEY_PASSWORD"] as String?
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -46,6 +62,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
