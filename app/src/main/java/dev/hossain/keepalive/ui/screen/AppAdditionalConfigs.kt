@@ -128,7 +128,7 @@ fun AppConfigScreen(
                 Text(
                     text =
                         """
-                        |When enabled, the app will automatically start selected apps, even if they might haven been running recently.
+                        |When enabled, the app will automatically start selected apps, even if they might have been running recently.
                         |This will ensure that the selected app is always attempted to be started at the interval specified above.
                         """.trimMargin(),
                     style = MaterialTheme.typography.bodySmall,
