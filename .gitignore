@@ -37,3 +37,4 @@ google-services.json
 *.hprof
 
 .DS_Store
+secret.properties
