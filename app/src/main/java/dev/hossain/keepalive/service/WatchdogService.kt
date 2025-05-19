@@ -69,6 +69,8 @@ class WatchdogService : Service() {
                     Timber.d("Next check will be done in $it minutes.")
                     delay(TimeUnit.MINUTES.toMillis(it.toLong()))
 
+                    // 👆🏽 Comment above first to disable configured delay 👆🏽
+                    // - - - - - - - - - - - - - - - - - - - - - - - - - - -
                     // For debug/development use smaller value see changes frequently
                     // delay(20_000L)
                 }
