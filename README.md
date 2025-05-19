@@ -30,6 +30,9 @@ Despite having many needed permissions, this app may still not work due to the s
 
 ![Keep Alive App](assets/screenshots/app-demo-screenshots.png)
 
+#### 🎥 Video Demo
+https://github.com/user-attachments/assets/8bf71b38-9fb4-43a4-8ee6-ab27d743c202
+
 ## 🔐 Sensitive permissions required ⚠️
 
 Here is the list of permissions needed for the service class ([`WatchdogService`](https://github.com/hossain-khan/android-keep-alive/blob/main/app/src/main/java/dev/hossain/keepalive/service/WatchdogService.kt)). [Source: [`AndroidManifest.xml`](https://github.com/hossain-khan/android-keep-alive/blob/main/app/src/main/AndroidManifest.xml)]
