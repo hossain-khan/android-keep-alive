@@ -45,10 +45,16 @@ android {
         create("release") {
             val props = Properties()
             val secretPropsFile = rootProject.file("secret.properties")
-            if (secretPropsFile.exists()) {
-                props.load(secretPropsFile.inputStream())
+            // The template file is used for CI/CD
+            val templatePropsFile = rootProject.file("secret.template.properties")
+            when {
+                secretPropsFile.exists() -> props.load(secretPropsFile.inputStream())
+                templatePropsFile.exists() -> props.load(templatePropsFile.inputStream())
             }
-            storeFile = file(props["KEYSTORE_FILE"] ?: "")
+            val keystoreFile = props["KEYSTORE_FILE"] as String?
+            if (!keystoreFile.isNullOrBlank()) {
+                storeFile = file(keystoreFile)
+            }
             storePassword = props["KEYSTORE_PASSWORD"] as String?
             keyAlias = props["KEY_ALIAS"] as String?
             keyPassword = props["KEY_PASSWORD"] as String?
