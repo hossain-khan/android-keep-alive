@@ -7,7 +7,20 @@ import timber.log.Timber
 import java.util.SortedMap
 import java.util.TreeMap
 
+/**
+ * Utility object to check the recent usage of apps on the device.
+ *
+ * This object provides methods to determine if an app has been running recently,
+ * retrieve recent app usage statistics, and check if an app is currently running in the foreground.
+ */
 object RecentAppChecker {
+    /**
+     * Checks if a specific app has been running recently.
+     *
+     * @param recentlyRunApps A list of [UsageStats] representing recently used apps.
+     * @param packageName The package name of the app to check.
+     * @return `true` if the app has been running recently, `false` otherwise.
+     */
     fun isAppRunningRecently(
         recentlyRunApps: List<UsageStats>,
         packageName: String,
@@ -17,6 +30,13 @@ object RecentAppChecker {
         return didAppRanRecently
     }
 
+    /**
+     * Retrieves a list of recently running app usage statistics.
+     *
+     * @param context The [Context] to access the [UsageStatsManager].
+     * @param timeSinceMs The time interval in milliseconds to look back for app usage. Default is 10 minutes.
+     * @return A list of [UsageStats] for apps that have been used recently.
+     */
     fun getRecentlyRunningAppStats(
         context: Context,
         timeSinceMs: Long = 600_000,
@@ -57,7 +77,11 @@ object RecentAppChecker {
     }
 
     /**
-     * Check if the app is running in foreground.
+     * Checks if a specific app is currently running in the foreground.
+     *
+     * @param context The [Context] to access the [UsageStatsManager].
+     * @param packageName The package name of the app to check.
+     * @return `true` if the app is running in the foreground, `false` otherwise.
      */
     fun isAppRunning(
         context: Context,
