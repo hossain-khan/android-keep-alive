@@ -63,12 +63,14 @@ class WatchdogService : Service() {
 
         serviceScope.launch {
             while (true) {
-                Timber.d("[Start ID: $serviceStartId] Current time: " + System.currentTimeMillis() + " @ " + Date())
+                Timber.d("[Start ID: $serviceStartId] Current time: ${System.currentTimeMillis()} @ ${Date()}")
                 val appsList = dataStore.data.first()
                 appSettings.appCheckIntervalFlow.first().let {
                     Timber.d("Next check will be done in $it minutes.")
                     delay(TimeUnit.MINUTES.toMillis(it.toLong()))
 
+                    // 👆🏽 Comment above first to disable configured delay 👆🏽
+                    // - - - - - - - - - - - - - - - - - - - - - - - - - - -
                     // For debug/development use smaller value see changes frequently
                     // delay(20_000L)
                 }
@@ -79,12 +81,19 @@ class WatchdogService : Service() {
                 }
 
                 val recentlyRunApps = RecentAppChecker.getRecentlyRunningAppStats(this@WatchdogService)
+                val shouldForceStart = appSettings.enableForceStartAppsFlow.first()
+
+                if (shouldForceStart) {
+                    Timber.d("Force start apps settings is enabled.")
+                } else {
+                    Timber.d("Force start apps settings is disabled.")
+                }
 
                 appsList.forEach {
-                    if (!RecentAppChecker.isAppRunningRecently(recentlyRunApps, it.packageName)) {
+                    if (!RecentAppChecker.isAppRunningRecently(recentlyRunApps, it.packageName) || shouldForceStart) {
                         Timber.d(
                             "[Start ID: $serviceStartId] ${it.appName} app is not running. " +
-                                "Attempting to start it now.",
+                                "Attempting to start it now. shouldForceStart=$shouldForceStart",
                         )
                         AppLauncher.openApp(this@WatchdogService, it.packageName)
                     } else {

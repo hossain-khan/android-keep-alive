@@ -17,6 +17,7 @@ private val Context.dataStore by preferencesDataStore(name = "app_settings")
 class SettingsRepository(private val context: Context) {
     companion object {
         val APP_CHECK_INTERVAL = intPreferencesKey("app_check_interval")
+        val ENABLE_FORCE_START_APPS = booleanPreferencesKey("enable_force_start_apps")
         val ENABLE_HEALTH_CHECK = booleanPreferencesKey("enable_health_check")
         val HEALTH_CHECK_UUID = stringPreferencesKey("health_check_uuid")
         val ENABLE_REMOTE_LOGGING = booleanPreferencesKey("enable_remote_logging")
@@ -30,6 +31,13 @@ class SettingsRepository(private val context: Context) {
             .map { preferences ->
                 val interval = preferences[APP_CHECK_INTERVAL] ?: DEFAULT_APP_CHECK_INTERVAL_MIN
                 if (interval < MINIMUM_APP_CHECK_INTERVAL_MIN) MINIMUM_APP_CHECK_INTERVAL_MIN else interval
+            }
+
+    // Retrieve force start apps enabled state from DataStore
+    val enableForceStartAppsFlow: Flow<Boolean> =
+        context.dataStore.data
+            .map { preferences ->
+                preferences[ENABLE_FORCE_START_APPS] ?: false // Default to disabled
             }
 
     // Retrieve health check enabled state from DataStore
@@ -81,6 +89,12 @@ class SettingsRepository(private val context: Context) {
     suspend fun saveAppCheckInterval(interval: Int) {
         context.dataStore.edit { preferences ->
             preferences[APP_CHECK_INTERVAL] = interval
+        }
+    }
+
+    suspend fun saveEnableForceStartApps(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[ENABLE_FORCE_START_APPS] = enabled
         }
     }
 

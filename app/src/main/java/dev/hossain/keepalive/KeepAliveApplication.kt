@@ -9,15 +9,20 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+/**
+ * The main application class for the KeepAlive app.
+ *
+ * This class is responsible for initializing the application, setting up logging,
+ * and managing the lifecycle of the application.
+ */
 class KeepAliveApplication : Application() {
     private val applicationScope = CoroutineScope(Dispatchers.Default)
 
     override fun onCreate() {
         super.onCreate()
 
-        if (BuildConfig.DEBUG) {
-            Timber.plant(Timber.DebugTree())
-        }
+        // Add logging tree regardless of the DEBUG/RELEASE build type
+        Timber.plant(Timber.DebugTree())
 
         val settingsRepository = SettingsRepository(this)
         applicationScope.launch {
