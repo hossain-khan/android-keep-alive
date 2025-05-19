@@ -32,7 +32,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import dev.hossain.keepalive.data.SettingsRepository
+import dev.hossain.keepalive.util.AppConfig.APP_CHECK_INTERVAL_STEP
 import dev.hossain.keepalive.util.AppConfig.DEFAULT_APP_CHECK_INTERVAL_MIN
+import dev.hossain.keepalive.util.AppConfig.MAX_APP_CHECK_INTERVAL_SLIDER
+import dev.hossain.keepalive.util.AppConfig.MIN_APP_CHECK_INTERVAL_SLIDER
 import dev.hossain.keepalive.util.Validator.isValidUUID
 import dev.hossain.keepalive.util.Validator.isValidUrl
 import kotlinx.coroutines.launch
@@ -80,7 +83,7 @@ fun AppConfigScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(text = "App Check Interval")
-            Text(text = "${appCheckIntervalValue.toInt()} minutes")
+            Text(text = formatMinutesToHoursAndMinutes(appCheckIntervalValue.toInt()))
         }
         Text(
             text =
@@ -94,9 +97,9 @@ fun AppConfigScreen(
         Slider(
             value = appCheckIntervalValue,
             onValueChange = { appCheckIntervalValue = it },
-            valueRange = 10f..180f,
-            steps = (180 - 10) / 5 - 1,
-            modifier = Modifier.fillMaxWidth(),
+            valueRange = MIN_APP_CHECK_INTERVAL_SLIDER.toFloat()..MAX_APP_CHECK_INTERVAL_SLIDER.toFloat(),
+            steps = (MAX_APP_CHECK_INTERVAL_SLIDER - MIN_APP_CHECK_INTERVAL_SLIDER) / APP_CHECK_INTERVAL_STEP - 1,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
             onValueChangeFinished = {
                 // Save the value when the user stops dragging the slider
                 coroutineScope.launch {
@@ -301,5 +304,30 @@ fun AppConfigScreen(
 
     LaunchedEffect(airtableDataUrl) {
         airtableDataUrlValue = airtableDataUrl
+    }
+}
+
+/**
+ * Formats a time in minutes to a readable string representation.
+ * When the time is less than 60 minutes, it's displayed as "X minutes".
+ * When the time is 60 minutes or more, it's displayed as "X hours Y minutes".
+ *
+ * @param minutes The time in minutes to format
+ * @return A formatted string representing the time in hours and minutes
+ */
+private fun formatMinutesToHoursAndMinutes(minutes: Int): String {
+    if (minutes < 60) {
+        return "$minutes minutes"
+    }
+
+    val hours = minutes / 60
+    val remainingMinutes = minutes % 60
+
+    return if (remainingMinutes == 0) {
+        if (hours == 1) "$hours hour" else "$hours hours"
+    } else {
+        val hoursText = if (hours == 1) "$hours hour" else "$hours hours"
+        val minutesText = if (remainingMinutes == 1) "$remainingMinutes minute" else "$remainingMinutes minutes"
+        "$hoursText $minutesText"
     }
 }
