@@ -50,6 +50,7 @@ fun AppConfigScreen(
 
     // Reading DataStore values
     val appCheckInterval by settingsRepository.appCheckIntervalFlow.collectAsState(initial = DEFAULT_APP_CHECK_INTERVAL_MIN)
+    val isForceStartAppsEnabled by settingsRepository.enableForceStartAppsFlow.collectAsState(initial = false)
     val isHealthCheckEnabled by settingsRepository.enableHealthCheckFlow.collectAsState(initial = false)
     val healthCheckUUID by settingsRepository.healthCheckUUIDFlow.collectAsState(initial = "")
 
@@ -59,6 +60,7 @@ fun AppConfigScreen(
     val airtableDataUrl by settingsRepository.airtableDataUrlFlow.collectAsState(initial = "")
 
     var appCheckIntervalValue by remember { mutableStateOf(appCheckInterval.toFloat()) }
+    var isForceStartAppsEnabledValue by remember { mutableStateOf(isForceStartAppsEnabled) }
     var isHealthCheckEnabledValue by remember { mutableStateOf(isHealthCheckEnabled) }
     var healthCheckUUIDValue by remember { mutableStateOf(healthCheckUUID) }
     var healthCheckUUIDError by remember { mutableStateOf<String?>(null) }
@@ -107,6 +109,33 @@ fun AppConfigScreen(
                 }
             },
         )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Enable Force Start Apps Setting
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(
+                checked = isForceStartAppsEnabledValue,
+                onCheckedChange = {
+                    isForceStartAppsEnabledValue = it
+                    coroutineScope.launch {
+                        settingsRepository.saveEnableForceStartApps(it)
+                    }
+                },
+            )
+            Column {
+                Text(text = "Enable Force Start Apps")
+                Text(
+                    text =
+                        """
+                        |When enabled, the app will automatically start selected apps, even if they might haven been running recently.
+                        |This will ensure that the selected app is always attempted to be started at the interval specified above.
+                        """.trimMargin(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -283,6 +312,10 @@ fun AppConfigScreen(
 
     LaunchedEffect(appCheckInterval) {
         appCheckIntervalValue = appCheckInterval.toFloat()
+    }
+
+    LaunchedEffect(isForceStartAppsEnabled) {
+        isForceStartAppsEnabledValue = isForceStartAppsEnabled
     }
 
     LaunchedEffect(isHealthCheckEnabled) {
