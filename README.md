@@ -1,4 +1,4 @@
-[![Android CI](https://github.com/hossain-khan/android-keep-alive/actions/workflows/android.yml/badge.svg)](https://github.com/hossain-khan/android-keep-alive/actions/workflows/android.yml) [![License](https://badgen.net/github/license/hossain-khan/android-keep-alive)](https://github.com/hossain-khan/android-keep-alive/blob/main/LICENSE) [![releases](https://badgen.net/github/release/hossain-khan/android-keep-alive)](https://github.com/hossain-khan/android-keep-alive/releases)
+[![Android CI](https://github.com/hossain-khan/android-keep-alive/actions/workflows/android.yml/badge.svg)](https://github.com/hossain-khan/android-keep-alive/actions/workflows/android.yml) [![releases](https://badgen.net/github/release/hossain-khan/android-keep-alive)](https://github.com/hossain-khan/android-keep-alive/releases)
 
 # Keep Alive 💓
 A simple app to keep specific apps alive by checking if they are running. If not, they will be attempted<sup>*</sup> to start for you.
