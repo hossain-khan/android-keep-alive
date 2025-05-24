@@ -25,7 +25,12 @@ class SettingsRepository(private val context: Context) {
         val AIRTABLE_DATA_URL = stringPreferencesKey("airtable_data_url")
     }
 
-    // Retrieve app check interval from DataStore
+    /**
+     * Flow for the application check interval in minutes.
+     * Note: The chosen interval significantly affects battery life.
+     * Longer intervals are recommended for better battery optimization.
+     * The interval is capped by [MINIMUM_APP_CHECK_INTERVAL_MIN].
+     */
     val appCheckIntervalFlow: Flow<Int> =
         context.dataStore.data
             .map { preferences ->

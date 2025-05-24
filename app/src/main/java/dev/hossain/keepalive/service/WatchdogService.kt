@@ -72,6 +72,7 @@ class WatchdogService : Service() {
                 val appsList: List<AppInfo> = dataStore.data.first()
                 appSettings.appCheckIntervalFlow.first().let {
                     Timber.d("Next check will be done in $it minutes.")
+                    // This interval is critical for battery consumption. Shorter intervals will drain the battery faster.
                     delay(TimeUnit.MINUTES.toMillis(it.toLong()))
 
                     // 👆🏽 Comment above first to disable configured delay 👆🏽
@@ -98,7 +99,7 @@ class WatchdogService : Service() {
                     val isAppRunningRecently = RecentAppChecker.isAppRunningRecently(recentlyRunApps, appInfo.packageName)
                     val needsToStart = !isAppRunningRecently || shouldForceStart
 
-                    // Log app activity regardless of whether the app needs to be started
+                    // Create app activity log entry
                     val timestamp = System.currentTimeMillis()
                     val message =
                         if (needsToStart) {
@@ -122,9 +123,9 @@ class WatchdogService : Service() {
                             forceStartEnabled = shouldForceStart,
                             message = message,
                         )
-                    activityLogger.logAppActivity(activityLog)
 
                     if (needsToStart) {
+                        activityLogger.logAppActivity(activityLog) // Log only when starting or force-starting
                         Timber.d(
                             "[Start ID: $serviceStartId] ${appInfo.appName} app is not running. " +
                                 "Attempting to start it now. shouldForceStart=$shouldForceStart",
@@ -132,6 +133,7 @@ class WatchdogService : Service() {
                         AppLauncher.openApp(this@WatchdogService, appInfo.packageName)
                     } else {
                         // If app is already running, send health check ping
+                        // No logging for "App is running normally"
                         conditionallySendHealthCheck(appSettings)
                     }
 

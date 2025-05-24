@@ -45,7 +45,7 @@ object RecentAppChecker {
             context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
 
         val endTime = System.currentTimeMillis()
-        val beginTime = endTime - 1000 * 1000
+        val beginTime = endTime - timeSinceMs
         val appList =
             usageStatsManager.queryUsageStats(
                 UsageStatsManager.INTERVAL_BEST,
