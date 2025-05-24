@@ -45,7 +45,7 @@ android {
         create("release") {
             val props = Properties()
             val secretPropsFile = rootProject.file("secret.properties")
-            // The template file is used for CI/CD
+            // The template file is used for CI/CD with debug keystore signing
             val templatePropsFile = rootProject.file("secret.template.properties")
             when {
                 secretPropsFile.exists() -> props.load(secretPropsFile.inputStream())
