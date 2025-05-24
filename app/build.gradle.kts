@@ -48,8 +48,17 @@ android {
             // The template file is used for CI/CD with debug keystore signing
             val templatePropsFile = rootProject.file("secret.template.properties")
             when {
-                secretPropsFile.exists() -> props.load(secretPropsFile.inputStream())
-                templatePropsFile.exists() -> props.load(templatePropsFile.inputStream())
+                secretPropsFile.exists() -> {
+                    println("🔑 Using secret.properties for signing config ✅ ")
+                    props.load(secretPropsFile.inputStream())
+                }
+                templatePropsFile.exists() -> {
+                    println("⚠️ Using secret.template.properties for signing config ⚠️ ")
+                    props.load(templatePropsFile.inputStream())
+                }
+                else -> {
+                    println("❌ No signing properties file found")
+                }
             }
             val keystoreFile = props["KEYSTORE_FILE"] as String?
             if (!keystoreFile.isNullOrBlank()) {
