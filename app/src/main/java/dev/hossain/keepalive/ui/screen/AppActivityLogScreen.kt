@@ -45,7 +45,7 @@ import java.util.Locale
 @Composable
 fun AppActivityLogScreen(
     navController: NavController,
-    context: Context
+    context: Context,
 ) {
     val activityLogger = remember { AppActivityLogger(context) }
     val logs by activityLogger.getRecentLogs().collectAsState(initial = emptyList())
@@ -53,21 +53,22 @@ fun AppActivityLogScreen(
     val isLoading = remember { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(16.dp),
     ) {
         // Header
         Text(
             text = "App Activity Log",
             style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 8.dp),
         )
 
         Text(
             text = "Recent app monitoring activity:",
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.Gray
+            color = Color.Gray,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -82,7 +83,7 @@ fun AppActivityLogScreen(
                 }
             },
             enabled = !isLoading.value && logs.isNotEmpty(),
-            modifier = Modifier.align(Alignment.End)
+            modifier = Modifier.align(Alignment.End),
         ) {
             Text("Clear Logs")
         }
@@ -92,23 +93,25 @@ fun AppActivityLogScreen(
         if (isLoading.value) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
             ) {
                 CircularProgressIndicator()
             }
         } else if (logs.isEmpty()) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
             ) {
                 Text(
                     text = "No activity logs yet. Logs will appear after the watchdog service checks monitored apps.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
+                    color = Color.Gray,
                 )
             }
         } else {
@@ -125,15 +128,16 @@ fun AppActivityLogScreen(
 @Composable
 fun ActivityLogItem(log: AppActivityLog) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 // App name
                 Text(
@@ -141,7 +145,7 @@ fun ActivityLogItem(log: AppActivityLog) {
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
 
                 // Status indicator
@@ -153,7 +157,7 @@ fun ActivityLogItem(log: AppActivityLog) {
             Text(
                 text = "Package: ${log.packageId}",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray
+                color = Color.Gray,
             )
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -162,7 +166,7 @@ fun ActivityLogItem(log: AppActivityLog) {
             Text(
                 text = log.getStatusSummary(),
                 style = MaterialTheme.typography.bodyMedium,
-                color = getStatusColor(log)
+                color = getStatusColor(log),
             )
 
             if (log.message.isNotEmpty()) {
@@ -170,7 +174,7 @@ fun ActivityLogItem(log: AppActivityLog) {
                 Text(
                     text = log.message,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = Color.Gray,
                 )
             }
 
@@ -180,7 +184,7 @@ fun ActivityLogItem(log: AppActivityLog) {
             Text(
                 text = formatTimestamp(log.timestamp),
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray
+                color = Color.Gray,
             )
         }
     }
@@ -188,24 +192,26 @@ fun ActivityLogItem(log: AppActivityLog) {
 
 @Composable
 private fun StatusIcon(log: AppActivityLog) {
-    val icon = when {
-        log.wasAttemptedToStart && log.forceStartEnabled -> Icons.Default.PlayArrow
-        log.wasAttemptedToStart -> Icons.Default.Warning
-        log.wasRunningRecently -> Icons.Default.Check
-        else -> Icons.Default.Warning
-    }
+    val icon =
+        when {
+            log.wasAttemptedToStart && log.forceStartEnabled -> Icons.Default.PlayArrow
+            log.wasAttemptedToStart -> Icons.Default.Warning
+            log.wasRunningRecently -> Icons.Default.Check
+            else -> Icons.Default.Warning
+        }
 
-    val tint = when {
-        log.wasAttemptedToStart && log.forceStartEnabled -> Color(0xFF2196F3) // Blue
-        log.wasAttemptedToStart -> Color(0xFFFF9800) // Orange
-        log.wasRunningRecently -> Color(0xFF4CAF50) // Green
-        else -> Color(0xFFF44336) // Red
-    }
+    val tint =
+        when {
+            log.wasAttemptedToStart && log.forceStartEnabled -> Color(0xFF2196F3) // Blue
+            log.wasAttemptedToStart -> Color(0xFFFF9800) // Orange
+            log.wasRunningRecently -> Color(0xFF4CAF50) // Green
+            else -> Color(0xFFF44336) // Red
+        }
 
     Icon(
         imageVector = icon,
         contentDescription = "Status",
-        tint = tint
+        tint = tint,
     )
 }
 

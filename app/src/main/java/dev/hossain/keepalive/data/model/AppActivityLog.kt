@@ -14,32 +14,26 @@ data class AppActivityLog(
      * Package ID of the application being monitored
      */
     val packageId: String,
-
     /**
      * Human-readable name of the application
      */
     val appName: String,
-
     /**
      * Whether the app was detected as recently running when checked
      */
     val wasRunningRecently: Boolean,
-
     /**
      * Whether the app was attempted to be started
      */
     val wasAttemptedToStart: Boolean,
-
     /**
      * Unix timestamp (milliseconds) when this check was performed
      */
     val timestamp: Long,
-
     /**
      * Whether force start app setting was enabled at the time of check
      */
     val forceStartEnabled: Boolean,
-
     /**
      * Optional message with additional details about the operation
      */

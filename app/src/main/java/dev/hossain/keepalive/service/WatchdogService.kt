@@ -76,7 +76,7 @@ class WatchdogService : Service() {
                     // 👆🏽 Comment above first to disable configured delay 👆🏽
                     // - - - - - - - - - - - - - - - - - - - - - - - - - - -
                     // For debug/development use smaller value see changes frequently
-                    // delay(20_000L)
+                    // delay(20_000L) // ⛔️ DO NOT COMMIT ⛔️
                 }
 
                 if (appsList.isEmpty()) {
@@ -99,23 +99,28 @@ class WatchdogService : Service() {
 
                     // Log app activity regardless of whether the app needs to be started
                     val timestamp = System.currentTimeMillis()
-                    val message = if (needsToStart) {
-                        if (shouldForceStart) "Force starting app regardless of running state"
-                        else "App was not running recently, attempting to start"
-                    } else {
-                        "App is running normally, no action needed"
-                    }
+                    val message =
+                        if (needsToStart) {
+                            if (shouldForceStart) {
+                                "Force starting app regardless of running state"
+                            } else {
+                                "App was not running recently, attempting to start"
+                            }
+                        } else {
+                            "App is running normally, no action needed"
+                        }
 
                     // Create and save the log entry
-                    val activityLog = AppActivityLog(
-                        packageId = it.packageName,
-                        appName = it.appName,
-                        wasRunningRecently = isAppRunningRecently,
-                        wasAttemptedToStart = needsToStart,
-                        timestamp = timestamp,
-                        forceStartEnabled = shouldForceStart,
-                        message = message
-                    )
+                    val activityLog =
+                        AppActivityLog(
+                            packageId = it.packageName,
+                            appName = it.appName,
+                            wasRunningRecently = isAppRunningRecently,
+                            wasAttemptedToStart = needsToStart,
+                            timestamp = timestamp,
+                            forceStartEnabled = shouldForceStart,
+                            message = message,
+                        )
                     activityLogger.logAppActivity(activityLog)
 
                     if (needsToStart) {
