@@ -5,6 +5,8 @@ import android.content.Intent
 import android.os.IBinder
 import dev.hossain.keepalive.data.AppDataStore
 import dev.hossain.keepalive.data.SettingsRepository
+import dev.hossain.keepalive.data.logging.AppActivityLogger
+import dev.hossain.keepalive.data.model.AppActivityLog
 import dev.hossain.keepalive.util.AppConfig.DELAY_BETWEEN_MULTIPLE_APP_CHECKS_MS
 import dev.hossain.keepalive.util.AppLauncher
 import dev.hossain.keepalive.util.HttpPingSender
@@ -35,6 +37,7 @@ class WatchdogService : Service() {
 
     private val pingSender = HttpPingSender(this)
     private val notificationHelper = NotificationHelper(this)
+    private lateinit var activityLogger: AppActivityLogger
 
     // Used to tracking the instance of the service
     private var serviceStartId: Int? = null
@@ -52,6 +55,7 @@ class WatchdogService : Service() {
         Timber.d("onStartCommand() called with: intent = $intent, flags = $flags, startId = $startId")
         serviceStartId = startId
         notificationHelper.createNotificationChannel()
+        activityLogger = AppActivityLogger(applicationContext)
 
         startForeground(
             NOTIFICATION_ID,
@@ -90,7 +94,31 @@ class WatchdogService : Service() {
                 }
 
                 appsList.forEach {
-                    if (!RecentAppChecker.isAppRunningRecently(recentlyRunApps, it.packageName) || shouldForceStart) {
+                    val isAppRunningRecently = RecentAppChecker.isAppRunningRecently(recentlyRunApps, it.packageName)
+                    val needsToStart = !isAppRunningRecently || shouldForceStart
+
+                    // Log app activity regardless of whether the app needs to be started
+                    val timestamp = System.currentTimeMillis()
+                    val message = if (needsToStart) {
+                        if (shouldForceStart) "Force starting app regardless of running state"
+                        else "App was not running recently, attempting to start"
+                    } else {
+                        "App is running normally, no action needed"
+                    }
+
+                    // Create and save the log entry
+                    val activityLog = AppActivityLog(
+                        packageId = it.packageName,
+                        appName = it.appName,
+                        wasRunningRecently = isAppRunningRecently,
+                        wasAttemptedToStart = needsToStart,
+                        timestamp = timestamp,
+                        forceStartEnabled = shouldForceStart,
+                        message = message
+                    )
+                    activityLogger.logAppActivity(activityLog)
+
+                    if (needsToStart) {
                         Timber.d(
                             "[Start ID: $serviceStartId] ${it.appName} app is not running. " +
                                 "Attempting to start it now. shouldForceStart=$shouldForceStart",
