@@ -4,7 +4,9 @@ import androidx.annotation.Keep
 import dev.hossain.keepalive.service.WatchdogService
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
 /**
  * Model class that represents a single log entry for app activity monitoring.
@@ -54,7 +56,7 @@ data class AppActivityLog(
      * Converts the timestamp to a human-readable date string.
      */
     fun getFormattedTimestamp(): String {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        val dateFormat = SimpleDateFormat("MMM d, yyyy h:mm a", Locale.getDefault())
         return dateFormat.format(Date(timestamp))
     }
 
