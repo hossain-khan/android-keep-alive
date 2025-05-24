@@ -65,6 +65,7 @@ import dev.hossain.keepalive.data.PermissionType.PERMISSION_POST_NOTIFICATIONS
 import dev.hossain.keepalive.data.PermissionType.PERMISSION_SYSTEM_APPLICATION_OVERLAY
 import dev.hossain.keepalive.service.WatchdogService
 import dev.hossain.keepalive.ui.Screen
+import dev.hossain.keepalive.ui.screen.AppActivityLogScreen
 import dev.hossain.keepalive.ui.screen.AppConfigScreen
 import dev.hossain.keepalive.ui.screen.SettingsScreen
 import dev.hossain.keepalive.ui.theme.KeepAliveTheme
@@ -114,6 +115,12 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable(Screen.AppSettings.route) { SettingsScreen(navController) }
+                        composable(Screen.ActivityLogs.route) {
+                            AppActivityLogScreen(
+                                navController,
+                                applicationContext,
+                            )
+                        }
                     }
                 }
             }
@@ -339,6 +346,12 @@ fun MainLandingScreen(
                             onClick = { navController.navigate(Screen.AppConfigs.route) },
                         ) {
                             Text("App Configurations")
+                        }
+                        Button(
+                            onClick = { navController.navigate(Screen.ActivityLogs.route) },
+                            modifier = Modifier.padding(top = 8.dp),
+                        ) {
+                            Text("Monitor Activity")
                         }
                     }
                 }

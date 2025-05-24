@@ -4,4 +4,5 @@ enum class Screen(val route: String) {
     Home("home"),
     AppConfigs("app_configs"),
     AppSettings("settings"),
+    ActivityLogs("activity_logs"),
 }
