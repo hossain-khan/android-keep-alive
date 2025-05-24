@@ -7,6 +7,7 @@ import dev.hossain.keepalive.data.AppDataStore
 import dev.hossain.keepalive.data.SettingsRepository
 import dev.hossain.keepalive.data.logging.AppActivityLogger
 import dev.hossain.keepalive.data.model.AppActivityLog
+import dev.hossain.keepalive.ui.screen.AppInfo
 import dev.hossain.keepalive.util.AppConfig.DELAY_BETWEEN_MULTIPLE_APP_CHECKS_MS
 import dev.hossain.keepalive.util.AppLauncher
 import dev.hossain.keepalive.util.HttpPingSender
@@ -68,7 +69,7 @@ class WatchdogService : Service() {
         serviceScope.launch {
             while (true) {
                 Timber.d("[Start ID: $serviceStartId] Current time: ${System.currentTimeMillis()} @ ${Date()}")
-                val appsList = dataStore.data.first()
+                val appsList: List<AppInfo> = dataStore.data.first()
                 appSettings.appCheckIntervalFlow.first().let {
                     Timber.d("Next check will be done in $it minutes.")
                     delay(TimeUnit.MINUTES.toMillis(it.toLong()))
@@ -93,8 +94,8 @@ class WatchdogService : Service() {
                     Timber.d("Force start apps settings is disabled.")
                 }
 
-                appsList.forEach {
-                    val isAppRunningRecently = RecentAppChecker.isAppRunningRecently(recentlyRunApps, it.packageName)
+                appsList.forEach { appInfo ->
+                    val isAppRunningRecently = RecentAppChecker.isAppRunningRecently(recentlyRunApps, appInfo.packageName)
                     val needsToStart = !isAppRunningRecently || shouldForceStart
 
                     // Log app activity regardless of whether the app needs to be started
@@ -113,8 +114,8 @@ class WatchdogService : Service() {
                     // Create and save the log entry
                     val activityLog =
                         AppActivityLog(
-                            packageId = it.packageName,
-                            appName = it.appName,
+                            packageId = appInfo.packageName,
+                            appName = appInfo.appName,
                             wasRunningRecently = isAppRunningRecently,
                             wasAttemptedToStart = needsToStart,
                             timestamp = timestamp,
@@ -125,10 +126,10 @@ class WatchdogService : Service() {
 
                     if (needsToStart) {
                         Timber.d(
-                            "[Start ID: $serviceStartId] ${it.appName} app is not running. " +
+                            "[Start ID: $serviceStartId] ${appInfo.appName} app is not running. " +
                                 "Attempting to start it now. shouldForceStart=$shouldForceStart",
                         )
-                        AppLauncher.openApp(this@WatchdogService, it.packageName)
+                        AppLauncher.openApp(this@WatchdogService, appInfo.packageName)
                     } else {
                         // If app is already running, send health check ping
                         conditionallySendHealthCheck(appSettings)
