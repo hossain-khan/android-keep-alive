@@ -54,7 +54,8 @@ data class AppActivityLog(
      * Converts the timestamp to a human-readable date string.
      */
     fun getFormattedTimestamp(): String {
-        return Date(timestamp).toString()
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        return dateFormat.format(Date(timestamp))
     }
 
     /**
