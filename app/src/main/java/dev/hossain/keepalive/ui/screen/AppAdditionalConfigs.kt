@@ -36,6 +36,7 @@ import dev.hossain.keepalive.util.AppConfig.APP_CHECK_INTERVAL_STEP
 import dev.hossain.keepalive.util.AppConfig.DEFAULT_APP_CHECK_INTERVAL_MIN
 import dev.hossain.keepalive.util.AppConfig.MAX_APP_CHECK_INTERVAL_SLIDER
 import dev.hossain.keepalive.util.AppConfig.MIN_APP_CHECK_INTERVAL_SLIDER
+import dev.hossain.keepalive.util.ServiceManager
 import dev.hossain.keepalive.util.Validator.isValidUUID
 import dev.hossain.keepalive.util.Validator.isValidUrl
 import kotlinx.coroutines.launch
@@ -105,7 +106,13 @@ fun AppConfigScreen(
             onValueChangeFinished = {
                 // Save the value when the user stops dragging the slider
                 coroutineScope.launch {
-                    settingsRepository.saveAppCheckInterval(appCheckIntervalValue.toInt())
+                    val newInterval = appCheckIntervalValue.toInt()
+                    // Only restart if the interval value has actually changed
+                    if (newInterval != appCheckInterval) {
+                        settingsRepository.saveAppCheckInterval(newInterval)
+                        // Restart the WatchdogService to apply the new interval
+                        ServiceManager.restartWatchdogService(context)
+                    }
                 }
             },
         )
