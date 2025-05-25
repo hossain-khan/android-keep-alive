@@ -8,6 +8,7 @@ import dev.hossain.keepalive.data.SettingsRepository
 import dev.hossain.keepalive.data.logging.AppActivityLogger
 import dev.hossain.keepalive.data.model.AppActivityLog
 import dev.hossain.keepalive.ui.screen.AppInfo
+import dev.hossain.keepalive.util.AppConfig.DEFAULT_APP_CHECK_INTERVAL_MIN
 import dev.hossain.keepalive.util.AppConfig.DELAY_BETWEEN_MULTIPLE_APP_CHECKS_MS
 import dev.hossain.keepalive.util.AppLauncher
 import dev.hossain.keepalive.util.HttpPingSender
@@ -19,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -66,19 +68,29 @@ class WatchdogService : Service() {
         val dataStore = AppDataStore.store(context = applicationContext)
         val appSettings = SettingsRepository(applicationContext)
 
+        // Launch a coroutine to monitor the app check interval flow
+        // This ensures we always have the most recent interval value
+        var currentCheckInterval = DEFAULT_APP_CHECK_INTERVAL_MIN
+        serviceScope.launch {
+            appSettings.appCheckIntervalFlow.collect { interval ->
+                Timber.d("App check interval updated from $currentCheckInterval to $interval minutes")
+                currentCheckInterval = interval
+            }
+        }
+
         serviceScope.launch {
             while (true) {
                 Timber.d("[Start ID: $serviceStartId] Current time: ${System.currentTimeMillis()} @ ${Date()}")
                 val appsList: List<AppInfo> = dataStore.data.first()
-                appSettings.appCheckIntervalFlow.first().let {
-                    Timber.d("Next check will be done in $it minutes.")
-                    delay(TimeUnit.MINUTES.toMillis(it.toLong()))
 
-                    // 👆🏽 Comment above first to disable configured delay 👆🏽
-                    // - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                    // For debug/development use smaller value see changes frequently
-                    // delay(20_000L) // ⛔️ DO NOT COMMIT ⛔️
-                }
+                // Use the latest interval value that's being updated by the collector above
+                Timber.d("Scheduling next check using current interval: $currentCheckInterval minutes.")
+                delay(TimeUnit.MINUTES.toMillis(currentCheckInterval.toLong()))
+
+                // 👆🏽 Comment above first to disable configured delay 👆🏽
+                // - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                // For debug/development use smaller value see changes frequently
+                // delay(20_000L) // ⛔️ DO NOT COMMIT ⛔️
 
                 if (appsList.isEmpty()) {
                     Timber.w("No apps configured yet. Skipping the check.")
