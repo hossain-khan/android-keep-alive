@@ -11,6 +11,21 @@ import timber.log.Timber
  */
 object ServiceManager {
     /**
+     * Starts the WatchdogService if it is not already running.
+     *
+     * @param context The context to use for service operations
+     */
+    fun startWatchdogService(context: Context) {
+        Timber.d("Starting WatchdogService if not already running")
+        if (!isServiceRunning(context, WatchdogService::class.java)) {
+            val serviceIntent = Intent(context, WatchdogService::class.java)
+            context.startForegroundService(serviceIntent)
+        } else {
+            Timber.d("WatchdogService is already running.")
+        }
+    }
+
+    /**
      * Restarts the WatchdogService to apply new configuration settings.
      *
      * @param context The context to use for service operations
