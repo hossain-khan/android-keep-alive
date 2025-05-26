@@ -63,14 +63,14 @@ fun AppListScreen(
     Column(modifier = modifier) {
         Text(
             text = "Apps that are kept running:",
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(vertical = 8.dp),
         )
         Text(
             text =
                 "These apps will be periodically checked if they were recently run, " +
                     "if not, they will be restarted based on app configuration you choose.",
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             color = Color.Gray,
         )
         LazyColumn {
