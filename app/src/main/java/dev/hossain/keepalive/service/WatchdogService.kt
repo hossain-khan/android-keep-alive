@@ -79,6 +79,9 @@ class WatchdogService : Service() {
         }
 
         serviceScope.launch {
+            // Preloads the initial value of the app check interval
+            currentCheckInterval = appSettings.appCheckIntervalFlow.first()
+
             while (true) {
                 Timber.d("[Start ID: $serviceStartId] Current time: ${System.currentTimeMillis()} @ ${Date()}")
                 val appsList: List<AppInfo> = dataStore.data.first()
