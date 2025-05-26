@@ -35,8 +35,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import dev.hossain.keepalive.data.SettingsRepository
 import dev.hossain.keepalive.data.logging.AppActivityLogger
 import dev.hossain.keepalive.data.model.AppActivityLog
+import dev.hossain.keepalive.util.AppConfig.DEFAULT_APP_CHECK_INTERVAL_MIN
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -51,6 +53,11 @@ fun AppActivityLogScreen(
     val logs by activityLogger.getRecentLogs().collectAsState(initial = emptyList())
     val coroutineScope = rememberCoroutineScope()
     val isLoading = remember { mutableStateOf(false) }
+
+    // Initialize SettingsRepository to get current settings
+    val settingsRepository = remember { SettingsRepository(context) }
+    val appCheckInterval by settingsRepository.appCheckIntervalFlow.collectAsState(initial = DEFAULT_APP_CHECK_INTERVAL_MIN)
+    val isForceStartAppsEnabled by settingsRepository.enableForceStartAppsFlow.collectAsState(initial = false)
 
     Column(
         modifier =
@@ -71,7 +78,7 @@ fun AppActivityLogScreen(
             color = Color.Gray,
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Clear logs button
         Button(
@@ -101,6 +108,9 @@ fun AppActivityLogScreen(
                 CircularProgressIndicator()
             }
         } else if (logs.isEmpty()) {
+            // Show Settings Card even when no logs
+            CurrentSettingsCard(appCheckInterval, isForceStartAppsEnabled)
+
             Box(
                 contentAlignment = Alignment.Center,
                 modifier =
@@ -116,10 +126,74 @@ fun AppActivityLogScreen(
             }
         } else {
             LazyColumn {
+                // Add Settings Card as first item
+                item {
+                    CurrentSettingsCard(appCheckInterval, isForceStartAppsEnabled)
+                }
+
                 items(logs) { logEntry ->
                     ActivityLogItem(logEntry)
                     Divider()
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun CurrentSettingsCard(
+    appCheckInterval: Int,
+    isForceStartAppsEnabled: Boolean,
+) {
+    Card(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = "Current Settings",
+                style = MaterialTheme.typography.titleMedium,
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = "Check Interval:",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Text(
+                    text = formatMinutesToHoursAndMinutes(appCheckInterval),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = "Force Start Apps:",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Text(
+                    text = if (isForceStartAppsEnabled) "Enabled" else "Disabled",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color =
+                        if (isForceStartAppsEnabled) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            Color.Gray
+                        },
+                )
             }
         }
     }
@@ -227,4 +301,29 @@ private fun getStatusColor(log: AppActivityLog): Color {
 private fun formatTimestamp(timestamp: Long): String {
     val dateFormat = SimpleDateFormat("MMM d, yyyy 'at' h:mm:ss a", Locale.getDefault())
     return dateFormat.format(Date(timestamp))
+}
+
+/**
+ * Formats a time in minutes to a readable string representation.
+ * When the time is less than 60 minutes, it's displayed as "X minutes".
+ * When the time is 60 minutes or more, it's displayed as "X hours Y minutes".
+ *
+ * @param minutes The time in minutes to format
+ * @return A formatted string representing the time in hours and minutes
+ */
+private fun formatMinutesToHoursAndMinutes(minutes: Int): String {
+    if (minutes < 60) {
+        return "$minutes minutes"
+    }
+
+    val hours = minutes / 60
+    val remainingMinutes = minutes % 60
+
+    return if (remainingMinutes == 0) {
+        if (hours == 1) "$hours hour" else "$hours hours"
+    } else {
+        val hoursText = if (hours == 1) "$hours hour" else "$hours hours"
+        val minutesText = if (remainingMinutes == 1) "$remainingMinutes minute" else "$remainingMinutes minutes"
+        "$hoursText $minutesText"
+    }
 }

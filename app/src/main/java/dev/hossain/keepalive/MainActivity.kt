@@ -41,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -57,6 +59,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import dev.hossain.keepalive.data.AppDataStore
 import dev.hossain.keepalive.data.PermissionType
 import dev.hossain.keepalive.data.PermissionType.PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS
 import dev.hossain.keepalive.data.PermissionType.PERMISSION_PACKAGE_USAGE_STATS
@@ -93,6 +96,10 @@ class MainActivity : ComponentActivity() {
                     val allPermissionsGranted by mainViewModel.allPermissionsGranted.observeAsState(false)
                     val navController: NavHostController = rememberNavController()
 
+                    // Get the configured apps count from AppDataStore
+                    val configuredAppsCount by AppDataStore.getConfiguredAppsCount(applicationContext)
+                        .collectAsState(initial = 0)
+
                     NavHost(navController = navController, startDestination = Screen.Home.route) {
                         composable(Screen.Home.route) {
                             MainLandingScreen(
@@ -105,6 +112,7 @@ class MainActivity : ComponentActivity() {
                                 onRequestPermissions = { requestNextRequiredPermission() },
                                 totalRequiredCount = mainViewModel.totalPermissionRequired,
                                 grantedCount = grantedPermissionCount,
+                                configuredAppsCount = configuredAppsCount,
                             )
                         }
                         composable(Screen.AppConfigs.route) {
@@ -226,6 +234,7 @@ fun MainLandingScreen(
     onRequestPermissions: () -> Unit,
     totalRequiredCount: Int,
     grantedCount: Int,
+    configuredAppsCount: Int,
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -314,8 +323,29 @@ fun MainLandingScreen(
                         ) {
                             Text("Configure Immortal Apps")
                         }
+
+                        // Display subtitle with appropriate text based on configured app count
+                        Text(
+                            text =
+                                if (configuredAppsCount == 0) {
+                                    "No app added to watch list"
+                                } else {
+                                    "Watching $configuredAppsCount apps"
+                                },
+                            style = MaterialTheme.typography.bodySmall,
+                            color =
+                                if (configuredAppsCount == 0) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    MaterialTheme.colorScheme.primary
+                                },
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(top = 2.dp),
+                        )
+
                         Button(
                             onClick = { navController.navigate(Screen.AppConfigs.route) },
+                            modifier = Modifier.padding(top = 8.dp),
                         ) {
                             Text("App Configurations")
                         }
