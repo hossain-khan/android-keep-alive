@@ -5,9 +5,11 @@ import android.content.Intent
 import android.os.IBinder
 import dev.hossain.keepalive.data.AppDataStore
 import dev.hossain.keepalive.data.SettingsRepository
+import dev.hossain.keepalive.data.PermissionType.PERMISSION_PACKAGE_USAGE_STATS
 import dev.hossain.keepalive.data.logging.AppActivityLogger
 import dev.hossain.keepalive.data.model.AppActivityLog
 import dev.hossain.keepalive.ui.screen.AppInfo
+import dev.hossain.keepalive.util.AppPermissions
 import dev.hossain.keepalive.util.AppConfig.DEFAULT_APP_CHECK_INTERVAL_MIN
 import dev.hossain.keepalive.util.AppConfig.DELAY_BETWEEN_MULTIPLE_APP_CHECKS_MS
 import dev.hossain.keepalive.util.AppLauncher
@@ -83,22 +85,43 @@ class WatchdogService : Service() {
             currentCheckInterval = appSettings.appCheckIntervalFlow.first()
 
             while (true) {
-                Timber.d("[Start ID: $serviceStartId] Current time: ${System.currentTimeMillis()} @ ${Date()}")
-                val appsList: List<AppInfo> = dataStore.data.first()
-
                 // Use the latest interval value that's being updated by the collector above
                 Timber.d("Scheduling next check using current interval: $currentCheckInterval minutes.")
                 delay(TimeUnit.MINUTES.toMillis(currentCheckInterval.toLong()))
 
-                // 👆🏽 Comment above first to disable configured delay 👆🏽
-                // - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                // For debug/development use smaller value see changes frequently
-                // delay(20_000L) // ⛔️ DO NOT COMMIT ⛔️
+                // Check for permission:
+                // This is crucial for the service's core functionality and to prevent crashes if the permission is revoked.
+                if (!AppPermissions.hasPermission(this@WatchdogService, PERMISSION_PACKAGE_USAGE_STATS)) {
+                    // Permission is missing. Inform user via notification and skip current monitoring cycle.
+                    Timber.w("PACKAGE_USAGE_STATS permission is missing. Skipping app checks and health check.")
+                    notificationHelper.updateNotification(
+                        NOTIFICATION_ID,
+                        "Permission Required",
+                        "Watchdog service needs Usage Stats permission to work. Tap to grant.",
+                    )
+                    continue // Skip the rest of this iteration
+                }
+
+                // Permission is granted. Ensure the notification reflects normal operation.
+                // This is important if the permission was just re-granted.
+                notificationHelper.updateNotification(
+                    NOTIFICATION_ID,
+                    "App Watchdog",
+                    "Monitoring your apps to keep it alive.",
+                )
+
+                Timber.d("[Start ID: $serviceStartId] Current time: ${System.currentTimeMillis()} @ ${Date()}")
+                val appsList: List<AppInfo> = dataStore.data.first()
 
                 if (appsList.isEmpty()) {
                     Timber.w("No apps configured yet. Skipping the check.")
                     continue
                 }
+
+                // 👆🏽 Comment above first to disable configured delay 👆🏽
+                // - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                // For debug/development use smaller value see changes frequently
+                // delay(20_000L) // ⛔️ DO NOT COMMIT ⛔️
 
                 val recentlyRunApps = RecentAppChecker.getRecentlyRunningAppStats(this@WatchdogService)
                 val shouldForceStart = appSettings.enableForceStartAppsFlow.first()
@@ -145,13 +168,12 @@ class WatchdogService : Service() {
                                 "Attempting to start it now. shouldForceStart=$shouldForceStart",
                         )
                         AppLauncher.openApp(this@WatchdogService, appInfo.packageName)
-                    } else {
-                        // If app is already running, send health check ping
-                        conditionallySendHealthCheck(appSettings)
                     }
 
                     delay(DELAY_BETWEEN_MULTIPLE_APP_CHECKS_MS)
                 }
+                // If app is already running or after attempts to start, send health check ping
+                conditionallySendHealthCheck(appSettings)
             }
         }
 
