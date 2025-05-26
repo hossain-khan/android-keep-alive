@@ -143,12 +143,13 @@ fun AppActivityLogScreen(
 @Composable
 fun CurrentSettingsCard(
     appCheckInterval: Int,
-    isForceStartAppsEnabled: Boolean
+    isForceStartAppsEnabled: Boolean,
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(
@@ -186,10 +187,12 @@ fun CurrentSettingsCard(
                 Text(
                     text = if (isForceStartAppsEnabled) "Enabled" else "Disabled",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (isForceStartAppsEnabled)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        Color.Gray,
+                    color =
+                        if (isForceStartAppsEnabled) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            Color.Gray
+                        },
                 )
             }
         }
