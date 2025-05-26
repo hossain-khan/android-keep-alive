@@ -72,59 +72,6 @@ fun AppActivityLogScreen(
             modifier = Modifier.padding(bottom = 8.dp),
         )
 
-        // Current Settings Information Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-        ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Text(
-                    text = "Current Settings",
-                    style = MaterialTheme.typography.titleMedium,
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        text = "Check Interval:",
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    Text(
-                        text = formatMinutesToHoursAndMinutes(appCheckInterval),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        text = "Force Start Apps:",
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    Text(
-                        text = if (isForceStartAppsEnabled) "Enabled" else "Disabled",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (isForceStartAppsEnabled)
-                            MaterialTheme.colorScheme.primary
-                        else
-                            Color.Gray,
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
         Text(
             text = "Recent app monitoring activity:",
             style = MaterialTheme.typography.bodyMedium,
@@ -161,6 +108,9 @@ fun AppActivityLogScreen(
                 CircularProgressIndicator()
             }
         } else if (logs.isEmpty()) {
+            // Show Settings Card even when no logs
+            CurrentSettingsCard(appCheckInterval, isForceStartAppsEnabled)
+
             Box(
                 contentAlignment = Alignment.Center,
                 modifier =
@@ -176,10 +126,71 @@ fun AppActivityLogScreen(
             }
         } else {
             LazyColumn {
+                // Add Settings Card as first item
+                item {
+                    CurrentSettingsCard(appCheckInterval, isForceStartAppsEnabled)
+                }
+
                 items(logs) { logEntry ->
                     ActivityLogItem(logEntry)
                     Divider()
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun CurrentSettingsCard(
+    appCheckInterval: Int,
+    isForceStartAppsEnabled: Boolean
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = "Current Settings",
+                style = MaterialTheme.typography.titleMedium,
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = "Check Interval:",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Text(
+                    text = formatMinutesToHoursAndMinutes(appCheckInterval),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = "Force Start Apps:",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Text(
+                    text = if (isForceStartAppsEnabled) "Enabled" else "Disabled",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (isForceStartAppsEnabled)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        Color.Gray,
+                )
             }
         }
     }
