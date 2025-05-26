@@ -2,7 +2,6 @@ package dev.hossain.keepalive
 
 import android.Manifest.permission.PACKAGE_USAGE_STATS
 import android.Manifest.permission.POST_NOTIFICATIONS
-import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -63,13 +62,13 @@ import dev.hossain.keepalive.data.PermissionType.PERMISSION_IGNORE_BATTERY_OPTIM
 import dev.hossain.keepalive.data.PermissionType.PERMISSION_PACKAGE_USAGE_STATS
 import dev.hossain.keepalive.data.PermissionType.PERMISSION_POST_NOTIFICATIONS
 import dev.hossain.keepalive.data.PermissionType.PERMISSION_SYSTEM_APPLICATION_OVERLAY
-import dev.hossain.keepalive.service.WatchdogService
 import dev.hossain.keepalive.ui.Screen
 import dev.hossain.keepalive.ui.screen.AppActivityLogScreen
 import dev.hossain.keepalive.ui.screen.AppConfigScreen
 import dev.hossain.keepalive.ui.screen.SettingsScreen
 import dev.hossain.keepalive.ui.theme.KeepAliveTheme
 import dev.hossain.keepalive.util.AppPermissions
+import dev.hossain.keepalive.util.ServiceManager
 import timber.log.Timber
 
 /**
@@ -127,7 +126,7 @@ class MainActivity : ComponentActivity() {
         }
 
         // Start the WatchdogService - this is required to monitor other apps and keep them alive.
-        startWatchdogService()
+        ServiceManager.startWatchdogService(this)
 
         requestPermissionLauncher =
             this.registerForActivityResult(
@@ -212,33 +211,6 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         updatePermissionGrantedStatus()
-    }
-
-    private fun startWatchdogService() {
-        if (!isServiceRunning(this, WatchdogService::class.java)) {
-            val serviceIntent = Intent(this, WatchdogService::class.java)
-            startForegroundService(serviceIntent)
-        } else {
-            Timber.d("WatchdogService is already running.")
-        }
-    }
-
-    @Suppress("DEPRECATION")
-    private fun isServiceRunning(
-        context: Context,
-        serviceClass: Class<*>,
-    ): Boolean {
-        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-
-        // DEPRECATED: `getRunningServices()` method is no longer available to third party applications.
-        // For backwards compatibility, it will still return the caller's own services.
-        // So, this method is still useful for detecting if your own services are running.
-        for (service in activityManager.getRunningServices(Int.MAX_VALUE)) {
-            if (serviceClass.name == service.service.className) {
-                return true
-            }
-        }
-        return false
     }
 }
 
