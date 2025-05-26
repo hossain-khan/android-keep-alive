@@ -50,4 +50,36 @@ class NotificationHelper(private val context: Context) {
             .setOngoing(true)
             .build()
     }
+
+    /**
+     * Updates an existing notification with a new title and content text.
+     *
+     * @param notificationId The ID of the notification to update.
+     * @param title The new title for the notification.
+     * @param contentText The new content text for the notification.
+     */
+    fun updateNotification(
+        notificationId: Int,
+        title: String,
+        contentText: String,
+    ) {
+        Timber.d("updateNotification() called with title: $title, contentText: $contentText")
+
+        val notificationIntent = Intent(context, MainActivity::class.java)
+        val pendingIntent =
+            PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
+
+        val newNotification =
+            NotificationCompat.Builder(context, CHANNEL_ID)
+                .setContentTitle(title)
+                .setContentText(contentText)
+                .setSmallIcon(R.drawable.baseline_radar_24)
+                .setContentIntent(pendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setOngoing(true)
+                .build()
+
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(notificationId, newNotification)
+    }
 }

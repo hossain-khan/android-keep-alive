@@ -5,9 +5,11 @@ import android.content.Intent
 import android.os.IBinder
 import dev.hossain.keepalive.data.AppDataStore
 import dev.hossain.keepalive.data.SettingsRepository
+import dev.hossain.keepalive.data.PermissionType.PERMISSION_PACKAGE_USAGE_STATS
 import dev.hossain.keepalive.data.logging.AppActivityLogger
 import dev.hossain.keepalive.data.model.AppActivityLog
 import dev.hossain.keepalive.ui.screen.AppInfo
+import dev.hossain.keepalive.util.AppPermissions
 import dev.hossain.keepalive.util.AppConfig.DEFAULT_APP_CHECK_INTERVAL_MIN
 import dev.hossain.keepalive.util.AppConfig.DELAY_BETWEEN_MULTIPLE_APP_CHECKS_MS
 import dev.hossain.keepalive.util.AppLauncher
@@ -100,57 +102,76 @@ class WatchdogService : Service() {
                     continue
                 }
 
-                val recentlyRunApps = RecentAppChecker.getRecentlyRunningAppStats(this@WatchdogService)
-                val shouldForceStart = appSettings.enableForceStartAppsFlow.first()
+                // Check for PACKAGE_USAGE_STATS permission. This is crucial for the service's core functionality.
+                // Without this permission, the service cannot check app states and might crash if the permission is revoked.
+                if (AppPermissions.hasPermission(this@WatchdogService, PERMISSION_PACKAGE_USAGE_STATS)) {
+                    // Restore default notification content when the permission is granted or has been re-granted.
+                    notificationHelper.updateNotification(
+                        NOTIFICATION_ID,
+                        "App Watchdog",
+                        "Monitoring your apps to keep it alive.",
+                    )
 
-                if (shouldForceStart) {
-                    Timber.d("Force start apps settings is enabled.")
-                } else {
-                    Timber.d("Force start apps settings is disabled.")
-                }
+                    val recentlyRunApps = RecentAppChecker.getRecentlyRunningAppStats(this@WatchdogService)
+                    val shouldForceStart = appSettings.enableForceStartAppsFlow.first()
 
-                appsList.forEach { appInfo ->
-                    val isAppRunningRecently = RecentAppChecker.isAppRunningRecently(recentlyRunApps, appInfo.packageName)
-                    val needsToStart = !isAppRunningRecently || shouldForceStart
-
-                    // Log app activity regardless of whether the app needs to be started
-                    val timestamp = System.currentTimeMillis()
-                    val message =
-                        if (needsToStart) {
-                            if (shouldForceStart) {
-                                "Force starting app regardless of running state"
-                            } else {
-                                "App was not running recently, attempting to start"
-                            }
-                        } else {
-                            "App is running normally, no action needed"
-                        }
-
-                    // Create and save the log entry
-                    val activityLog =
-                        AppActivityLog(
-                            packageId = appInfo.packageName,
-                            appName = appInfo.appName,
-                            wasRunningRecently = isAppRunningRecently,
-                            wasAttemptedToStart = needsToStart,
-                            timestamp = timestamp,
-                            forceStartEnabled = shouldForceStart,
-                            message = message,
-                        )
-                    activityLogger.logAppActivity(activityLog)
-
-                    if (needsToStart) {
-                        Timber.d(
-                            "[Start ID: $serviceStartId] ${appInfo.appName} app is not running. " +
-                                "Attempting to start it now. shouldForceStart=$shouldForceStart",
-                        )
-                        AppLauncher.openApp(this@WatchdogService, appInfo.packageName)
+                    if (shouldForceStart) {
+                        Timber.d("Force start apps settings is enabled.")
                     } else {
-                        // If app is already running, send health check ping
-                        conditionallySendHealthCheck(appSettings)
+                        Timber.d("Force start apps settings is disabled.")
                     }
 
-                    delay(DELAY_BETWEEN_MULTIPLE_APP_CHECKS_MS)
+                    appsList.forEach { appInfo ->
+                        val isAppRunningRecently = RecentAppChecker.isAppRunningRecently(recentlyRunApps, appInfo.packageName)
+                        val needsToStart = !isAppRunningRecently || shouldForceStart
+
+                        // Log app activity regardless of whether the app needs to be started
+                        val timestamp = System.currentTimeMillis()
+                        val message =
+                            if (needsToStart) {
+                                if (shouldForceStart) {
+                                    "Force starting app regardless of running state"
+                                } else {
+                                    "App was not running recently, attempting to start"
+                                }
+                            } else {
+                                "App is running normally, no action needed"
+                            }
+
+                        // Create and save the log entry
+                        val activityLog =
+                            AppActivityLog(
+                                packageId = appInfo.packageName,
+                                appName = appInfo.appName,
+                                wasRunningRecently = isAppRunningRecently,
+                                wasAttemptedToStart = needsToStart,
+                                timestamp = timestamp,
+                                forceStartEnabled = shouldForceStart,
+                                message = message,
+                            )
+                        activityLogger.logAppActivity(activityLog)
+
+                        if (needsToStart) {
+                            Timber.d(
+                                "[Start ID: $serviceStartId] ${appInfo.appName} app is not running. " +
+                                    "Attempting to start it now. shouldForceStart=$shouldForceStart",
+                            )
+                            AppLauncher.openApp(this@WatchdogService, appInfo.packageName)
+                        }
+
+                        delay(DELAY_BETWEEN_MULTIPLE_APP_CHECKS_MS)
+                    }
+                    // If app is already running or after attempts to start, send health check ping
+                    conditionallySendHealthCheck(appSettings)
+                } else {
+                    Timber.w("PACKAGE_USAGE_STATS permission is missing. Skipping app checks.")
+                    // Inform the user about the missing critical permission via the notification.
+                    // This guides the user to grant the permission for the service to function correctly.
+                    notificationHelper.updateNotification(
+                        NOTIFICATION_ID,
+                        "Permission Required",
+                        "Watchdog service needs Usage Stats permission to work. Tap to grant.",
+                    )
                 }
             }
         }
