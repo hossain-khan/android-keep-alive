@@ -9,9 +9,16 @@ import dev.hossain.keepalive.ui.screen.AppListSerializer
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+/**
+ * Provides a DataStore for persisting a list of `AppInfo` objects.
+ */
 object AppDataStore {
     lateinit var dataStore: DataStore<List<AppInfo>>
 
+    /**
+     * Initializes and returns the DataStore instance.
+     * If already initialized, returns the existing instance.
+     */
     fun store(context: Context): DataStore<List<AppInfo>> {
         if (!::dataStore.isInitialized) {
             dataStore = createDataStore(context)
@@ -20,6 +27,9 @@ object AppDataStore {
         return dataStore
     }
 
+    /**
+     * Creates a new DataStore instance for storing `AppInfo` objects.
+     */
     private fun createDataStore(context: Context): DataStore<List<AppInfo>> {
         return DataStoreFactory.create(
             serializer = AppListSerializer,
