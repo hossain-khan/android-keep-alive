@@ -29,6 +29,17 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Service that keeps an eye on the apps configured by user and restarts if it's killed.
+ *
+ * IMPORTANT PERMISSION REQUIREMENTS:
+ * For reliable operation, especially on Android 10 (API 29) and above, this service relies on:
+ * 1. `android.permission.PACKAGE_USAGE_STATS`: To accurately check if a monitored app is running.
+ *    The user must grant this permission through system settings.
+ * 2. `android.permission.SYSTEM_ALERT_WINDOW`: To allow the service to launch apps from the background.
+ *    The user must grant this permission through system settings.
+ * The app should guide the user to grant these permissions if they are not already available.
+ *
+ * This service runs as a foreground service to ensure it's not killed by the system.
+ * It also requires `android.permission.POST_NOTIFICATIONS` on Android 13 (API 33)+ for its foreground notification.
  */
 class WatchdogService : Service() {
     companion object {
@@ -100,7 +111,8 @@ class WatchdogService : Service() {
                     continue
                 }
 
-                val recentlyRunApps = RecentAppChecker.getRecentlyRunningAppStats(this@WatchdogService)
+                val checkIntervalMillis = TimeUnit.MINUTES.toMillis(currentCheckInterval.toLong())
+                val recentlyRunApps = RecentAppChecker.getRecentlyRunningAppStats(this@WatchdogService, checkIntervalMillis)
                 val shouldForceStart = appSettings.enableForceStartAppsFlow.first()
 
                 if (shouldForceStart) {
