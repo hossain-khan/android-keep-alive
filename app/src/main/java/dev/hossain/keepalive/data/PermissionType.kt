@@ -1,7 +1,7 @@
 package dev.hossain.keepalive.data
 
 /**
- * Only contains the permission that are requested at runtime.
+ * Defines the types of runtime permissions that the application may request from the user.
  *
  * See additional permissions in AndroidManifest.xml
  *
