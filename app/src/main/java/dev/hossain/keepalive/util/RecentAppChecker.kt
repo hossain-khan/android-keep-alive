@@ -10,6 +10,12 @@ import java.util.TreeMap
 /**
  * Utility object to check the recent usage of apps on the device.
  *
+ * IMPORTANT PERMISSION REQUIREMENT:
+ * This utility relies on the `android.permission.PACKAGE_USAGE_STATS` permission,
+ * which must be granted by the user through system settings. Without this permission,
+ * methods like `getRecentlyRunningAppStats` will likely return empty or unreliable data.
+ * The application should ensure this permission is requested and granted.
+ *
  * This object provides methods to determine if an app has been running recently,
  * retrieve recent app usage statistics, and check if an app is currently running in the foreground.
  */
@@ -45,7 +51,7 @@ object RecentAppChecker {
             context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
 
         val endTime = System.currentTimeMillis()
-        val beginTime = endTime - 1000 * 1000
+        val beginTime = endTime - timeSinceMs
         val appList =
             usageStatsManager.queryUsageStats(
                 UsageStatsManager.INTERVAL_BEST,
@@ -53,25 +59,12 @@ object RecentAppChecker {
                 endTime,
             )
 
-        if (appList != null && appList.isNotEmpty()) {
-            val sortedMap: SortedMap<Long, UsageStats> = TreeMap()
-            for (usageStats in appList) {
-                sortedMap[usageStats.lastTimeUsed] = usageStats
-            }
-
-            // Return only the last 10 items from the sorted map
-            val usageStats =
-                sortedMap.entries
-                    .reversed() // Reverse the order to get the last items first
-                    .take(5) // Take most recent 5 items
-                    .map { it.value } // Extract the UsageStats objects
-                    .toList()
-
+        if (!appList.isNullOrEmpty()) {
             Timber.d(
-                "getRecentlyRunningAppStats: Found ${sortedMap.size} apps running " +
-                    "in last $timeSinceMs ms = ${usageStats.map { it.packageName + " " + it.lastTimeUsed }}",
+                "getRecentlyRunningAppStats: Found ${appList.size} app events " +
+                    "in last $timeSinceMs ms. First few: ${appList.take(5).joinToString { it.packageName + " (lastTimeUsed: " + it.lastTimeUsed + ")" }}",
             )
-            return usageStats
+            return appList
         }
         return emptyList()
     }
