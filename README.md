@@ -72,3 +72,48 @@ Most of the permissions listed above are discouraged and or restricted. Please b
 ---
 > \* = _The app uses Android's standard explicit intent to start app using it's app package-id. Intent is sent to Android OS re-run the app, however, it's up to Android OS to run the app. Something to keep in mind._
 ---
+
+## 🏗️ Architecture & Development
+
+### Tech Stack
+- **Language**: Kotlin
+- **UI**: Jetpack Compose with Material3
+- **Architecture**: MVVM with Repository pattern
+- **Storage**: DataStore Preferences
+- **Background Processing**: Foreground Services
+- **Build System**: Gradle with Kotlin DSL
+- **Code Quality**: ktlint formatting
+
+### Project Structure
+```
+app/src/main/java/dev/hossain/keepalive/
+├── MainActivity.kt                 # Main entry point with Compose navigation
+├── MainViewModel.kt               # Main screen state management
+├── KeepAliveApplication.kt        # Application class setup
+├── service/
+│   └── WatchdogService.kt         # Core monitoring service
+├── ui/screen/                     # Compose UI screens
+│   ├── AppSelectionScreen.kt      # App selection interface
+│   └── AppAdditionalConfigs.kt    # Settings configuration
+├── data/                          # Data layer
+│   ├── SettingsRepository.kt      # Settings management
+│   ├── AppDataStore.kt           # App data storage
+│   └── model/                    # Data models
+└── util/                         # Utility classes
+```
+
+### Development Setup
+1. **Prerequisites**: Android Studio, JDK 21+
+2. **Build**: `./gradlew :app:assembleDebug`
+3. **Lint**: `./gradlew ktlintCheck`
+4. **Format**: `./gradlew ktlintFormat`
+
+### Key Design Decisions
+- **No API 35 Target**: Foreground service restrictions break app functionality
+- **Foreground Service Required**: Ensures continuous monitoring
+- **DataStore over SharedPreferences**: Modern reactive data storage
+- **Compose Navigation**: Single-activity architecture
+
+For detailed development guidelines, see `.copilot-instructions.md`.
+
+---
