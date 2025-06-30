@@ -70,10 +70,26 @@ android {
                     }
                 storeFile = ciKeystore ?: file(keystoreFile)
             }
-            // Use CI secrets if available, otherwise fall back to properties
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: props["KEYSTORE_PASSWORD"] as String?
-            keyAlias = System.getenv("KEY_ALIAS") ?: props["KEY_ALIAS"] as String?
-            keyPassword = System.getenv("KEY_PASSWORD") ?: props["KEY_PASSWORD"] as String?
+            val isCI = System.getenv("CI") != null
+            val resolvedStorePassword = System.getenv("KEYSTORE_PASSWORD") ?: props["KEYSTORE_PASSWORD"] as String?
+            val resolvedKeyAlias = System.getenv("KEY_ALIAS") ?: props["KEY_ALIAS"] as String?
+            val resolvedKeyPassword = System.getenv("KEY_PASSWORD") ?: props["KEY_PASSWORD"] as String?
+            if (isCI) {
+                if (resolvedStorePassword.isNullOrBlank() || resolvedKeyAlias.isNullOrBlank() || resolvedKeyPassword.isNullOrBlank()) {
+                    throw GradleException(
+                        "[SigningConfig] CI build requires KEYSTORE_PASSWORD, KEY_ALIAS, and KEY_PASSWORD secrets to be set. " +
+                            "Fallback to template/debug config is not allowed in CI.",
+                    )
+                }
+            }
+            // Debug print for troubleshooting
+            println("🔒 [SigningConfig] storeFile: ${storeFile?.path}")
+            println("🔒 [SigningConfig] keyAlias: $resolvedKeyAlias")
+            println("🔒 [SigningConfig] storePassword: ${if (resolvedStorePassword.isNullOrBlank()) "(empty)" else "***"}")
+            println("🔒 [SigningConfig] keyPassword: ${if (resolvedKeyPassword.isNullOrBlank()) "(empty)" else "***"}")
+            storePassword = resolvedStorePassword
+            keyAlias = resolvedKeyAlias
+            keyPassword = resolvedKeyPassword
         }
     }
 
