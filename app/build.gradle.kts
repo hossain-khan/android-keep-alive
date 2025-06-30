@@ -62,11 +62,18 @@ android {
             }
             val keystoreFile = props["KEYSTORE_FILE"] as String?
             if (!keystoreFile.isNullOrBlank()) {
-                storeFile = file(keystoreFile)
+                // If running in CI, use the CI-provided keystore path
+                val ciKeystore =
+                    System.getenv("CI")?.let {
+                        val ciKeystorePath = rootProject.file("keystore/keep-alive.keystore")
+                        if (ciKeystorePath.exists()) ciKeystorePath else null
+                    }
+                storeFile = ciKeystore ?: file(keystoreFile)
             }
-            storePassword = props["KEYSTORE_PASSWORD"] as String?
-            keyAlias = props["KEY_ALIAS"] as String?
-            keyPassword = props["KEY_PASSWORD"] as String?
+            // Use CI secrets if available, otherwise fall back to properties
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: props["KEYSTORE_PASSWORD"] as String?
+            keyAlias = System.getenv("KEY_ALIAS") ?: props["KEY_ALIAS"] as String?
+            keyPassword = System.getenv("KEY_PASSWORD") ?: props["KEY_PASSWORD"] as String?
         }
     }
 
