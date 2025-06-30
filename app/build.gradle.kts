@@ -76,7 +76,10 @@ android {
             val resolvedKeyPassword = System.getenv("KEY_PASSWORD") ?: props["KEY_PASSWORD"] as String?
             if (isCI) {
                 if (resolvedStorePassword.isNullOrBlank() || resolvedKeyAlias.isNullOrBlank() || resolvedKeyPassword.isNullOrBlank()) {
-                    throw GradleException("[SigningConfig] CI build requires KEYSTORE_PASSWORD, KEY_ALIAS, and KEY_PASSWORD secrets to be set. Fallback to template/debug config is not allowed in CI.")
+                    throw GradleException(
+                        "[SigningConfig] CI build requires KEYSTORE_PASSWORD, KEY_ALIAS, and KEY_PASSWORD secrets to be set. " +
+                            "Fallback to template/debug config is not allowed in CI.",
+                    )
                 }
             }
             // Debug print for troubleshooting
