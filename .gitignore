@@ -38,3 +38,5 @@ google-services.json
 
 .DS_Store
 secret.properties
+keystore-test-local/
+test-local-keystore-signing.sh
