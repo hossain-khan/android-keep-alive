@@ -63,7 +63,9 @@ fun AppActivityLogScreen(
     // Initialize SettingsRepository to get current settings
     val settingsRepository = remember { SettingsRepository(context) }
     val appCheckInterval by settingsRepository.appCheckIntervalFlow.collectAsState(initial = DEFAULT_APP_CHECK_INTERVAL_MIN)
-    val isForceStartAppsEnabled by settingsRepository.enableForceStartAppsFlow.collectAsState(initial = false)
+    val isForceStartAppsEnabled by settingsRepository.enableForceStartAppsFlow.collectAsState(
+        initial = false,
+    )
 
     Scaffold(
         topBar = {
@@ -73,82 +75,84 @@ fun AppActivityLogScreen(
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
                         )
                     }
-                }
+                },
             )
-        }
+        },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(16.dp),
         ) {
             // Header subtitle
             Text(
-            text = "Recent app monitoring activity:",
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.Gray,
-        )
+                text = "Recent app monitoring activity:",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray,
+            )
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        // Clear logs button
-        Button(
-            onClick = {
-                isLoading.value = true
-                coroutineScope.launch {
-                    activityLogger.clearLogs()
-                    isLoading.value = false
-                }
-            },
-            enabled = !isLoading.value && logs.isNotEmpty(),
-            modifier = Modifier.align(Alignment.End),
-        ) {
-            Text("Clear Logs")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        if (isLoading.value) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+            // Clear logs button
+            Button(
+                onClick = {
+                    isLoading.value = true
+                    coroutineScope.launch {
+                        activityLogger.clearLogs()
+                        isLoading.value = false
+                    }
+                },
+                enabled = !isLoading.value && logs.isNotEmpty(),
+                modifier = Modifier.align(Alignment.End),
             ) {
-                CircularProgressIndicator()
+                Text("Clear Logs")
             }
-        } else if (logs.isEmpty()) {
-            // Show Settings Card even when no logs
-            CurrentSettingsCard(appCheckInterval, isForceStartAppsEnabled)
 
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp),
-            ) {
-                Text(
-                    text = "No activity logs yet. Logs will appear after the watchdog service checks monitored apps.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray,
-                )
-            }
-        } else {
-            LazyColumn {
-                // Add Settings Card as first item
-                item {
-                    CurrentSettingsCard(appCheckInterval, isForceStartAppsEnabled)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (isLoading.value) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                ) {
+                    CircularProgressIndicator()
                 }
+            } else if (logs.isEmpty()) {
+                // Show Settings Card even when no logs
+                CurrentSettingsCard(appCheckInterval, isForceStartAppsEnabled)
 
-                items(logs) { logEntry ->
-                    ActivityLogItem(logEntry)
-                    Divider()
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                ) {
+                    Text(
+                        text = "No activity logs yet. Logs will appear after the watchdog service checks monitored apps.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray,
+                    )
+                }
+            } else {
+                LazyColumn {
+                    // Add Settings Card as first item
+                    item {
+                        CurrentSettingsCard(appCheckInterval, isForceStartAppsEnabled)
+                    }
+
+                    items(logs) { logEntry ->
+                        ActivityLogItem(logEntry)
+                        Divider()
+                    }
                 }
             }
         }

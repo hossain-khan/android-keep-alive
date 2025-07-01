@@ -60,7 +60,9 @@ fun AppConfigScreen(
 
     // Reading DataStore values
     val appCheckInterval by settingsRepository.appCheckIntervalFlow.collectAsState(initial = DEFAULT_APP_CHECK_INTERVAL_MIN)
-    val isForceStartAppsEnabled by settingsRepository.enableForceStartAppsFlow.collectAsState(initial = false)
+    val isForceStartAppsEnabled by settingsRepository.enableForceStartAppsFlow.collectAsState(
+        initial = false,
+    )
     val isHealthCheckEnabled by settingsRepository.enableHealthCheckFlow.collectAsState(initial = false)
     val healthCheckUUID by settingsRepository.healthCheckUUIDFlow.collectAsState(initial = "")
 
@@ -90,287 +92,288 @@ fun AppConfigScreen(
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
                         )
                     }
-                }
+                },
             )
-        }
+        },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState())
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
         ) {
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // App Check Interval Setting
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(text = "App Check Interval")
-            Text(text = formatMinutesToHoursAndMinutes(appCheckIntervalValue.toInt()))
-        }
-        Text(
-            text =
-                """
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // App Check Interval Setting
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(text = "App Check Interval")
+                Text(text = formatMinutesToHoursAndMinutes(appCheckIntervalValue.toInt()))
+            }
+            Text(
+                text =
+                    """
             |This app will check if configured apps have been recently used or opened.`.
             |If not, it will re-start those apps to foreground so that the app and it's services can run again.
-                """.trimMargin(),
-            style = MaterialTheme.typography.bodySmall,
-            color = Color.Gray,
-        )
-        Slider(
-            value = appCheckIntervalValue,
-            onValueChange = { appCheckIntervalValue = it },
-            valueRange = MIN_APP_CHECK_INTERVAL_SLIDER.toFloat()..MAX_APP_CHECK_INTERVAL_SLIDER.toFloat(),
-            steps = (MAX_APP_CHECK_INTERVAL_SLIDER - MIN_APP_CHECK_INTERVAL_SLIDER) / APP_CHECK_INTERVAL_STEP - 1,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-            onValueChangeFinished = {
-                // Save the value when the user stops dragging the slider
-                coroutineScope.launch {
-                    val newInterval = appCheckIntervalValue.toInt()
-                    // Only restart if the interval value has actually changed
-                    if (newInterval != appCheckInterval) {
-                        settingsRepository.saveAppCheckInterval(newInterval)
-                        // Restart the WatchdogService to apply the new interval
-                        ServiceManager.restartWatchdogService(context)
-                    }
-                }
-            },
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Enable Force Start Apps Setting
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(
-                checked = isForceStartAppsEnabledValue,
-                onCheckedChange = {
-                    isForceStartAppsEnabledValue = it
+                    """.trimMargin(),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray,
+            )
+            Slider(
+                value = appCheckIntervalValue,
+                onValueChange = { appCheckIntervalValue = it },
+                valueRange = MIN_APP_CHECK_INTERVAL_SLIDER.toFloat()..MAX_APP_CHECK_INTERVAL_SLIDER.toFloat(),
+                steps = (MAX_APP_CHECK_INTERVAL_SLIDER - MIN_APP_CHECK_INTERVAL_SLIDER) / APP_CHECK_INTERVAL_STEP - 1,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                onValueChangeFinished = {
+                    // Save the value when the user stops dragging the slider
                     coroutineScope.launch {
-                        settingsRepository.saveEnableForceStartApps(it)
+                        val newInterval = appCheckIntervalValue.toInt()
+                        // Only restart if the interval value has actually changed
+                        if (newInterval != appCheckInterval) {
+                            settingsRepository.saveAppCheckInterval(newInterval)
+                            // Restart the WatchdogService to apply the new interval
+                            ServiceManager.restartWatchdogService(context)
+                        }
                     }
                 },
             )
-            Column {
-                Text(text = "Enable Force Start Apps")
-                Text(
-                    text =
-                        """
-                        |When enabled, the app will automatically start selected apps, even if they might have been running recently.
-                        |This will ensure that the selected app is always attempted to be started at the interval specified above.
-                        """.trimMargin(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
-                )
-            }
-        }
 
-        Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-        // Enable Health Check Setting
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(
-                checked = isHealthCheckEnabledValue,
-                onCheckedChange = {
-                    isHealthCheckEnabledValue = it
-                    coroutineScope.launch {
-                        settingsRepository.saveEnableHealthCheck(it)
-                    }
-                },
-            )
-            Column {
-                Text(text = "Enable Health Check")
-                Text(
-                    text =
-                        """
-                        |When enabled, the app will send a ping to the server with the UUID. Ping sent to `https://hc-ping.com/{UUID}`.
-                        |Ping will be sent at specified interval and only when your selected app(s) are validated to be alive or restart by this app.
-                        """.trimMargin(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Health Check Ping UUID (only enabled when healthcheck is enabled)
-        if (isHealthCheckEnabledValue) {
-            Column {
-                OutlinedTextField(
-                    value = healthCheckUUIDValue,
-                    onValueChange = {
-                        healthCheckUUIDValue = it
-                        if (isValidUUID(it)) {
-                            healthCheckUUIDError = null
-                            coroutineScope.launch {
-                                settingsRepository.saveHealthCheckUUID(it)
-                            }
-                        } else {
-                            healthCheckUUIDError = "Invalid UUID format, please copy the UUID from healthchecks.io"
+            // Enable Force Start Apps Setting
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = isForceStartAppsEnabledValue,
+                    onCheckedChange = {
+                        isForceStartAppsEnabledValue = it
+                        coroutineScope.launch {
+                            settingsRepository.saveEnableForceStartApps(it)
                         }
                     },
-                    label = { Text("Health Check Ping UUID") },
-                    placeholder = { Text("UUID format: xyz-mn-ab-pq-hijkl") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    isError = healthCheckUUIDError != null,
                 )
-                if (healthCheckUUIDError != null) {
+                Column {
+                    Text(text = "Enable Force Start Apps")
                     Text(
-                        text = healthCheckUUIDError ?: "",
-                        color = MaterialTheme.colorScheme.error,
+                        text =
+                            """
+                        |When enabled, the app will automatically start selected apps, even if they might have been running recently.
+                        |This will ensure that the selected app is always attempted to be started at the interval specified above.
+                            """.trimMargin(),
                         style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(start = 16.dp, top = 4.dp),
+                        color = Color.Gray,
                     )
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-        // Enable Remote Logging Setting
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(
-                checked = isRemoteLoggingEnabledValue,
-                onCheckedChange = {
-                    isRemoteLoggingEnabledValue = it
-                    coroutineScope.launch {
-                        settingsRepository.saveEnableRemoteLogging(it)
-                    }
-                },
-            )
-
-            Column {
-                Text(text = "Enable Remote Logging")
-                Text(
-                    text =
-                        """
-                        |When enabled, the app will send logs to Airtable using the provided token and table URL.
-                        |Account required from airtable.com
-                        |Additional guide is available at bit.ly/keep-alive-readme
-                        """.trimMargin(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Airtable Token (only enabled when remote logging is enabled)
-        if (isRemoteLoggingEnabledValue) {
-            Column {
-                OutlinedTextField(
-                    value = airtableTokenValue,
-                    onValueChange = {
-                        airtableTokenValue = it
-                        if (it.isNotBlank()) {
-                            airtableTokenError = null
-                            coroutineScope.launch {
-                                settingsRepository.saveAirtableToken(it)
-                            }
-                        } else {
-                            airtableTokenError = "Airtable token cannot be empty"
+            // Enable Health Check Setting
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = isHealthCheckEnabledValue,
+                    onCheckedChange = {
+                        isHealthCheckEnabledValue = it
+                        coroutineScope.launch {
+                            settingsRepository.saveEnableHealthCheck(it)
                         }
                     },
-                    label = { Text("Airtable Token") },
-                    placeholder = { Text("Enter your Airtable token") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    isError = airtableTokenError != null,
                 )
-                if (airtableTokenError != null) {
+                Column {
+                    Text(text = "Enable Health Check")
                     Text(
-                        text = airtableTokenError ?: "",
-                        color = MaterialTheme.colorScheme.error,
+                        text =
+                            """
+                        |When enabled, the app will send a ping to the server with the UUID. Ping sent to `https://hc-ping.com/{UUID}`.
+                        |Ping will be sent at specified interval and only when your selected app(s) are validated to be alive or restart by this app.
+                            """.trimMargin(),
                         style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(start = 16.dp, top = 4.dp),
+                        color = Color.Gray,
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Airtable Data URL (only enabled when remote logging is enabled)
-            Column {
-                OutlinedTextField(
-                    value = airtableDataUrlValue,
-                    onValueChange = {
-                        airtableDataUrlValue = it
-                        if (isValidUrl(it)) {
-                            airtableDataUrlError = null
-                            coroutineScope.launch {
-                                settingsRepository.saveAirtableDataUrl(it)
+            // Health Check Ping UUID (only enabled when healthcheck is enabled)
+            if (isHealthCheckEnabledValue) {
+                Column {
+                    OutlinedTextField(
+                        value = healthCheckUUIDValue,
+                        onValueChange = {
+                            healthCheckUUIDValue = it
+                            if (isValidUUID(it)) {
+                                healthCheckUUIDError = null
+                                coroutineScope.launch {
+                                    settingsRepository.saveHealthCheckUUID(it)
+                                }
+                            } else {
+                                healthCheckUUIDError =
+                                    "Invalid UUID format, please copy the UUID from healthchecks.io"
                             }
-                        } else {
-                            airtableDataUrlError = "Invalid URL format"
+                        },
+                        label = { Text("Health Check Ping UUID") },
+                        placeholder = { Text("UUID format: xyz-mn-ab-pq-hijkl") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = healthCheckUUIDError != null,
+                    )
+                    if (healthCheckUUIDError != null) {
+                        Text(
+                            text = healthCheckUUIDError ?: "",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(start = 16.dp, top = 4.dp),
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Enable Remote Logging Setting
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = isRemoteLoggingEnabledValue,
+                    onCheckedChange = {
+                        isRemoteLoggingEnabledValue = it
+                        coroutineScope.launch {
+                            settingsRepository.saveEnableRemoteLogging(it)
                         }
                     },
-                    label = { Text("Airtable Data URL") },
-                    placeholder = { Text("https://api.airtable.com/v0/{baseId}/{table}") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    isError = airtableDataUrlError != null,
                 )
-                if (airtableDataUrlError != null) {
+
+                Column {
+                    Text(text = "Enable Remote Logging")
                     Text(
-                        text = airtableDataUrlError ?: "",
-                        color = MaterialTheme.colorScheme.error,
+                        text =
+                            """
+                        |When enabled, the app will send logs to Airtable using the provided token and table URL.
+                        |Account required from airtable.com
+                        |Additional guide is available at bit.ly/keep-alive-readme
+                            """.trimMargin(),
                         style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(start = 16.dp, top = 4.dp),
+                        color = Color.Gray,
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Airtable Token (only enabled when remote logging is enabled)
+            if (isRemoteLoggingEnabledValue) {
+                Column {
+                    OutlinedTextField(
+                        value = airtableTokenValue,
+                        onValueChange = {
+                            airtableTokenValue = it
+                            if (it.isNotBlank()) {
+                                airtableTokenError = null
+                                coroutineScope.launch {
+                                    settingsRepository.saveAirtableToken(it)
+                                }
+                            } else {
+                                airtableTokenError = "Airtable token cannot be empty"
+                            }
+                        },
+                        label = { Text("Airtable Token") },
+                        placeholder = { Text("Enter your Airtable token") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = airtableTokenError != null,
+                    )
+                    if (airtableTokenError != null) {
+                        Text(
+                            text = airtableTokenError ?: "",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(start = 16.dp, top = 4.dp),
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Airtable Data URL (only enabled when remote logging is enabled)
+                Column {
+                    OutlinedTextField(
+                        value = airtableDataUrlValue,
+                        onValueChange = {
+                            airtableDataUrlValue = it
+                            if (isValidUrl(it)) {
+                                airtableDataUrlError = null
+                                coroutineScope.launch {
+                                    settingsRepository.saveAirtableDataUrl(it)
+                                }
+                            } else {
+                                airtableDataUrlError = "Invalid URL format"
+                            }
+                        },
+                        label = { Text("Airtable Data URL") },
+                        placeholder = { Text("https://api.airtable.com/v0/{baseId}/{table}") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = airtableDataUrlError != null,
+                    )
+                    if (airtableDataUrlError != null) {
+                        Text(
+                            text = airtableDataUrlError ?: "",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(start = 16.dp, top = 4.dp),
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Done Button
+            Button(
+                onClick = { navController.popBackStack() },
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            ) {
+                Text("Done")
+            }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Done Button
-        Button(
-            onClick = { navController.popBackStack() },
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-        ) {
-            Text("Done")
+        LaunchedEffect(appCheckInterval) {
+            appCheckIntervalValue = appCheckInterval.toFloat()
         }
-    }
 
-    LaunchedEffect(appCheckInterval) {
-        appCheckIntervalValue = appCheckInterval.toFloat()
-    }
+        LaunchedEffect(isForceStartAppsEnabled) {
+            isForceStartAppsEnabledValue = isForceStartAppsEnabled
+        }
 
-    LaunchedEffect(isForceStartAppsEnabled) {
-        isForceStartAppsEnabledValue = isForceStartAppsEnabled
-    }
+        LaunchedEffect(isHealthCheckEnabled) {
+            isHealthCheckEnabledValue = isHealthCheckEnabled
+        }
 
-    LaunchedEffect(isHealthCheckEnabled) {
-        isHealthCheckEnabledValue = isHealthCheckEnabled
-    }
+        LaunchedEffect(healthCheckUUID) {
+            healthCheckUUIDValue = healthCheckUUID
+        }
 
-    LaunchedEffect(healthCheckUUID) {
-        healthCheckUUIDValue = healthCheckUUID
-    }
+        // New LaunchedEffects for Remote Logging settings
+        LaunchedEffect(isRemoteLoggingEnabled) {
+            isRemoteLoggingEnabledValue = isRemoteLoggingEnabled
+        }
 
-    // New LaunchedEffects for Remote Logging settings
-    LaunchedEffect(isRemoteLoggingEnabled) {
-        isRemoteLoggingEnabledValue = isRemoteLoggingEnabled
-    }
+        LaunchedEffect(airtableToken) {
+            airtableTokenValue = airtableToken
+        }
 
-    LaunchedEffect(airtableToken) {
-        airtableTokenValue = airtableToken
-    }
-
-    LaunchedEffect(airtableDataUrl) {
-        airtableDataUrlValue = airtableDataUrl
-    }
+        LaunchedEffect(airtableDataUrl) {
+            airtableDataUrlValue = airtableDataUrl
         }
     }
 }
