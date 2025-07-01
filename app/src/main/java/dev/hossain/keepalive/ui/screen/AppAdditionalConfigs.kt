@@ -104,12 +104,8 @@ fun AppConfigScreen(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-        Text(
-            text = "App Configurations",
-            style = MaterialTheme.typography.headlineSmall,
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-
+        Spacer(modifier = Modifier.height(16.dp))
+        
         // App Check Interval Setting
         Row(
             modifier = Modifier.fillMaxWidth(),

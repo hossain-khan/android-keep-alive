@@ -152,7 +152,6 @@ fun AppActivityLogScreen(
                 }
             }
         }
-        }
     }
 }
 
