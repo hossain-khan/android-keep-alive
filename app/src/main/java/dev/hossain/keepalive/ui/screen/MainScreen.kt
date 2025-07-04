@@ -139,20 +139,6 @@ fun MainLandingScreen(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Text(
-                            text = "Welcome to Keep Alive!",
-                            style = MaterialTheme.typography.headlineSmall,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(bottom = 8.dp),
-                        )
-
-                        Text(
-                            text = "Use the navigation bar below to access different features.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(bottom = 16.dp),
-                        )
-
                         // Display subtitle with appropriate text based on configured app count
                         Text(
                             text =
