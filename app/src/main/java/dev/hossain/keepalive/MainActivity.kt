@@ -12,14 +12,6 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
@@ -29,8 +21,16 @@ import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -253,14 +253,18 @@ fun MainAppScreen(
                 // For now, using MainLandingScreen without permission UI.
                 MainLandingScreen(
                     navController = navController,
-                    allPermissionsGranted = true, // Assuming all permissions are granted here
+                    // Assuming all permissions are granted here
+                    allPermissionsGranted = true,
                     activityResultLauncher = null,
                     requestPermissionLauncher = null,
-                    permissionType = PERMISSION_POST_NOTIFICATIONS, // Dummy value
-                    showPermissionRequestDialog = remember { mutableStateOf(false) }, // Dummy value
+                    // Dummy value
+                    permissionType = PERMISSION_POST_NOTIFICATIONS,
+                    // Dummy value
+                    showPermissionRequestDialog = remember { mutableStateOf(false) },
                     onRequestPermissions = {},
                     totalRequiredCount = mainViewModel.totalPermissionRequired,
-                    grantedCount = mainViewModel.totalPermissionRequired, // Assuming all granted
+                    // Assuming all granted
+                    grantedCount = mainViewModel.totalPermissionRequired,
                     configuredAppsCount = configuredAppsCount,
                 )
             }

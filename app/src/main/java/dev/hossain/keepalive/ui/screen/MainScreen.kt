@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import dev.hossain.keepalive.R
 import dev.hossain.keepalive.data.PermissionType
-import dev.hossain.keepalive.ui.Screen
 import dev.hossain.keepalive.ui.theme.KeepAliveTheme
 
 /**
