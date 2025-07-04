@@ -1,14 +1,12 @@
-package dev.hossain.keepalive
+package dev.hossain.keepalive.ui.screen
 
-import android.Manifest.permission.PACKAGE_USAGE_STATS
-import android.Manifest.permission.POST_NOTIFICATIONS
+import android.Manifest
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.TIRAMISU
 import android.os.PowerManager
+import android.os.Process
 import android.provider.Settings
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
@@ -21,9 +19,14 @@ class MainViewModel : ViewModel() {
 
     /**
      * Total number of permissions required by the app.
-     * On [TIRAMISU] and above, it includes [POST_NOTIFICATIONS] permission.
+     * On [android.os.Build.VERSION_CODES.TIRAMISU] and above, it includes [android.Manifest.permission.POST_NOTIFICATIONS] permission.
      */
-    val totalPermissionRequired = if (SDK_INT >= TIRAMISU) PermissionType.entries.size else PermissionType.entries.size - 1
+    val totalPermissionRequired =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            PermissionType.entries.size
+        } else {
+            PermissionType.entries.size - 1
+        }
     val totalApprovedPermissions = MutableLiveData(0)
 
     /**
@@ -35,10 +38,10 @@ class MainViewModel : ViewModel() {
     val grantedPermissions = mutableSetOf<PermissionType>()
 
     val requiredPermissions =
-        if (SDK_INT >= TIRAMISU) {
-            arrayOf(POST_NOTIFICATIONS, PACKAGE_USAGE_STATS)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            arrayOf(Manifest.permission.POST_NOTIFICATIONS, Manifest.permission.PACKAGE_USAGE_STATS)
         } else {
-            arrayOf(PACKAGE_USAGE_STATS)
+            arrayOf(Manifest.permission.PACKAGE_USAGE_STATS)
         }
 
     fun checkAllPermissions(context: Context) {
@@ -47,8 +50,12 @@ class MainViewModel : ViewModel() {
         val hasOverlayPermission = hasOverlayPermission(context)
 
         requiredPermissionRemaining.clear()
-        if (SDK_INT >= TIRAMISU) {
-            val hasPostNotificationPermission = isPermissionGranted(context, POST_NOTIFICATIONS)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasPostNotificationPermission =
+                isPermissionGranted(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS,
+                )
             if (!hasPostNotificationPermission) {
                 requiredPermissionRemaining.add(PermissionType.PERMISSION_POST_NOTIFICATIONS)
             } else {
@@ -71,7 +78,7 @@ class MainViewModel : ViewModel() {
             grantedPermissions.add(PermissionType.PERMISSION_SYSTEM_APPLICATION_OVERLAY)
         }
 
-        Timber.d("requiredPermissionRemaining=$requiredPermissionRemaining")
+        Timber.Forest.d("requiredPermissionRemaining=$requiredPermissionRemaining")
         totalApprovedPermissions.value = grantedPermissions.size
         allPermissionsGranted.value = requiredPermissionRemaining.isEmpty()
     }
@@ -84,17 +91,17 @@ class MainViewModel : ViewModel() {
     private fun hasUsageStatsPermission(context: Context): Boolean {
         val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
         val mode =
-            if (SDK_INT >= Build.VERSION_CODES.Q) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 appOps.unsafeCheckOpNoThrow(
                     AppOpsManager.OPSTR_GET_USAGE_STATS,
-                    android.os.Process.myUid(),
+                    Process.myUid(),
                     context.packageName,
                 )
             } else {
                 @Suppress("DEPRECATION")
                 appOps.checkOpNoThrow(
                     AppOpsManager.OPSTR_GET_USAGE_STATS,
-                    android.os.Process.myUid(),
+                    Process.myUid(),
                     context.packageName,
                 )
             }
@@ -115,7 +122,7 @@ class MainViewModel : ViewModel() {
                     context,
                     permission,
                 )
-            Timber.d("permission=$permission | status=$checkSelfPermission")
+            Timber.Forest.d("permission=$permission | status=$checkSelfPermission")
             checkSelfPermission == PackageManager.PERMISSION_GRANTED
         }
     }
@@ -125,7 +132,7 @@ class MainViewModel : ViewModel() {
         permission: String,
     ): Boolean {
         val checkSelfPermission = ContextCompat.checkSelfPermission(context, permission)
-        Timber.d("permission=$permission | status=$checkSelfPermission")
+        Timber.Forest.d("permission=$permission | status=$checkSelfPermission")
         return checkSelfPermission == PackageManager.PERMISSION_GRANTED
     }
 }
