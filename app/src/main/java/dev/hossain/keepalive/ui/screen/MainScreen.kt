@@ -140,19 +140,27 @@ fun MainLandingScreen(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Button(
-                            onClick = { navController.navigate(Screen.AppSettings.route) },
-                        ) {
-                            Text("Configure Immortal Apps")
-                        }
+                        Text(
+                            text = "Welcome to Keep Alive!",
+                            style = MaterialTheme.typography.headlineSmall,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(bottom = 8.dp),
+                        )
+                        
+                        Text(
+                            text = "Use the navigation bar below to access different features.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(bottom = 16.dp),
+                        )
 
                         // Display subtitle with appropriate text based on configured app count
                         Text(
                             text =
                                 if (configuredAppsCount == 0) {
-                                    "No app added to watch list"
+                                    "No app added to watch list - Configure apps to get started"
                                 } else {
-                                    "Watching $configuredAppsCount apps"
+                                    "Currently watching $configuredAppsCount apps"
                                 },
                             style = MaterialTheme.typography.bodySmall,
                             color =
@@ -164,19 +172,6 @@ fun MainLandingScreen(
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(top = 2.dp),
                         )
-
-                        Button(
-                            onClick = { navController.navigate(Screen.AppConfigs.route) },
-                            modifier = Modifier.padding(top = 8.dp),
-                        ) {
-                            Text("App Configurations")
-                        }
-                        Button(
-                            onClick = { navController.navigate(Screen.ActivityLogs.route) },
-                            modifier = Modifier.padding(top = 8.dp),
-                        ) {
-                            Text("Monitor Activity")
-                        }
                     }
                 }
             }
