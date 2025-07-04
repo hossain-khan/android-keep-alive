@@ -20,9 +20,6 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dev.hossain.keepalive.data.AppDataStore
 import dev.hossain.keepalive.data.PermissionType
@@ -30,12 +27,8 @@ import dev.hossain.keepalive.data.PermissionType.PERMISSION_IGNORE_BATTERY_OPTIM
 import dev.hossain.keepalive.data.PermissionType.PERMISSION_PACKAGE_USAGE_STATS
 import dev.hossain.keepalive.data.PermissionType.PERMISSION_POST_NOTIFICATIONS
 import dev.hossain.keepalive.data.PermissionType.PERMISSION_SYSTEM_APPLICATION_OVERLAY
-import dev.hossain.keepalive.ui.Screen
-import dev.hossain.keepalive.ui.screen.AppActivityLogScreen
-import dev.hossain.keepalive.ui.screen.AppConfigScreen
-import dev.hossain.keepalive.ui.screen.MainLandingScreen
+import dev.hossain.keepalive.ui.BottomNavigationWrapper
 import dev.hossain.keepalive.ui.screen.MainViewModel
-import dev.hossain.keepalive.ui.screen.SettingsScreen
 import dev.hossain.keepalive.ui.theme.KeepAliveTheme
 import dev.hossain.keepalive.util.ServiceManager
 import timber.log.Timber
@@ -60,41 +53,25 @@ class MainActivity : ComponentActivity() {
                     nextPermissionType = remember { mutableStateOf(PERMISSION_POST_NOTIFICATIONS) }
                     val grantedPermissionCount by mainViewModel.totalApprovedPermissions.observeAsState(0)
                     val allPermissionsGranted by mainViewModel.allPermissionsGranted.observeAsState(false)
-                    val navController: NavHostController = rememberNavController()
+                    val navController = rememberNavController()
 
                     // Get the configured apps count from AppDataStore
                     val configuredAppsCount by AppDataStore.getConfiguredAppsCount(applicationContext)
                         .collectAsState(initial = 0)
 
-                    NavHost(navController = navController, startDestination = Screen.Home.route) {
-                        composable(Screen.Home.route) {
-                            MainLandingScreen(
-                                navController = navController,
-                                allPermissionsGranted = allPermissionsGranted,
-                                activityResultLauncher = activityResultLauncher,
-                                requestPermissionLauncher = requestPermissionLauncher,
-                                permissionType = nextPermissionType.value,
-                                showPermissionRequestDialog = showPermissionRequestDialog,
-                                onRequestPermissions = { requestNextRequiredPermission() },
-                                totalRequiredCount = mainViewModel.totalPermissionRequired,
-                                grantedCount = grantedPermissionCount,
-                                configuredAppsCount = configuredAppsCount,
-                            )
-                        }
-                        composable(Screen.AppConfigs.route) {
-                            AppConfigScreen(
-                                navController,
-                                applicationContext,
-                            )
-                        }
-                        composable(Screen.AppSettings.route) { SettingsScreen(navController) }
-                        composable(Screen.ActivityLogs.route) {
-                            AppActivityLogScreen(
-                                navController,
-                                applicationContext,
-                            )
-                        }
-                    }
+                    BottomNavigationWrapper(
+                        navController = navController,
+                        context = applicationContext,
+                        allPermissionsGranted = allPermissionsGranted,
+                        activityResultLauncher = activityResultLauncher,
+                        requestPermissionLauncher = requestPermissionLauncher,
+                        permissionType = nextPermissionType.value,
+                        showPermissionRequestDialog = showPermissionRequestDialog,
+                        onRequestPermissions = { requestNextRequiredPermission() },
+                        totalRequiredCount = mainViewModel.totalPermissionRequired,
+                        grantedCount = grantedPermissionCount,
+                        configuredAppsCount = configuredAppsCount,
+                    )
                 }
             }
         }
