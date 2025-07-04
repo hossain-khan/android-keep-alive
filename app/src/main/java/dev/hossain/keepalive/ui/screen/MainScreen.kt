@@ -140,21 +140,15 @@ fun MainLandingScreen(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Button(
-                            onClick = { navController.navigate(Screen.AppSettings.route) },
-                        ) {
-                            Text("Configure Immortal Apps")
-                        }
-
                         // Display subtitle with appropriate text based on configured app count
                         Text(
                             text =
                                 if (configuredAppsCount == 0) {
-                                    "No app added to watch list"
+                                    "No app added to watch list. \nGo to 'App Settings' to add apps."
                                 } else {
                                     "Watching $configuredAppsCount apps"
                                 },
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodyLarge,
                             color =
                                 if (configuredAppsCount == 0) {
                                     MaterialTheme.colorScheme.error
@@ -164,19 +158,6 @@ fun MainLandingScreen(
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(top = 2.dp),
                         )
-
-                        Button(
-                            onClick = { navController.navigate(Screen.AppConfigs.route) },
-                            modifier = Modifier.padding(top = 8.dp),
-                        ) {
-                            Text("App Configurations")
-                        }
-                        Button(
-                            onClick = { navController.navigate(Screen.ActivityLogs.route) },
-                            modifier = Modifier.padding(top = 8.dp),
-                        ) {
-                            Text("Monitor Activity")
-                        }
                     }
                 }
             }

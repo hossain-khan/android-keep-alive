@@ -19,10 +19,26 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dev.hossain.keepalive.data.AppDataStore
 import dev.hossain.keepalive.data.PermissionType
@@ -66,34 +82,25 @@ class MainActivity : ComponentActivity() {
                     val configuredAppsCount by AppDataStore.getConfiguredAppsCount(applicationContext)
                         .collectAsState(initial = 0)
 
-                    NavHost(navController = navController, startDestination = Screen.Home.route) {
-                        composable(Screen.Home.route) {
-                            MainLandingScreen(
-                                navController = navController,
-                                allPermissionsGranted = allPermissionsGranted,
-                                activityResultLauncher = activityResultLauncher,
-                                requestPermissionLauncher = requestPermissionLauncher,
-                                permissionType = nextPermissionType.value,
-                                showPermissionRequestDialog = showPermissionRequestDialog,
-                                onRequestPermissions = { requestNextRequiredPermission() },
-                                totalRequiredCount = mainViewModel.totalPermissionRequired,
-                                grantedCount = grantedPermissionCount,
-                                configuredAppsCount = configuredAppsCount,
-                            )
-                        }
-                        composable(Screen.AppConfigs.route) {
-                            AppConfigScreen(
-                                navController,
-                                applicationContext,
-                            )
-                        }
-                        composable(Screen.AppSettings.route) { SettingsScreen(navController) }
-                        composable(Screen.ActivityLogs.route) {
-                            AppActivityLogScreen(
-                                navController,
-                                applicationContext,
-                            )
-                        }
+                    if (allPermissionsGranted) {
+                        MainAppScreen(
+                            navController = navController,
+                            mainViewModel = mainViewModel,
+                            configuredAppsCount = configuredAppsCount,
+                        )
+                    } else {
+                        MainLandingScreen(
+                            navController = navController,
+                            allPermissionsGranted = allPermissionsGranted,
+                            activityResultLauncher = activityResultLauncher,
+                            requestPermissionLauncher = requestPermissionLauncher,
+                            permissionType = nextPermissionType.value,
+                            showPermissionRequestDialog = showPermissionRequestDialog,
+                            onRequestPermissions = { requestNextRequiredPermission() },
+                            totalRequiredCount = mainViewModel.totalPermissionRequired,
+                            grantedCount = grantedPermissionCount,
+                            configuredAppsCount = configuredAppsCount,
+                        )
                     }
                 }
             }
@@ -185,5 +192,103 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         updatePermissionGrantedStatus()
+    }
+}
+
+@Composable
+fun MainAppScreen(
+    navController: NavHostController,
+    mainViewModel: MainViewModel,
+    configuredAppsCount: Int,
+) {
+    val items =
+        listOf(
+            Screen.Home,
+            Screen.AppConfigs,
+            Screen.AppSettings,
+            Screen.ActivityLogs,
+        )
+    Scaffold(
+        bottomBar = {
+            BottomAppBar {
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentDestination = navBackStackEntry?.destination
+                items.forEach { screen ->
+                    NavigationBarItem(
+                        icon = {
+                            Icon(
+                                imageVector = screen.icon(),
+                                contentDescription = null,
+                            )
+                        },
+                        label = { Text(screen.name) },
+                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                        onClick = {
+                            navController.navigate(screen.route) {
+                                // Pop up to the start destination of the graph to
+                                // avoid building up a large stack of destinations
+                                // on the back stack as users select items
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                // Avoid multiple copies of the same destination when
+                                // reselecting the same item
+                                launchSingleTop = true
+                                // Restore state when reselecting a previously selected item
+                                restoreState = true
+                            }
+                        },
+                    )
+                }
+            }
+        },
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = Screen.Home.route,
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            composable(Screen.Home.route) {
+                // TODO: Replace with actual home screen content.
+                // For now, using MainLandingScreen without permission UI.
+                MainLandingScreen(
+                    navController = navController,
+                    allPermissionsGranted = true, // Assuming all permissions are granted here
+                    activityResultLauncher = null,
+                    requestPermissionLauncher = null,
+                    permissionType = PERMISSION_POST_NOTIFICATIONS, // Dummy value
+                    showPermissionRequestDialog = remember { mutableStateOf(false) }, // Dummy value
+                    onRequestPermissions = {},
+                    totalRequiredCount = mainViewModel.totalPermissionRequired,
+                    grantedCount = mainViewModel.totalPermissionRequired, // Assuming all granted
+                    configuredAppsCount = configuredAppsCount,
+                )
+            }
+            composable(Screen.AppConfigs.route) {
+                AppConfigScreen(
+                    navController,
+                    navController.context,
+                )
+            }
+            composable(Screen.AppSettings.route) { SettingsScreen(navController) }
+            composable(Screen.ActivityLogs.route) {
+                AppActivityLogScreen(
+                    navController,
+                    navController.context,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Returns the appropriate icon for each screen.
+ */
+fun Screen.icon(): ImageVector {
+    return when (this) {
+        Screen.Home -> Icons.Filled.Home
+        Screen.AppConfigs -> Icons.Filled.List // Corrected Icon
+        Screen.AppSettings -> Icons.Filled.Settings // Corrected Icon
+        Screen.ActivityLogs -> Icons.Filled.Warning
     }
 }
