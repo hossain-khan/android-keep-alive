@@ -4,7 +4,12 @@ import android.content.Context
 import android.content.Intent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -13,6 +18,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -40,7 +51,10 @@ fun BottomNavigationWrapper(
     Scaffold(
         bottomBar = {
             if (allPermissionsGranted) {
-                BottomNavigationBar(navController = navController)
+                BottomNavigationBar(
+                    navController = navController,
+                    configuredAppsCount = configuredAppsCount,
+                )
             }
         },
     ) { innerPadding ->
@@ -63,13 +77,13 @@ fun BottomNavigationWrapper(
                     configuredAppsCount = configuredAppsCount,
                 )
             }
-            composable(Screen.AppConfigs.route) {
+            composable(Screen.WatchDogConfig.route) {
                 AppConfigScreen(
                     navController,
                     context,
                 )
             }
-            composable(Screen.AppSettings.route) {
+            composable(Screen.AppWatchList.route) {
                 SettingsScreen(navController)
             }
             composable(Screen.ActivityLogs.route) {
@@ -83,12 +97,15 @@ fun BottomNavigationWrapper(
 }
 
 @Composable
-fun BottomNavigationBar(navController: NavHostController) {
+fun BottomNavigationBar(
+    navController: NavHostController,
+    configuredAppsCount: Int,
+) {
     val items =
         listOf(
             Screen.Home,
-            Screen.AppSettings,
-            Screen.AppConfigs,
+            Screen.AppWatchList,
+            Screen.WatchDogConfig,
             Screen.ActivityLogs,
         )
 
@@ -98,7 +115,34 @@ fun BottomNavigationBar(navController: NavHostController) {
     NavigationBar {
         items.forEach { screen ->
             NavigationBarItem(
-                icon = { Icon(screen.icon, contentDescription = screen.title) },
+                icon = {
+                    BadgedBox(
+                        badge = {
+                            if (screen == Screen.AppWatchList && configuredAppsCount > 0) {
+                                Badge(
+                                    modifier =
+                                        Modifier
+                                            .size(20.dp)
+                                            .clip(CircleShape),
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = Color.White,
+                                ) {
+                                    Text(
+                                        text = configuredAppsCount.toString(),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.padding(4.dp),
+                                    )
+                                }
+                            } else {
+                                null
+                            }
+                        },
+                    ) {
+                        Icon(screen.icon, contentDescription = screen.title)
+                    }
+                },
                 label = { Text(screen.title) },
                 selected = currentRoute == screen.route,
                 onClick = {
