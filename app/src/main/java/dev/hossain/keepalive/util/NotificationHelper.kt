@@ -48,7 +48,7 @@ class NotificationHelper(private val context: Context) {
         val channel =
             NotificationChannel(
                 CHANNEL_ID,
-                context.getString(R.string.notification_channel_name_watchdog_service), // Using string resource
+                context.getString(R.string.notification_channel_name_watchdog_service),
                 NotificationManager.IMPORTANCE_DEFAULT,
             )
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -72,11 +72,12 @@ class NotificationHelper(private val context: Context) {
         Timber.d("buildNotification() called")
 
         val notificationIntent = Intent(context, MainActivity::class.java)
-        val pendingIntentFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        } else {
-            PendingIntent.FLAG_UPDATE_CURRENT
-        }
+        val pendingIntentFlags =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
         val pendingIntent =
             PendingIntent.getActivity(context, 0, notificationIntent, pendingIntentFlags)
 

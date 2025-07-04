@@ -79,8 +79,9 @@ object ServiceManager {
         context: Context,
         serviceClass: Class<*>,
     ): Boolean {
-        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager?
-            ?: return false // Should not happen, but good practice to check
+        val activityManager =
+            context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager?
+                ?: return false // Should not happen, but good practice to check
 
         // getRunningServices() is deprecated for third-party apps but works for app's own services.
         try {

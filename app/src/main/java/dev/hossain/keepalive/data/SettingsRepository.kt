@@ -34,16 +34,22 @@ class SettingsRepository(private val context: Context) {
     companion object {
         /** [Preferences.Key] for storing the app check interval in minutes. */
         val APP_CHECK_INTERVAL = intPreferencesKey("app_check_interval")
+
         /** [Preferences.Key] for storing the toggle state of forcing app starts. */
         val ENABLE_FORCE_START_APPS = booleanPreferencesKey("enable_force_start_apps")
+
         /** [Preferences.Key] for storing the toggle state of health checks. */
         val ENABLE_HEALTH_CHECK = booleanPreferencesKey("enable_health_check")
+
         /** [Preferences.Key] for storing the UUID used for health checks. */
         val HEALTH_CHECK_UUID = stringPreferencesKey("health_check_uuid")
+
         /** [Preferences.Key] for storing the toggle state of remote logging. */
         val ENABLE_REMOTE_LOGGING = booleanPreferencesKey("enable_remote_logging")
+
         /** [Preferences.Key] for storing the Airtable API token. */
         val AIRTABLE_TOKEN = stringPreferencesKey("airtable_token")
+
         /** [Preferences.Key] for storing the Airtable data URL. */
         val AIRTABLE_DATA_URL = stringPreferencesKey("airtable_data_url")
     }

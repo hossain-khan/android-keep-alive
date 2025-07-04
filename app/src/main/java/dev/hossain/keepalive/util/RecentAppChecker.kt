@@ -57,7 +57,8 @@ object RecentAppChecker {
      */
     fun getRecentlyRunningAppStats(
         context: Context,
-        lookbackIntervalMs: Long = 600_000, // Default: 10 minutes
+        // Default: 10 minutes
+        lookbackIntervalMs: Long = 600_000,
     ): List<UsageStats> {
         val usageStatsManager =
             context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
@@ -69,7 +70,8 @@ object RecentAppChecker {
         val beginTime = endTime - 1_000_000 // Query window of ~16.6 minutes
         val appList =
             usageStatsManager.queryUsageStats(
-                UsageStatsManager.INTERVAL_BEST, // Tries to get the most fine-grained data available
+                // Tries to get the most fine-grained data available
+                UsageStatsManager.INTERVAL_BEST,
                 beginTime,
                 endTime,
             )
