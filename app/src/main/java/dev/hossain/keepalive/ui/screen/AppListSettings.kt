@@ -42,6 +42,9 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.navigation.NavHostController
 import dev.hossain.keepalive.data.AppDataStore
 
+/**
+ * Displays the app list settings screen, allowing users to configure which apps are managed.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(navController: NavHostController) {
@@ -77,6 +80,9 @@ fun SettingsScreen(navController: NavHostController) {
     }
 }
 
+/**
+ * Shows a list of apps that are kept running and allows adding or removing apps from the list.
+ */
 @Composable
 fun AppListScreen(
     navController: NavHostController,
@@ -160,6 +166,9 @@ fun AppListScreen(
     }
 }
 
+/**
+ * Displays a single app item in the list with selection and delete options.
+ */
 @Composable
 fun AppListItem(
     appInfo: AppInfo,
@@ -199,6 +208,9 @@ fun AppListItem(
     }
 }
 
+/**
+ * Dialog for selecting an app from the list of installed apps to add to the watchlist.
+ */
 @Composable
 fun ShowAppSelectionDialog(
     installedApps: List<AppInfo>,
