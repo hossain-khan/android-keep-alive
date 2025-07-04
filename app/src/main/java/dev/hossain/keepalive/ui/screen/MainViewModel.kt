@@ -89,7 +89,7 @@ class MainViewModel : ViewModel() {
             grantedPermissions.add(PermissionType.PERMISSION_SYSTEM_APPLICATION_OVERLAY)
         }
 
-        Timber.Forest.d("requiredPermissionRemaining=$requiredPermissionRemaining")
+        Timber.d("requiredPermissionRemaining=$requiredPermissionRemaining")
         totalApprovedPermissions.value = grantedPermissions.size
         allPermissionsGranted.value = requiredPermissionRemaining.isEmpty()
     }
@@ -145,7 +145,7 @@ class MainViewModel : ViewModel() {
                     context,
                     permission,
                 )
-            Timber.Forest.d("permission=$permission | status=$checkSelfPermission")
+            Timber.d("permission=$permission | status=$checkSelfPermission")
             checkSelfPermission == PackageManager.PERMISSION_GRANTED
         }
     }
@@ -158,7 +158,7 @@ class MainViewModel : ViewModel() {
         permission: String,
     ): Boolean {
         val checkSelfPermission = ContextCompat.checkSelfPermission(context, permission)
-        Timber.Forest.d("permission=$permission | status=$checkSelfPermission")
+        Timber.d("permission=$permission | status=$checkSelfPermission")
         return checkSelfPermission == PackageManager.PERMISSION_GRANTED
     }
 }
