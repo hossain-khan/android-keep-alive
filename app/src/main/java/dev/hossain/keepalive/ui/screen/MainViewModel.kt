@@ -14,6 +14,10 @@ import androidx.lifecycle.ViewModel
 import dev.hossain.keepalive.data.PermissionType
 import timber.log.Timber
 
+/**
+ * ViewModel responsible for managing and checking app permissions required for core functionality.
+ * Tracks granted and remaining permissions, and exposes permission status for UI.
+ */
 class MainViewModel : ViewModel() {
     val allPermissionsGranted = MutableLiveData(false)
 
@@ -37,6 +41,9 @@ class MainViewModel : ViewModel() {
     val requiredPermissionRemaining = mutableSetOf<PermissionType>()
     val grantedPermissions = mutableSetOf<PermissionType>()
 
+    /**
+     * List of permissions required by the app, based on Android version.
+     */
     val requiredPermissions =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             arrayOf(Manifest.permission.POST_NOTIFICATIONS, Manifest.permission.PACKAGE_USAGE_STATS)
@@ -44,6 +51,10 @@ class MainViewModel : ViewModel() {
             arrayOf(Manifest.permission.PACKAGE_USAGE_STATS)
         }
 
+    /**
+     * Checks and updates the status of all required permissions.
+     * Updates LiveData and permission sets accordingly.
+     */
     fun checkAllPermissions(context: Context) {
         val hasUsageStatsPermission = hasUsageStatsPermission(context)
         val isBatteryOptimizationIgnored = isBatteryOptimizationIgnored(context)
@@ -83,11 +94,17 @@ class MainViewModel : ViewModel() {
         allPermissionsGranted.value = requiredPermissionRemaining.isEmpty()
     }
 
+    /**
+     * Returns true if battery optimizations are ignored for the app.
+     */
     private fun isBatteryOptimizationIgnored(context: Context): Boolean {
         val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
         return powerManager.isIgnoringBatteryOptimizations(context.packageName)
     }
 
+    /**
+     * Returns true if the app has usage stats permission.
+     */
     private fun hasUsageStatsPermission(context: Context): Boolean {
         val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
         val mode =
@@ -108,10 +125,16 @@ class MainViewModel : ViewModel() {
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
+    /**
+     * Returns true if the app has overlay (draw over other apps) permission.
+     */
     private fun hasOverlayPermission(context: Context): Boolean {
         return Settings.canDrawOverlays(context)
     }
 
+    /**
+     * Returns true if all specified permissions are granted.
+     */
     fun arePermissionsGranted(
         context: Context,
         permissions: Array<String>,
@@ -127,6 +150,9 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Returns true if the specified permission is granted.
+     */
     private fun isPermissionGranted(
         context: Context,
         permission: String,
