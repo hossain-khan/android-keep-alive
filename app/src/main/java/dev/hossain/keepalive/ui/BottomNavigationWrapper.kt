@@ -42,12 +42,12 @@ fun BottomNavigationWrapper(
             if (allPermissionsGranted) {
                 BottomNavigationBar(navController = navController)
             }
-        }
+        },
     ) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
         ) {
             composable(Screen.Home.route) {
                 MainLandingScreen(
@@ -84,16 +84,17 @@ fun BottomNavigationWrapper(
 
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
-    val items = listOf(
-        Screen.Home,
-        Screen.AppSettings,
-        Screen.AppConfigs,
-        Screen.ActivityLogs
-    )
-    
+    val items =
+        listOf(
+            Screen.Home,
+            Screen.AppSettings,
+            Screen.AppConfigs,
+            Screen.ActivityLogs,
+        )
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    
+
     NavigationBar {
         items.forEach { screen ->
             NavigationBarItem(
@@ -114,7 +115,7 @@ fun BottomNavigationBar(navController: NavHostController) {
                         // Restore state when reselecting a previously selected item
                         restoreState = true
                     }
-                }
+                },
             )
         }
     }

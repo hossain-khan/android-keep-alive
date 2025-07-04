@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import dev.hossain.keepalive.R
 import dev.hossain.keepalive.data.PermissionType
-import dev.hossain.keepalive.ui.Screen
 import dev.hossain.keepalive.ui.theme.KeepAliveTheme
 
 /**
@@ -146,7 +145,7 @@ fun MainLandingScreen(
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(bottom = 8.dp),
                         )
-                        
+
                         Text(
                             text = "Use the navigation bar below to access different features.",
                             style = MaterialTheme.typography.bodyMedium,
