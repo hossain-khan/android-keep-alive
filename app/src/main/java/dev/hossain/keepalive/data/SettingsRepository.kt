@@ -106,6 +106,8 @@ class SettingsRepository(private val context: Context) {
 
     /**
      * Saves the app check interval in minutes.
+     * The minimum interval is [MINIMUM_APP_CHECK_INTERVAL_MIN].
+     * @param interval The interval in minutes.
      */
     suspend fun saveAppCheckInterval(interval: Int) {
         context.dataStore.edit { preferences ->
@@ -114,7 +116,8 @@ class SettingsRepository(private val context: Context) {
     }
 
     /**
-     * Saves whether force starting apps is enabled.
+     * Saves the setting for enabling or disabling force starting of apps.
+     * @param enabled `true` to enable force starting apps, `false` to disable.
      */
     suspend fun saveEnableForceStartApps(enabled: Boolean) {
         context.dataStore.edit { preferences ->
@@ -123,7 +126,8 @@ class SettingsRepository(private val context: Context) {
     }
 
     /**
-     * Saves whether health check is enabled.
+     * Saves the setting for enabling or disabling health checks.
+     * @param enabled `true` to enable health checks, `false` to disable.
      */
     suspend fun saveEnableHealthCheck(enabled: Boolean) {
         context.dataStore.edit { preferences ->
@@ -133,6 +137,7 @@ class SettingsRepository(private val context: Context) {
 
     /**
      * Saves the health check UUID.
+     * @param uuid The UUID string for health checks.
      */
     suspend fun saveHealthCheckUUID(uuid: String) {
         context.dataStore.edit { preferences ->
@@ -141,7 +146,8 @@ class SettingsRepository(private val context: Context) {
     }
 
     /**
-     * Saves whether remote logging is enabled.
+     * Saves the setting for enabling or disabling remote logging.
+     * @param enabled `true` to enable remote logging, `false` to disable.
      */
     suspend fun saveEnableRemoteLogging(enabled: Boolean) {
         context.dataStore.edit { preferences ->
@@ -150,7 +156,8 @@ class SettingsRepository(private val context: Context) {
     }
 
     /**
-     * Saves the Airtable token.
+     * Saves the Airtable authentication token.
+     * @param token The Airtable API token.
      */
     suspend fun saveAirtableToken(token: String) {
         context.dataStore.edit { preferences ->
@@ -160,6 +167,7 @@ class SettingsRepository(private val context: Context) {
 
     /**
      * Saves the Airtable data URL.
+     * @param url The URL for the Airtable data endpoint.
      */
     suspend fun saveAirtableDataUrl(url: String) {
         context.dataStore.edit { preferences ->

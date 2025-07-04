@@ -42,21 +42,42 @@ class WatchdogService : Service() {
     private val notificationHelper = NotificationHelper(this)
     private lateinit var activityLogger: AppActivityLogger
 
-    // Used to tracking the instance of the service
-    private var serviceStartId: Int? = null
+    /** Unique ID for the current instance of the service, provided by `onStartCommand`. */
+    private var currentServiceInstanceId: Int = 0
 
+    /**
+     * Called when a component attempts to bind to the service.
+     * This service does not support binding, so it returns null.
+     *
+     * @param intent The Intent that was used to bind to this service.
+     * @return Return an IBinder through which clients can call on to the service.
+     * Return null if clients cannot bind to the service.
+     */
     override fun onBind(intent: Intent?): IBinder? {
         Timber.d("onBind: $intent")
         return null
     }
 
+    /**
+     * Called by the system every time a client explicitly starts the service by calling
+     * `startService(Intent)`, providing the arguments it supplied and a unique integer token
+     * representing the start request.
+     *
+     * This method initializes the service, sets up notifications, and starts the main monitoring loop.
+     *
+     * @param intent The Intent supplied to `startService(Intent)`.
+     * @param flags Additional data about this start request.
+     * @param startId A unique integer representing this specific request to start.
+     * @return The return value indicates what semantics the system should use for the service's
+     * current started state.
+     */
     override fun onStartCommand(
         intent: Intent?,
         flags: Int,
         startId: Int,
     ): Int {
         Timber.d("onStartCommand() called with: intent = $intent, flags = $flags, startId = $startId")
-        serviceStartId = startId
+        currentServiceInstanceId = startId
         notificationHelper.createNotificationChannel()
         activityLogger = AppActivityLogger(applicationContext)
 
@@ -83,7 +104,7 @@ class WatchdogService : Service() {
             currentCheckInterval = appSettings.appCheckIntervalFlow.first()
 
             while (true) {
-                Timber.d("[Start ID: $serviceStartId] Current time: ${System.currentTimeMillis()} @ ${Date()}")
+                Timber.d("[Instance ID: $currentServiceInstanceId] Current time: ${System.currentTimeMillis()} @ ${Date()}")
                 val appsList: List<AppInfo> = dataStore.data.first()
 
                 // Use the latest interval value that's being updated by the collector above
@@ -141,7 +162,7 @@ class WatchdogService : Service() {
 
                     if (needsToStart) {
                         Timber.d(
-                            "[Start ID: $serviceStartId] ${appInfo.appName} app is not running. " +
+                            "[Instance ID: $currentServiceInstanceId] ${appInfo.appName} app is not running. " +
                                 "Attempting to start it now. shouldForceStart=$shouldForceStart",
                         )
                         AppLauncher.openApp(this@WatchdogService, appInfo.packageName)
@@ -159,6 +180,13 @@ class WatchdogService : Service() {
         return START_STICKY
     }
 
+    /**
+     * Sends a health check ping if health checks are enabled and a valid UUID is configured.
+     * This function checks the current settings via [appSettings] and uses [pingSender]
+     * to dispatch the ping.
+     *
+     * @param appSettings The [SettingsRepository] instance to access health check settings.
+     */
     private suspend fun conditionallySendHealthCheck(appSettings: SettingsRepository) {
         val healthCheckEnabled = appSettings.enableHealthCheckFlow.first()
         val healthCheckUUID = appSettings.healthCheckUUIDFlow.first()
@@ -174,7 +202,7 @@ class WatchdogService : Service() {
     override fun onDestroy() {
         super.onDestroy()
 
-        Timber.d("onDestroy: Service is being destroyed. Service ID: $serviceStartId ($this)")
+        Timber.d("onDestroy: Service is being destroyed. Service ID: $currentServiceInstanceId ($this)")
 
         // Cancel the scope to clean up resources
         serviceScope.cancel()

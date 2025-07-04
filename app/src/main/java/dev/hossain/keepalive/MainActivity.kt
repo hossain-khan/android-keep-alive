@@ -37,12 +37,22 @@ import timber.log.Timber
  * Main activity that launches the WatchdogService and requests for necessary permissions.
  */
 class MainActivity : ComponentActivity() {
-    private lateinit var requestPermissionLauncher: ActivityResultLauncher<Array<String>>
-    private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
+    /** Launcher for requesting multiple permissions. */
+    private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
+
+    /** Launcher for starting an activity for result, used here for system settings like overlay permission. */
+    private lateinit var activityResultLauncherForSystemSettings: ActivityResultLauncher<Intent>
+
     private val mainViewModel: MainViewModel by viewModels()
     private lateinit var showPermissionRequestDialog: MutableState<Boolean>
     private lateinit var nextPermissionType: MutableState<PermissionType>
 
+    /**
+     * Called when the activity is first created.
+     *
+     * This function sets up the UI, initializes permission launchers, and starts the WatchdogService.
+     * It also observes LiveData for permission status and configured app count.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -63,8 +73,8 @@ class MainActivity : ComponentActivity() {
                         navController = navController,
                         context = applicationContext,
                         allPermissionsGranted = allPermissionsGranted,
-                        activityResultLauncher = activityResultLauncher,
-                        requestPermissionLauncher = requestPermissionLauncher,
+                        activityResultLauncher = activityResultLauncherForSystemSettings,
+                        requestPermissionLauncher = permissionLauncher,
                         permissionType = nextPermissionType.value,
                         showPermissionRequestDialog = showPermissionRequestDialog,
                         onRequestPermissions = { requestNextRequiredPermission() },
@@ -79,7 +89,7 @@ class MainActivity : ComponentActivity() {
         // Start the WatchdogService - this is required to monitor other apps and keep them alive.
         ServiceManager.startWatchdogService(this)
 
-        requestPermissionLauncher =
+        permissionLauncher =
             this.registerForActivityResult(
                 ActivityResultContracts.RequestMultiplePermissions(),
             ) { permissions ->
@@ -101,7 +111,7 @@ class MainActivity : ComponentActivity() {
             }
 
         // Initialize the ActivityResultLauncher
-        activityResultLauncher =
+        activityResultLauncherForSystemSettings =
             registerForActivityResult(
                 ActivityResultContracts.StartActivityForResult(),
             ) { result ->
@@ -117,12 +127,23 @@ class MainActivity : ComponentActivity() {
             }
     }
 
+    /**
+     * Updates the status of all required permissions by checking them and updates the ViewModel.
+     *
+     * @return `true` if all required permissions are granted, `false` otherwise.
+     */
     private fun updatePermissionGrantedStatus(): Boolean {
         mainViewModel.checkAllPermissions(this)
 
         return mainViewModel.requiredPermissionRemaining.isEmpty()
     }
 
+    /**
+     * Requests the next required permission from the user.
+     *
+     * It first checks if all permissions are already granted. If not, it identifies the next
+     * pending permission and triggers a dialog to request it from the user.
+     */
     private fun requestNextRequiredPermission() {
         if (updatePermissionGrantedStatus()) {
             Timber.d("requestNextRequiredPermission: All required permissions granted.")
@@ -159,6 +180,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Called when the activity will start interacting with the user.
+     * At this point your activity is at the top of the activity stack, with user input going to it.
+     * It also updates the permission status.
+     */
     override fun onResume() {
         super.onResume()
         updatePermissionGrantedStatus()
