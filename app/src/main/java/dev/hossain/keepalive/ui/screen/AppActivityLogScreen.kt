@@ -49,6 +49,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+/**
+ * Displays the activity log screen showing recent app activity logs and settings.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppActivityLogScreen(
