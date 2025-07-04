@@ -43,7 +43,7 @@ class WatchdogService : Service() {
     private lateinit var activityLogger: AppActivityLogger
 
     /** Unique ID for the current instance of the service, provided by `onStartCommand`. */
-    private var currentServiceInstanceId: Int? = null
+    private var currentServiceInstanceId: Int = 0
 
     /**
      * Called when a component attempts to bind to the service.
