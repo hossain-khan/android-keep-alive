@@ -2,7 +2,6 @@ package dev.hossain.keepalive
 
 import android.Manifest.permission.PACKAGE_USAGE_STATS
 import android.Manifest.permission.POST_NOTIFICATIONS
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
@@ -12,49 +11,15 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -68,9 +33,10 @@ import dev.hossain.keepalive.data.PermissionType.PERMISSION_SYSTEM_APPLICATION_O
 import dev.hossain.keepalive.ui.Screen
 import dev.hossain.keepalive.ui.screen.AppActivityLogScreen
 import dev.hossain.keepalive.ui.screen.AppConfigScreen
+import dev.hossain.keepalive.ui.screen.MainLandingScreen
+import dev.hossain.keepalive.ui.screen.MainViewModel
 import dev.hossain.keepalive.ui.screen.SettingsScreen
 import dev.hossain.keepalive.ui.theme.KeepAliveTheme
-import dev.hossain.keepalive.util.AppPermissions
 import dev.hossain.keepalive.util.ServiceManager
 import timber.log.Timber
 
@@ -220,277 +186,4 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         updatePermissionGrantedStatus()
     }
-}
-
-@Composable
-fun MainLandingScreen(
-    modifier: Modifier = Modifier,
-    navController: NavHostController,
-    activityResultLauncher: ActivityResultLauncher<Intent>?,
-    requestPermissionLauncher: ActivityResultLauncher<Array<String>>?,
-    allPermissionsGranted: Boolean = false,
-    permissionType: PermissionType,
-    showPermissionRequestDialog: MutableState<Boolean>,
-    onRequestPermissions: () -> Unit,
-    totalRequiredCount: Int,
-    grantedCount: Int,
-    configuredAppsCount: Int,
-) {
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-    ) { innerPadding ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .wrapContentSize(Alignment.Center)
-                    .padding(innerPadding),
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.baseline_radar_24),
-                contentDescription = "App Icon",
-                modifier =
-                    Modifier
-                        .size(64.dp)
-                        .align(Alignment.CenterHorizontally)
-                        .padding(bottom = 16.dp),
-            )
-            AppHeading(
-                title = "Keep Alive",
-                modifier =
-                    Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .padding(bottom = 8.dp),
-            )
-            Text(
-                text = "App that keeps other apps alive 💓",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier =
-                    Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .padding(bottom = 16.dp),
-            )
-            Spacer(modifier = Modifier.height(128.dp))
-            Column {
-                Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("ℹ️ Required permission status \nApproved Permissions: $grantedCount of $totalRequiredCount")
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(
-                        imageVector = if (allPermissionsGranted) Icons.Filled.Check else Icons.Filled.Clear,
-                        // Set color to red if permission is not granted
-                        tint = if (allPermissionsGranted) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error,
-                        contentDescription = "Icon",
-                    )
-                }
-                AnimatedVisibility(
-                    visible = !allPermissionsGranted,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
-                    modifier =
-                        Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(bottom = 32.dp),
-                ) {
-                    Button(
-                        onClick = { onRequestPermissions() },
-                    ) {
-                        Text("Grant Permission")
-                    }
-                }
-                AnimatedVisibility(
-                    visible = allPermissionsGranted,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
-                    modifier =
-                        Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(bottom = 32.dp),
-                ) {
-                    Column(
-                        modifier = Modifier.wrapContentSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Button(
-                            onClick = { navController.navigate(Screen.AppSettings.route) },
-                        ) {
-                            Text("Configure Immortal Apps")
-                        }
-
-                        // Display subtitle with appropriate text based on configured app count
-                        Text(
-                            text =
-                                if (configuredAppsCount == 0) {
-                                    "No app added to watch list"
-                                } else {
-                                    "Watching $configuredAppsCount apps"
-                                },
-                            style = MaterialTheme.typography.bodySmall,
-                            color =
-                                if (configuredAppsCount == 0) {
-                                    MaterialTheme.colorScheme.error
-                                } else {
-                                    MaterialTheme.colorScheme.primary
-                                },
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(top = 2.dp),
-                        )
-
-                        Button(
-                            onClick = { navController.navigate(Screen.AppConfigs.route) },
-                            modifier = Modifier.padding(top = 8.dp),
-                        ) {
-                            Text("App Configurations")
-                        }
-                        Button(
-                            onClick = { navController.navigate(Screen.ActivityLogs.route) },
-                            modifier = Modifier.padding(top = 8.dp),
-                        ) {
-                            Text("Monitor Activity")
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    PermissionDialogs(
-        context = LocalContext.current,
-        permissionType = permissionType,
-        showDialog = showPermissionRequestDialog,
-        activityResultLauncher = activityResultLauncher,
-        requestPermissionLauncher = requestPermissionLauncher,
-    )
-}
-
-@Composable
-fun AppHeading(
-    title: String,
-    modifier: Modifier = Modifier,
-) {
-    Text(
-        text = title,
-        modifier = modifier,
-        style = MaterialTheme.typography.headlineLarge,
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun AppHeadingPreview() {
-    KeepAliveTheme {
-        AppHeading("Hello Android App")
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun BottomSheetDialog(
-    showDialog: Boolean,
-    title: String,
-    description: String,
-    onAccept: () -> Unit,
-    onCancel: () -> Unit,
-) {
-    if (showDialog) {
-        ModalBottomSheet(
-            onDismissRequest = onCancel,
-        ) {
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-            ) {
-                Text(
-                    text = title,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(text = description)
-                Spacer(Modifier.height(16.dp))
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    TextButton(onClick = onCancel) {
-                        Text("Cancel")
-                    }
-                    Spacer(Modifier.width(8.dp))
-                    Button(onClick = onAccept) {
-                        Text("Accept")
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MyBottomSheetDialogPreview() {
-    BottomSheetDialog(
-        showDialog = true,
-        title = "My Title",
-        description = "This is a description",
-        onAccept = { /*TODO*/ },
-        onCancel = { /*TODO*/ },
-    )
-}
-
-@Composable
-fun PermissionDialogs(
-    context: Context,
-    activityResultLauncher: ActivityResultLauncher<Intent>?,
-    requestPermissionLauncher: ActivityResultLauncher<Array<String>>?,
-    permissionType: PermissionType,
-    showDialog: MutableState<Boolean>,
-) {
-    val (title, description) =
-        when (permissionType) {
-            PERMISSION_POST_NOTIFICATIONS ->
-                "Post Notifications" to "Please grant the notification permission." +
-                    "\nThis is essential for notifying you about ongoing watchdog activity. " +
-                    "It also allows the app to always run in the background."
-            PERMISSION_PACKAGE_USAGE_STATS ->
-                "Usage Stats" to "Please grant the usage stats permission." +
-                    "\nThe permission allows the app to access usage statistics, " +
-                    "which is necessary for knowing if specific apps have been recently used."
-            PERMISSION_SYSTEM_APPLICATION_OVERLAY ->
-                "Overlay Permission" to "Please grant the overlay permission." +
-                    "\nThe permission allows this app to start the apps you configure from the background service."
-            PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS ->
-                "Battery Optimization" to "Please exclude this app from battery optimization." +
-                    "\nThis ensures the app and it's `WatchdogService` can run continuously without being restricted by the system."
-            else -> "Unknown" to "Please ignore this permission request."
-        }
-
-    BottomSheetDialog(
-        showDialog = showDialog.value,
-        title = title,
-        description = description,
-        onAccept = {
-            Timber.d("onAccept: for $permissionType")
-            showDialog.value = false
-            AppPermissions.requestPermission(
-                context = context,
-                activityResultLauncher = activityResultLauncher,
-                requestPermissionLauncher = requestPermissionLauncher,
-                permissionType = permissionType,
-            )
-        },
-        onCancel = {
-            Timber.d("onCancel: for $permissionType")
-            showDialog.value = false
-        },
-    )
 }
