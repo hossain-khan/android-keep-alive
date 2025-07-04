@@ -25,7 +25,7 @@ class AppActivityLogger constructor(private val context: Context) {
     companion object {
         private const val MAX_LOGS = 300
         private val ACTIVITY_LOGS_KEY = stringPreferencesKey("app_activity_logs")
-        private val json = Json { ignoreUnknownKeys = true }
+        private val json = Json { ignoreUnknownKeys = true; prettyPrint = true }
     }
 
     /**
