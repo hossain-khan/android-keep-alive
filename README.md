@@ -3,8 +3,6 @@
 # Keep Alive 💓
 A simple app to keep specific apps alive by checking if they are running. If not, they will be attempted<sup>*</sup> to start for you.
 
-> ⚠️ _DISCLAIMER: The app is mostly generated with AI (copilot, gemini, chatgpt, etc). It doesn't follow any best practices. See [CONTRIBUTING](CONTRIBUTING.md) guide for more info._
-
 ## 🛑 **STOP** 🛑 - Know before you use ✋
 This app is designed with a very specific use case in mind. It is important to understand what this app does and how.
 
@@ -69,6 +67,10 @@ Here are the permissions needed for the app along with a summary of why they are
 
 Most of the permissions listed above are discouraged and or restricted. Please be sure to use the app with caution.
 
+## 🤝 Contributing
+
+Contributions are welcome! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines before submitting a pull request.
+
 ---
-> \* = _The app uses Android's standard explicit intent to start app using it's app package-id. Intent is sent to Android OS re-run the app, however, it's up to Android OS to run the app. Something to keep in mind._
+> \* = _The app uses Android’s standard explicit intent to start an app by its package ID. The intent is sent to the Android OS to request the app to run, but it is ultimately up to the OS whether the app will actually be started._
 ---
