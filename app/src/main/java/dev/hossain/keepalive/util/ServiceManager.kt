@@ -83,7 +83,9 @@ object ServiceManager {
             context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager?
                 ?: return false // Should not happen, but good practice to check
 
-        // getRunningServices() is deprecated for third-party apps but works for app's own services.
+        // DEPRECATED: `getRunningServices()` method is no longer available to third party applications.
+        // For backwards compatibility, it will still return the caller's own services.
+        // So, this method is still useful for detecting if your own services are running.
         try {
             for (service in activityManager.getRunningServices(Int.MAX_VALUE)) {
                 if (serviceClass.name == service.service.className) {
