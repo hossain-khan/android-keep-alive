@@ -90,10 +90,14 @@ object ServiceManager {
                     return true
                 }
             }
-        } catch (e: Exception) {
-            // Catch potential exceptions, e.g., SecurityException on some modified ROMs, though unlikely for own service.
-            Timber.e(e, "Error checking if service ${serviceClass.name} is running.")
-            return false // Assume not running if an error occurs
+        } catch (e: SecurityException) {
+            // Catch SecurityException, which might occur on some modified ROMs.
+            Timber.e(e, "SecurityException while checking if service ${serviceClass.name} is running.")
+            return false // Assume not running if a security error occurs
+        } catch (e: RuntimeException) {
+            // Catch other runtime exceptions that might occur unexpectedly.
+            Timber.e(e, "RuntimeException while checking if service ${serviceClass.name} is running.")
+            return false // Assume not running if a runtime error occurs
         }
         return false
     }
