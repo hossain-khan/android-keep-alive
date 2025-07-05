@@ -34,17 +34,36 @@ import dev.hossain.keepalive.util.ServiceManager
 import timber.log.Timber
 
 /**
- * Main activity that launches the WatchdogService and requests for necessary permissions.
+ * Main activity for the KeepAlive application.
+ *
+ * This activity is responsible for:
+ * - Setting up the user interface.
+ * - Managing and requesting necessary runtime permissions.
+ * - Initializing and starting the [WatchdogService] to monitor applications.
+ * - Handling results from permission requests and system settings changes.
  */
 class MainActivity : ComponentActivity() {
-    /** Launcher for requesting multiple permissions. */
+    /**
+     * ActivityResultLauncher for requesting multiple permissions.
+     * This is used to request standard Android runtime permissions like [android.Manifest.permission.POST_NOTIFICATIONS]
+     * and [android.Manifest.permission.PACKAGE_USAGE_STATS].
+     */
     private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
 
-    /** Launcher for starting an activity for result, used here for system settings like overlay permission. */
+    /**
+     * ActivityResultLauncher for starting an activity for a result.
+     * This is primarily used for permissions that require navigating to system settings,
+     * such as the overlay permission ([android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION])
+     * or battery optimization exclusion.
+     */
     private lateinit var activityResultLauncherForSystemSettings: ActivityResultLauncher<Intent>
 
     private val mainViewModel: MainViewModel by viewModels()
+
+    /** State variable to control the visibility of the permission request dialog. */
     private lateinit var showPermissionRequestDialog: MutableState<Boolean>
+
+    /** State variable to store the next permission type to be requested. */
     private lateinit var nextPermissionType: MutableState<PermissionType>
 
     /**

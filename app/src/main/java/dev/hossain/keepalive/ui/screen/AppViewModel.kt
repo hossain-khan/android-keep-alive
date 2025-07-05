@@ -12,22 +12,39 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel for managing the list of applications and their selection state.
+ * ViewModel responsible for managing the list of applications that the user wants to monitor.
  *
- * @property dataStore The DataStore instance for persisting the list of applications.
+ * This ViewModel interacts with a [DataStore] to persist the list of [AppInfo] objects.
+ * It provides functionality to:
+ * - Observe the list of monitored apps ([appList]).
+ * - Manage a temporary selection of apps ([selectedApps]), typically for UI interactions like bulk removal.
+ * - Add ([addApp]) and remove ([removeApp]) apps from the monitored list.
+ * - Retrieve a list of all installed applications on the device ([getInstalledApps]), filtered to exclude
+ *   the current app, system apps (implicitly by checking for launch intent), and apps already in the monitored list.
+ *
+ * @param dataStore The [DataStore] instance used for storing and retrieving the list of [AppInfo] objects.
  */
 class AppViewModel(private val dataStore: DataStore<List<AppInfo>>) : ViewModel() {
-    // LiveData for observing the list of apps
+    /**
+     * LiveData that emits the current list of monitored applications ([AppInfo]) from the [DataStore].
+     * Observers can use this to react to changes in the monitored apps list.
+     */
     val appList: LiveData<List<AppInfo>> = dataStore.data.map { it }.asLiveData()
 
-    // List of selected apps
+    /**
+     * LiveData representing the set of currently selected [AppInfo] objects.
+     * This is typically used for UI purposes, such as highlighting selected items in a list
+     * or performing batch operations (e.g., removing multiple selected apps).
+     * It is not persisted in DataStore directly but managed in memory by the ViewModel.
+     */
     private val _selectedApps = MutableLiveData<Set<AppInfo>>(emptySet())
     val selectedApps: LiveData<Set<AppInfo>> = _selectedApps
 
     /**
-     * Toggles the selection state of an application.
+     * Toggles the selection state of a given [AppInfo] in the [_selectedApps] set.
+     * If the app is already selected, it will be deselected. If not selected, it will be added to the selection.
      *
-     * @param appInfo The AppInfo object representing the application to be toggled.
+     * @param appInfo The [AppInfo] object whose selection state is to be toggled.
      */
     fun toggleAppSelection(appInfo: AppInfo) {
         _selectedApps.value =
@@ -37,9 +54,10 @@ class AppViewModel(private val dataStore: DataStore<List<AppInfo>>) : ViewModel(
     }
 
     /**
-     * Adds a new application to the DataStore.
+     * Adds a specified [AppInfo] to the list of monitored applications in the [DataStore].
+     * This operation is performed asynchronously within the `viewModelScope`.
      *
-     * @param appInfo The AppInfo object representing the application to be added.
+     * @param appInfo The [AppInfo] object representing the application to be added.
      */
     fun addApp(appInfo: AppInfo) {
         viewModelScope.launch {
@@ -49,9 +67,10 @@ class AppViewModel(private val dataStore: DataStore<List<AppInfo>>) : ViewModel(
     }
 
     /**
-     * Removes an application from the DataStore.
+     * Removes a specified [AppInfo] from the list of monitored applications in the [DataStore].
+     * This operation is performed asynchronously within the `viewModelScope`.
      *
-     * @param appInfo The AppInfo object representing the application to be removed.
+     * @param appInfo The [AppInfo] object representing the application to be removed.
      */
     fun removeApp(appInfo: AppInfo) {
         viewModelScope.launch {
@@ -61,10 +80,17 @@ class AppViewModel(private val dataStore: DataStore<List<AppInfo>>) : ViewModel(
     }
 
     /**
-     * Retrieves a list of installed applications on the device, excluding system apps and the current app.
+     * Retrieves a list of installed applications on the device that are eligible for monitoring.
      *
-     * @param context The context used to access the package manager.
-     * @return A sorted list of AppInfo objects representing the installed applications.
+     * The returned list is filtered to:
+     * - Exclude the current application itself.
+     * - Exclude applications that do not have a launchable activity (e.g., system services without a UI).
+     * - Exclude applications that are already present in the `appList` (i.e., already being monitored).
+     *
+     * The resulting list is sorted alphabetically by application name.
+     *
+     * @param context The application [Context], used to access the [PackageManager].
+     * @return A sorted list of [AppInfo] objects representing eligible installed applications.
      */
     fun getInstalledApps(context: Context): List<AppInfo> {
         val alreadyAddedApps: List<AppInfo> = appList.value ?: emptyList()

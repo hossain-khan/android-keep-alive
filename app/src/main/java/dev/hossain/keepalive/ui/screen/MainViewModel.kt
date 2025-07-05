@@ -15,36 +15,53 @@ import dev.hossain.keepalive.data.PermissionType
 import timber.log.Timber
 
 /**
- * ViewModel responsible for managing and checking app permissions required for core functionality.
- * Tracks granted and remaining permissions, and exposes permission status for UI.
+ * ViewModel responsible for managing and checking app permissions essential for the app's core functionality.
+ *
+ * This ViewModel:
+ * - Tracks the overall status of all required permissions via [allPermissionsGranted].
+ * - Calculates the [totalPermissionRequired] based on the Android version.
+ * - Keeps a count of [totalApprovedPermissions].
+ * - Maintains sets of [requiredPermissionRemaining] and [grantedPermissions].
+ * - Provides a list of [requiredPermissions] (manifest permissions) based on the Android version.
+ * - Offers methods to [checkAllPermissions] and verify individual or groups of permissions.
  */
 class MainViewModel : ViewModel() {
+    /** LiveData indicating whether all necessary permissions have been granted. */
     val allPermissionsGranted = MutableLiveData(false)
 
     /**
-     * Total number of permissions required by the app.
-     * On [android.os.Build.VERSION_CODES.TIRAMISU] and above, it includes [android.Manifest.permission.POST_NOTIFICATIONS] permission.
+     * Total number of distinct permission types required by the app.
+     * This count varies based on the Android SDK version, for example,
+     * [android.Manifest.permission.POST_NOTIFICATIONS] is only required on
+     * [android.os.Build.VERSION_CODES.TIRAMISU] and above.
      */
-    val totalPermissionRequired =
+    val totalPermissionRequired: Int =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             PermissionType.entries.size
         } else {
+            // Exclude PERMISSION_POST_NOTIFICATIONS if below TIRAMISU
             PermissionType.entries.size - 1
         }
+
+    /** LiveData holding the count of currently approved (granted) permissions. */
     val totalApprovedPermissions = MutableLiveData(0)
 
     /**
-     * Permissions that are required but not granted yet.
-     * Having empty set after [checkAllPermissions] means all required permissions are granted.
-     * @see checkAllPermissions
+     * A mutable set of [PermissionType] that are currently required by the app but have not yet been granted.
+     * This set is populated by [checkAllPermissions]. If this set is empty, it implies all permissions are granted.
      */
     val requiredPermissionRemaining = mutableSetOf<PermissionType>()
+
+    /** A mutable set of [PermissionType] that have been successfully granted. */
     val grantedPermissions = mutableSetOf<PermissionType>()
 
     /**
-     * List of permissions required by the app, based on Android version.
+     * Array of Android Manifest permission strings required by the app.
+     * The specific permissions in this array depend on the Android SDK version.
+     * For example, [android.Manifest.permission.POST_NOTIFICATIONS] is included only on
+     * [android.os.Build.VERSION_CODES.TIRAMISU] and higher.
      */
-    val requiredPermissions =
+    val requiredPermissions: Array<String> =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             arrayOf(Manifest.permission.POST_NOTIFICATIONS, Manifest.permission.PACKAGE_USAGE_STATS)
         } else {
@@ -52,8 +69,22 @@ class MainViewModel : ViewModel() {
         }
 
     /**
-     * Checks and updates the status of all required permissions.
-     * Updates LiveData and permission sets accordingly.
+     * Checks the status of all permissions required by the application and updates the ViewModel's state.
+     *
+     * This function performs the following actions:
+     * 1. Clears the current [requiredPermissionRemaining] and [grantedPermissions] sets.
+     * 2. Checks for [Manifest.permission.POST_NOTIFICATIONS] if on Android Tiramisu (API 33) or higher.
+     *    Adds to [requiredPermissionRemaining] if not granted, or [grantedPermissions] if granted.
+     * 3. Checks if battery optimizations are ignored using [isBatteryOptimizationIgnored].
+     *    Adds [PermissionType.PERMISSION_IGNORE_BATTERY_OPTIMIZATIONS] to appropriate set.
+     * 4. Checks for usage stats permission using [hasUsageStatsPermission].
+     *    Adds [PermissionType.PERMISSION_PACKAGE_USAGE_STATS] to appropriate set.
+     * 5. Checks for overlay permission using [hasOverlayPermission].
+     *    Adds [PermissionType.PERMISSION_SYSTEM_APPLICATION_OVERLAY] to appropriate set.
+     * 6. Updates [totalApprovedPermissions] LiveData with the size of the [grantedPermissions] set.
+     * 7. Updates [allPermissionsGranted] LiveData based on whether [requiredPermissionRemaining] is empty.
+     *
+     * @param context The application context, used to check permission statuses.
      */
     fun checkAllPermissions(context: Context) {
         val hasUsageStatsPermission = hasUsageStatsPermission(context)
@@ -95,7 +126,10 @@ class MainViewModel : ViewModel() {
     }
 
     /**
-     * Returns true if battery optimizations are ignored for the app.
+     * Checks if the application is currently exempt from battery optimizations.
+     *
+     * @param context The application context.
+     * @return `true` if battery optimizations are ignored for the app, `false` otherwise.
      */
     private fun isBatteryOptimizationIgnored(context: Context): Boolean {
         val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -103,7 +137,12 @@ class MainViewModel : ViewModel() {
     }
 
     /**
-     * Returns true if the app has usage stats permission.
+     * Checks if the application has been granted permission to access package usage statistics.
+     * This permission ([android.Manifest.permission.PACKAGE_USAGE_STATS]) is a special permission
+     * that requires the user to grant it through system settings.
+     *
+     * @param context The application context.
+     * @return `true` if the app has usage stats permission, `false` otherwise.
      */
     private fun hasUsageStatsPermission(context: Context): Boolean {
         val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
@@ -126,14 +165,23 @@ class MainViewModel : ViewModel() {
     }
 
     /**
-     * Returns true if the app has overlay (draw over other apps) permission.
+     * Checks if the application has permission to draw overlays on top of other apps.
+     * This permission ([android.Manifest.permission.SYSTEM_ALERT_WINDOW]) is a special permission
+     * that requires the user to grant it through system settings.
+     *
+     * @param context The application context.
+     * @return `true` if the app can draw overlays, `false` otherwise.
      */
     private fun hasOverlayPermission(context: Context): Boolean {
         return Settings.canDrawOverlays(context)
     }
 
     /**
-     * Returns true if all specified permissions are granted.
+     * Checks if all permissions in the provided array are currently granted.
+     *
+     * @param context The application context.
+     * @param permissions An array of Android Manifest permission strings to check.
+     * @return `true` if all specified permissions are granted, `false` otherwise.
      */
     fun arePermissionsGranted(
         context: Context,
@@ -151,7 +199,11 @@ class MainViewModel : ViewModel() {
     }
 
     /**
-     * Returns true if the specified permission is granted.
+     * Checks if a specific Android Manifest permission is currently granted.
+     *
+     * @param context The application context.
+     * @param permission The Android Manifest permission string to check.
+     * @return `true` if the specified permission is granted, `false` otherwise.
      */
     private fun isPermissionGranted(
         context: Context,
