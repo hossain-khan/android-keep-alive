@@ -40,7 +40,7 @@ class MainViewModel : ViewModel() {
             PermissionType.entries.size
         } else {
             // Exclude PERMISSION_POST_NOTIFICATIONS if below TIRAMISU
-            PermissionType.entries.count { it != PermissionType.PERMISSION_POST_NOTIFICATIONS }
+            PermissionType.entries.size - 1
         }
 
     /** LiveData holding the count of currently approved (granted) permissions. */

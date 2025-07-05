@@ -78,12 +78,14 @@ class NotificationHelper(private val context: Context) {
             PendingIntent.getActivity(context, 0, notificationIntent, pendingIntentFlags)
 
         return NotificationCompat.Builder(context, CHANNEL_ID)
-            .setContentTitle(context.getString(R.string.notification_title_app_watchdog)) // Using string resource
-            .setContentText(context.getString(R.string.notification_content_monitoring_apps)) // Using string resource
+            .setContentTitle(context.getString(R.string.notification_title_app_watchdog))
+            .setContentText(context.getString(R.string.notification_content_monitoring_apps))
             .setSmallIcon(R.drawable.baseline_radar_24)
             .setContentIntent(pendingIntent)
-            .setPriority(NotificationCompat.PRIORITY_LOW) // Low priority for ongoing background service notification
-            .setOngoing(true) // Makes the notification persistent
+            // Low priority for ongoing background service notification
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            // Makes the notification persistent
+            .setOngoing(true)
             .build()
     }
 }

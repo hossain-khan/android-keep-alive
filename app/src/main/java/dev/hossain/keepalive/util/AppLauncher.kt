@@ -64,7 +64,6 @@ object AppLauncher {
         try {
             context.startActivity(launchIntent)
         } catch (e: ActivityNotFoundException) {
-            e.printStackTrace() // Consider removing if Timber logging is sufficient
             Timber.e(e, "Unable to find activity: $activityName in package: $packageName")
         }
     }
