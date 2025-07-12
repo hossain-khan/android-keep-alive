@@ -74,28 +74,30 @@ fun AppActivityLogScreen(
     val logs by activityLogger.getRecentLogs().collectAsState(initial = emptyList())
     val coroutineScope = rememberCoroutineScope()
     val isLoading = remember { mutableStateOf(false) }
-    
+
     // Filter states
     var searchQuery by remember { mutableStateOf("") }
     var selectedTimeFrame by remember { mutableStateOf(TimeFrame.ALL) }
     var showClearConfirmation by remember { mutableStateOf(false) }
     var showFilterMenu by remember { mutableStateOf(false) }
-    
+
     // Filter logs based on search query and time frame
     val filteredLogs by remember {
         derivedStateOf {
             logs.filter { log ->
-                val matchesSearch = searchQuery.isEmpty() || 
-                    log.appName.contains(searchQuery, ignoreCase = true) ||
-                    log.packageId.contains(searchQuery, ignoreCase = true)
-                
-                val matchesTimeFrame = when (selectedTimeFrame) {
-                    TimeFrame.ALL -> true
-                    TimeFrame.LAST_HOUR -> log.timestamp > System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1)
-                    TimeFrame.LAST_DAY -> log.timestamp > System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1)
-                    TimeFrame.LAST_WEEK -> log.timestamp > System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7)
-                }
-                
+                val matchesSearch =
+                    searchQuery.isEmpty() ||
+                        log.appName.contains(searchQuery, ignoreCase = true) ||
+                        log.packageId.contains(searchQuery, ignoreCase = true)
+
+                val matchesTimeFrame =
+                    when (selectedTimeFrame) {
+                        TimeFrame.ALL -> true
+                        TimeFrame.LAST_HOUR -> log.timestamp > System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1)
+                        TimeFrame.LAST_DAY -> log.timestamp > System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1)
+                        TimeFrame.LAST_WEEK -> log.timestamp > System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7)
+                    }
+
                 matchesSearch && matchesTimeFrame
             }
         }
@@ -114,17 +116,17 @@ fun AppActivityLogScreen(
                 title = { Text("Activity Logs") },
                 actions = {
                     IconButton(
-                        onClick = { showFilterMenu = !showFilterMenu }
+                        onClick = { showFilterMenu = !showFilterMenu },
                     ) {
                         Icon(
                             imageVector = Icons.Default.FilterList,
-                            contentDescription = "Filter logs"
+                            contentDescription = "Filter logs",
                         )
                     }
-                    
+
                     DropdownMenu(
                         expanded = showFilterMenu,
-                        onDismissRequest = { showFilterMenu = false }
+                        onDismissRequest = { showFilterMenu = false },
                     ) {
                         TimeFrame.values().forEach { timeFrame ->
                             DropdownMenuItem(
@@ -132,11 +134,11 @@ fun AppActivityLogScreen(
                                 onClick = {
                                     selectedTimeFrame = timeFrame
                                     showFilterMenu = false
-                                }
+                                },
                             )
                         }
                     }
-                }
+                },
             )
         },
     ) { innerPadding ->
@@ -155,7 +157,7 @@ fun AppActivityLogScreen(
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
-                        contentDescription = "Search"
+                        contentDescription = "Search",
                     )
                 },
                 trailingIcon = {
@@ -163,20 +165,20 @@ fun AppActivityLogScreen(
                         IconButton(onClick = { searchQuery = "" }) {
                             Icon(
                                 imageVector = Icons.Default.Clear,
-                                contentDescription = "Clear search"
+                                contentDescription = "Clear search",
                             )
                         }
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             // Filter chips
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 FilterChip(
                     selected = selectedTimeFrame != TimeFrame.ALL,
@@ -185,13 +187,13 @@ fun AppActivityLogScreen(
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.FilterList,
-                            contentDescription = null
+                            contentDescription = null,
                         )
-                    }
+                    },
                 )
-                
+
                 Spacer(modifier = Modifier.weight(1f))
-                
+
                 // Clear logs button with improved UX
                 Button(
                     onClick = { showClearConfirmation = true },
@@ -199,26 +201,27 @@ fun AppActivityLogScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Clear,
-                        contentDescription = null
+                        contentDescription = null,
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Clear Logs")
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Results count
             Text(
-                text = if (searchQuery.isNotEmpty() || selectedTimeFrame != TimeFrame.ALL) {
-                    "Showing ${filteredLogs.size} of ${logs.size} logs"
-                } else {
-                    "${logs.size} logs"
-                },
+                text =
+                    if (searchQuery.isNotEmpty() || selectedTimeFrame != TimeFrame.ALL) {
+                        "Showing ${filteredLogs.size} of ${logs.size} logs"
+                    } else {
+                        "${logs.size} logs"
+                    },
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
 
             if (isLoading.value) {
@@ -258,7 +261,7 @@ fun AppActivityLogScreen(
                             .padding(32.dp),
                 ) {
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Text(
                             text = "No logs match your filters",
@@ -287,13 +290,13 @@ fun AppActivityLogScreen(
                 }
             }
         }
-        
+
         // Clear confirmation dialog
         if (showClearConfirmation) {
             AlertDialog(
                 onDismissRequest = { showClearConfirmation = false },
                 title = { Text("Clear All Logs?") },
-                text = { 
+                text = {
                     Text("This will permanently delete all ${logs.size} activity logs. This action cannot be undone.")
                 },
                 confirmButton = {
@@ -305,18 +308,18 @@ fun AppActivityLogScreen(
                                 activityLogger.clearLogs()
                                 isLoading.value = false
                             }
-                        }
+                        },
                     ) {
                         Text("Clear")
                     }
                 },
                 dismissButton = {
                     TextButton(
-                        onClick = { showClearConfirmation = false }
+                        onClick = { showClearConfirmation = false },
                     ) {
                         Text("Cancel")
                     }
-                }
+                },
             )
         }
     }
@@ -329,7 +332,7 @@ enum class TimeFrame(val displayName: String) {
     ALL("All Time"),
     LAST_HOUR("Last Hour"),
     LAST_DAY("Last Day"),
-    LAST_WEEK("Last Week")
+    LAST_WEEK("Last Week"),
 }
 
 @Composable
