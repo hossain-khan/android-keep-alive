@@ -192,7 +192,7 @@ fun AppListScreen(
         // Confirmation Dialog for Delete
         showDeleteDialog.value?.let { appToDelete ->
             AlertDialog(
-                onDismissRequest = { 
+                onDismissRequest = {
                     showDeleteDialog.value = null
                 },
                 title = { Text("Remove App") },
@@ -229,7 +229,7 @@ fun AppListScreen(
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { 
+                    TextButton(onClick = {
                         showDeleteDialog.value = null
                     }) {
                         Text("Cancel")
