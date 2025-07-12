@@ -198,7 +198,7 @@ fun AppListScreen(
                 title = { Text("Remove App") },
                 text = {
                     Text(
-                        "Are you sure you want to remove \"${appToDelete.appName}\" from the watchlist?"
+                        "Are you sure you want to remove \"${appToDelete.appName}\" from the watchlist?",
                     )
                 },
                 confirmButton = {
@@ -209,19 +209,21 @@ fun AppListScreen(
 
                             // Show undo snackbar
                             coroutineScope.launch {
-                                val result = snackbarHostState.showSnackbar(
-                                    message = "\"${appToDelete.appName}\" removed from watchlist",
-                                    actionLabel = "Undo",
-                                    duration = SnackbarDuration.Long
-                                )
+                                val result =
+                                    snackbarHostState.showSnackbar(
+                                        message = "\"${appToDelete.appName}\" removed from watchlist",
+                                        actionLabel = "Undo",
+                                        duration = SnackbarDuration.Long,
+                                    )
                                 if (result == SnackbarResult.ActionPerformed) {
                                     viewModel.addApp(appToDelete)
                                 }
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error
-                        )
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error,
+                            ),
                     ) {
                         Text("Remove")
                     }
@@ -230,7 +232,7 @@ fun AppListScreen(
                     TextButton(onClick = { showDeleteDialog.value = null }) {
                         Text("Cancel")
                     }
-                }
+                },
             )
         }
     }
@@ -251,18 +253,19 @@ fun AppListItem(
     coroutineScope: kotlinx.coroutines.CoroutineScope,
 ) {
     var isRemoved by remember { mutableStateOf(false) }
-    val swipeState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { dismissValue ->
-            when (dismissValue) {
-                SwipeToDismissBoxValue.EndToStart -> {
-                    // Swipe to delete
-                    onDeleteRequested(appInfo)
-                    true
+    val swipeState =
+        rememberSwipeToDismissBoxState(
+            confirmValueChange = { dismissValue ->
+                when (dismissValue) {
+                    SwipeToDismissBoxValue.EndToStart -> {
+                        // Swipe to delete
+                        onDeleteRequested(appInfo)
+                        true
+                    }
+                    else -> false
                 }
-                else -> false
-            }
-        }
-    )
+            },
+        )
 
     // Reset swipe state when item is not removed
     LaunchedEffect(isRemoved) {
@@ -277,25 +280,26 @@ fun AppListItem(
             backgroundContent = {
                 // Background content when swiping
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.error)
-                        .padding(horizontal = 16.dp),
-                    contentAlignment = Alignment.CenterEnd
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.error)
+                            .padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.CenterEnd,
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Delete",
-                            tint = MaterialTheme.colorScheme.onError
+                            tint = MaterialTheme.colorScheme.onError,
                         )
                         Text(
                             text = "Remove",
                             color = MaterialTheme.colorScheme.onError,
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
                         )
                     }
                 }
@@ -305,9 +309,9 @@ fun AppListItem(
                     appInfo = appInfo,
                     isSelected = isSelected,
                     onAppSelected = onAppSelected,
-                    onDeleteRequested = onDeleteRequested
+                    onDeleteRequested = onDeleteRequested,
                 )
-            }
+            },
         )
     }
 }
@@ -323,25 +327,31 @@ private fun AppItemContent(
     onDeleteRequested: (AppInfo) -> Unit,
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected)
-                MaterialTheme.colorScheme.primaryContainer
-            else
-                MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isSelected) 4.dp else 1.dp
-        )
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    if (isSelected) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surface
+                    },
+            ),
+        elevation =
+            CardDefaults.cardElevation(
+                defaultElevation = if (isSelected) 4.dp else 1.dp,
+            ),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onAppSelected(appInfo) }
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { onAppSelected(appInfo) }
+                    .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             val context = LocalContext.current
             val icon = remember { context.packageManager.getApplicationIcon(appInfo.packageName) }
@@ -358,18 +368,22 @@ private fun AppItemContent(
                 Text(
                     text = appInfo.appName,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = if (isSelected)
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    else
-                        MaterialTheme.colorScheme.onSurface
+                    color =
+                        if (isSelected) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
                 )
                 Text(
                     text = appInfo.packageName,
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (isSelected)
-                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                    else
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    color =
+                        if (isSelected) {
+                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        },
                 )
             }
 
@@ -377,15 +391,16 @@ private fun AppItemContent(
             if (isSelected) {
                 Button(
                     onClick = { onDeleteRequested(appInfo) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    ),
-                    modifier = Modifier.padding(start = 8.dp)
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                        ),
+                    modifier = Modifier.padding(start = 8.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Delete",
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(16.dp),
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("Remove")
@@ -437,20 +452,23 @@ private fun SimpleAppListItem(
     onAppSelected: (AppInfo) -> Unit,
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 2.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onAppSelected(appInfo) }
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { onAppSelected(appInfo) }
+                    .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             val context = LocalContext.current
             val icon = remember { context.packageManager.getApplicationIcon(appInfo.packageName) }
@@ -467,12 +485,12 @@ private fun SimpleAppListItem(
                 Text(
                     text = appInfo.appName,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     text = appInfo.packageName,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 )
             }
         }
