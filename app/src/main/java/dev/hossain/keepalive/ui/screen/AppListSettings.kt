@@ -40,13 +40,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -194,7 +192,9 @@ fun AppListScreen(
         // Confirmation Dialog for Delete
         showDeleteDialog.value?.let { appToDelete ->
             AlertDialog(
-                onDismissRequest = { showDeleteDialog.value = null },
+                onDismissRequest = { 
+                    showDeleteDialog.value = null
+                },
                 title = { Text("Remove App") },
                 text = {
                     Text(
@@ -229,7 +229,9 @@ fun AppListScreen(
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showDeleteDialog.value = null }) {
+                    TextButton(onClick = { 
+                        showDeleteDialog.value = null
+                    }) {
                         Text("Cancel")
                     }
                 },
@@ -252,33 +254,26 @@ fun AppListItem(
     snackbarHostState: SnackbarHostState,
     coroutineScope: kotlinx.coroutines.CoroutineScope,
 ) {
-    var isRemoved by remember { mutableStateOf(false) }
     val swipeState =
         rememberSwipeToDismissBoxState(
             confirmValueChange = { dismissValue ->
                 when (dismissValue) {
                     SwipeToDismissBoxValue.EndToStart -> {
-                        // Swipe to delete
+                        // Show delete dialog but don't confirm dismissal yet
                         onDeleteRequested(appInfo)
-                        true
+                        false // Don't dismiss immediately, wait for user confirmation
                     }
                     else -> false
                 }
             },
         )
 
-    // Reset swipe state when item is not removed
-    LaunchedEffect(isRemoved) {
-        if (!isRemoved) {
-            swipeState.snapTo(SwipeToDismissBoxValue.Settled)
-        }
-    }
-
-    if (!isRemoved) {
-        SwipeToDismissBox(
-            state = swipeState,
-            backgroundContent = {
-                // Background content when swiping
+    SwipeToDismissBox(
+        state = swipeState,
+        backgroundContent = {
+            // Background content when swiping - only show when actually swiping
+            val dismissDirection = swipeState.dismissDirection
+            if (dismissDirection == SwipeToDismissBoxValue.EndToStart) {
                 Box(
                     modifier =
                         Modifier
@@ -303,17 +298,17 @@ fun AppListItem(
                         )
                     }
                 }
-            },
-            content = {
-                AppItemContent(
-                    appInfo = appInfo,
-                    isSelected = isSelected,
-                    onAppSelected = onAppSelected,
-                    onDeleteRequested = onDeleteRequested,
-                )
-            },
-        )
-    }
+            }
+        },
+        content = {
+            AppItemContent(
+                appInfo = appInfo,
+                isSelected = isSelected,
+                onAppSelected = onAppSelected,
+                onDeleteRequested = onDeleteRequested,
+            )
+        },
+    )
 }
 
 /**
