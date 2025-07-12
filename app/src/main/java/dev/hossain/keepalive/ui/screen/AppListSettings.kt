@@ -57,9 +57,6 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.navigation.NavHostController
 import dev.hossain.keepalive.data.AppDataStore
 import kotlinx.coroutines.launch
-import androidx.core.graphics.drawable.toBitmap
-import androidx.navigation.NavHostController
-import dev.hossain.keepalive.data.AppDataStore
 
 /**
  * Displays the app list settings screen, allowing users to configure which apps are managed.
@@ -127,9 +124,9 @@ fun AppListScreen(
             style = MaterialTheme.typography.bodyMedium,
             color = Color.Gray,
         )
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         LazyColumn {
             if (appList.isEmpty()) {
                 item {
@@ -193,21 +190,23 @@ fun AppListScreen(
                 onDismissRequest = { showDialog.value = false },
             )
         }
-        
+
         // Confirmation Dialog for Delete
         showDeleteDialog.value?.let { appToDelete ->
             AlertDialog(
                 onDismissRequest = { showDeleteDialog.value = null },
                 title = { Text("Remove App") },
-                text = { 
-                    Text("Are you sure you want to remove \"${appToDelete.appName}\" from the watchlist?")
+                text = {
+                    Text(
+                        "Are you sure you want to remove \"${appToDelete.appName}\" from the watchlist?"
+                    )
                 },
                 confirmButton = {
                     Button(
                         onClick = {
                             viewModel.removeApp(appToDelete)
                             showDeleteDialog.value = null
-                            
+
                             // Show undo snackbar
                             coroutineScope.launch {
                                 val result = snackbarHostState.showSnackbar(
@@ -328,9 +327,9 @@ private fun AppItemContent(
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) 
-                MaterialTheme.colorScheme.primaryContainer 
-            else 
+            containerColor = if (isSelected)
+                MaterialTheme.colorScheme.primaryContainer
+            else
                 MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(
@@ -359,17 +358,17 @@ private fun AppItemContent(
                 Text(
                     text = appInfo.appName,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = if (isSelected) 
-                        MaterialTheme.colorScheme.onPrimaryContainer 
-                    else 
+                    color = if (isSelected)
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    else
                         MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = appInfo.packageName,
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (isSelected) 
-                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f) 
-                    else 
+                    color = if (isSelected)
+                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    else
                         MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             }
