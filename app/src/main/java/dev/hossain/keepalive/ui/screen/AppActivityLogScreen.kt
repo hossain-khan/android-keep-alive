@@ -10,28 +10,41 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,6 +59,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 /**
  * Displays the activity log screen showing recent app activity logs and settings.
@@ -60,6 +74,32 @@ fun AppActivityLogScreen(
     val logs by activityLogger.getRecentLogs().collectAsState(initial = emptyList())
     val coroutineScope = rememberCoroutineScope()
     val isLoading = remember { mutableStateOf(false) }
+    
+    // Filter states
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedTimeFrame by remember { mutableStateOf(TimeFrame.ALL) }
+    var showClearConfirmation by remember { mutableStateOf(false) }
+    var showFilterMenu by remember { mutableStateOf(false) }
+    
+    // Filter logs based on search query and time frame
+    val filteredLogs by remember {
+        derivedStateOf {
+            logs.filter { log ->
+                val matchesSearch = searchQuery.isEmpty() || 
+                    log.appName.contains(searchQuery, ignoreCase = true) ||
+                    log.packageId.contains(searchQuery, ignoreCase = true)
+                
+                val matchesTimeFrame = when (selectedTimeFrame) {
+                    TimeFrame.ALL -> true
+                    TimeFrame.LAST_HOUR -> log.timestamp > System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1)
+                    TimeFrame.LAST_DAY -> log.timestamp > System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1)
+                    TimeFrame.LAST_WEEK -> log.timestamp > System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7)
+                }
+                
+                matchesSearch && matchesTimeFrame
+            }
+        }
+    }
 
     // Initialize SettingsRepository to get current settings
     val settingsRepository = remember { SettingsRepository(context) }
@@ -72,6 +112,31 @@ fun AppActivityLogScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Activity Logs") },
+                actions = {
+                    IconButton(
+                        onClick = { showFilterMenu = !showFilterMenu }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FilterList,
+                            contentDescription = "Filter logs"
+                        )
+                    }
+                    
+                    DropdownMenu(
+                        expanded = showFilterMenu,
+                        onDismissRequest = { showFilterMenu = false }
+                    ) {
+                        TimeFrame.values().forEach { timeFrame ->
+                            DropdownMenuItem(
+                                text = { Text(timeFrame.displayName) },
+                                onClick = {
+                                    selectedTimeFrame = timeFrame
+                                    showFilterMenu = false
+                                }
+                            )
+                        }
+                    }
+                }
             )
         },
     ) { innerPadding ->
@@ -80,32 +145,80 @@ fun AppActivityLogScreen(
                 Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .padding(24.dp),
+                    .padding(16.dp),
         ) {
-            // Header subtitle
-            Text(
-                text = "Recent app monitoring activity:",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Clear logs button
-            Button(
-                onClick = {
-                    isLoading.value = true
-                    coroutineScope.launch {
-                        activityLogger.clearLogs()
-                        isLoading.value = false
+            // Search bar
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                label = { Text("Search apps...") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search"
+                    )
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Clear search"
+                            )
+                        }
                     }
                 },
-                enabled = !isLoading.value && logs.isNotEmpty(),
-                modifier = Modifier.align(Alignment.End),
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Filter chips
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Clear Logs")
+                FilterChip(
+                    selected = selectedTimeFrame != TimeFrame.ALL,
+                    onClick = { /* Already handled in TopAppBar dropdown */ },
+                    label = { Text(selectedTimeFrame.displayName) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.FilterList,
+                            contentDescription = null
+                        )
+                    }
+                )
+                
+                Spacer(modifier = Modifier.weight(1f))
+                
+                // Clear logs button with improved UX
+                Button(
+                    onClick = { showClearConfirmation = true },
+                    enabled = !isLoading.value && logs.isNotEmpty(),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = null
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Clear Logs")
+                }
             }
-
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Results count
+            Text(
+                text = if (searchQuery.isNotEmpty() || selectedTimeFrame != TimeFrame.ALL) {
+                    "Showing ${filteredLogs.size} of ${logs.size} logs"
+                } else {
+                    "${logs.size} logs"
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
             Spacer(modifier = Modifier.height(8.dp))
 
             if (isLoading.value) {
@@ -132,8 +245,33 @@ fun AppActivityLogScreen(
                     Text(
                         text = "No activity logs yet. Logs will appear after the watchdog service checks monitored apps.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                }
+            } else if (filteredLogs.isEmpty()) {
+                // Show empty state for filtered results
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "No logs match your filters",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Try adjusting your search or time frame filter",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             } else {
                 LazyColumn {
@@ -142,14 +280,56 @@ fun AppActivityLogScreen(
                         CurrentSettingsCard(appCheckInterval, isForceStartAppsEnabled)
                     }
 
-                    items(logs) { logEntry ->
+                    items(filteredLogs) { logEntry ->
                         ActivityLogItem(logEntry)
                         HorizontalDivider()
                     }
                 }
             }
         }
+        
+        // Clear confirmation dialog
+        if (showClearConfirmation) {
+            AlertDialog(
+                onDismissRequest = { showClearConfirmation = false },
+                title = { Text("Clear All Logs?") },
+                text = { 
+                    Text("This will permanently delete all ${logs.size} activity logs. This action cannot be undone.")
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showClearConfirmation = false
+                            isLoading.value = true
+                            coroutineScope.launch {
+                                activityLogger.clearLogs()
+                                isLoading.value = false
+                            }
+                        }
+                    ) {
+                        Text("Clear")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showClearConfirmation = false }
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
     }
+}
+
+/**
+ * Time frame options for filtering logs
+ */
+enum class TimeFrame(val displayName: String) {
+    ALL("All Time"),
+    LAST_HOUR("Last Hour"),
+    LAST_DAY("Last Day"),
+    LAST_WEEK("Last Week")
 }
 
 @Composable
@@ -163,13 +343,13 @@ fun CurrentSettingsCard(
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = "Current Settings",
                 style = MaterialTheme.typography.titleMedium,
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -186,7 +366,7 @@ fun CurrentSettingsCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -203,7 +383,7 @@ fun CurrentSettingsCard(
                         if (isForceStartAppsEnabled) {
                             MaterialTheme.colorScheme.primary
                         } else {
-                            Color.Gray
+                            MaterialTheme.colorScheme.onSurfaceVariant
                         },
                 )
             }
@@ -219,7 +399,7 @@ fun ActivityLogItem(log: AppActivityLog) {
                 .fillMaxWidth()
                 .padding(vertical = 4.dp),
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -238,15 +418,15 @@ fun ActivityLogItem(log: AppActivityLog) {
                 StatusIcon(log)
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = "Package: ${log.packageId}",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Status info
             Text(
@@ -256,21 +436,21 @@ fun ActivityLogItem(log: AppActivityLog) {
             )
 
             if (log.message.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = log.message,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Timestamp
             Text(
                 text = formatTimestamp(log.timestamp),
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -288,10 +468,10 @@ private fun StatusIcon(log: AppActivityLog) {
 
     val tint =
         when {
-            log.wasAttemptedToStart && log.forceStartEnabled -> Color(0xFF2196F3) // Blue
-            log.wasAttemptedToStart -> Color(0xFFFF9800) // Orange
-            log.wasRunningRecently -> Color(0xFF4CAF50) // Green
-            else -> Color(0xFFF44336) // Red
+            log.wasAttemptedToStart && log.forceStartEnabled -> MaterialTheme.colorScheme.primary
+            log.wasAttemptedToStart -> Color(0xFFFF9800) // Orange - warning
+            log.wasRunningRecently -> Color(0xFF4CAF50) // Green - success
+            else -> MaterialTheme.colorScheme.error
         }
 
     Icon(
@@ -301,12 +481,13 @@ private fun StatusIcon(log: AppActivityLog) {
     )
 }
 
+@Composable
 private fun getStatusColor(log: AppActivityLog): Color {
     return when {
-        log.wasAttemptedToStart && log.forceStartEnabled -> Color(0xFF2196F3) // Blue
-        log.wasAttemptedToStart -> Color(0xFFFF9800) // Orange
-        log.wasRunningRecently -> Color(0xFF4CAF50) // Green
-        else -> Color(0xFFF44336) // Red
+        log.wasAttemptedToStart && log.forceStartEnabled -> MaterialTheme.colorScheme.primary
+        log.wasAttemptedToStart -> Color(0xFFFF9800) // Orange - warning
+        log.wasRunningRecently -> Color(0xFF4CAF50) // Green - success
+        else -> MaterialTheme.colorScheme.error
     }
 }
 
