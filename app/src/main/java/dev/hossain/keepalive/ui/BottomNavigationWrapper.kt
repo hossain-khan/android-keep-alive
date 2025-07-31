@@ -3,8 +3,10 @@ package dev.hossain.keepalive.ui
 import android.content.Context
 import android.content.Intent
 import androidx.activity.result.ActivityResultLauncher
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -49,6 +51,7 @@ fun BottomNavigationWrapper(
     configuredAppsCount: Int,
 ) {
     Scaffold(
+        contentWindowInsets = WindowInsets.systemBars,
         bottomBar = {
             if (allPermissionsGranted) {
                 BottomNavigationBar(
