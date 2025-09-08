@@ -217,6 +217,35 @@ class WatchdogService : Service() {
 
                     delay(DELAY_BETWEEN_MULTIPLE_APP_CHECKS_MS)
                 }
+
+                // After processing all monitored apps, launch the sticky app to bring it to the top of recent apps
+                val stickyApp = monitoredApps.find { it.isSticky }
+                if (stickyApp != null) {
+                    Timber.d(
+                        "[Instance ID: $currentServiceInstanceId] Launching sticky app ${stickyApp.appName} " +
+                            "to bring it to the top of recent apps list.",
+                    )
+
+                    // Small delay before launching sticky app to ensure other apps have finished launching
+                    delay(DELAY_BETWEEN_MULTIPLE_APP_CHECKS_MS)
+
+                    AppLauncher.openApp(this@WatchdogService, stickyApp.packageName)
+
+                    // Log the sticky app activity
+                    val stickyActivityLog =
+                        AppActivityLog(
+                            packageId = stickyApp.packageName,
+                            appName = stickyApp.appName,
+                            wasRunningRecently = true,
+                            wasAttemptedToStart = true,
+                            timestamp = System.currentTimeMillis(),
+                            forceStartEnabled = shouldForceStart,
+                            message = "Sticky app launched to bring it to top of recent apps list",
+                        )
+                    activityLogger.logAppActivity(stickyActivityLog)
+                } else {
+                    Timber.d("[Instance ID: $currentServiceInstanceId] No sticky app configured.")
+                }
             }
         }
 

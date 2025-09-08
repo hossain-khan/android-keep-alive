@@ -14,6 +14,8 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -38,6 +41,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import dev.hossain.keepalive.data.AppDataStore
 import dev.hossain.keepalive.data.SettingsRepository
 import dev.hossain.keepalive.ui.theme.ThemeMode
 import dev.hossain.keepalive.util.AppConfig.APP_CHECK_INTERVAL_STEP
@@ -330,6 +334,119 @@ fun AppConfigScreen(
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(start = 16.dp, top = 4.dp),
                         )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Sticky App Selection Setting
+            val appViewModel = remember { AppViewModel(AppDataStore.store(context)) }
+            val monitoredApps by appViewModel.appList.observeAsState(emptyList())
+            val currentStickyApp by appViewModel.stickyApp.observeAsState()
+
+            Text(
+                text = "Sticky App",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+            Text(
+                text =
+                    """
+                    |The sticky app will be launched last during each monitoring cycle, 
+                    |bringing it to the top of the recent apps list and ensuring it remains the most recently active app. 
+                    |This is useful for apps that need to stay prominent or accessible. Only one app can be sticky at a time.
+                    """.trimMargin(),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray,
+                modifier = Modifier.padding(bottom = 16.dp),
+            )
+
+            if (monitoredApps.isEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        ),
+                ) {
+                    Text(
+                        text = "No apps are being monitored yet. Add apps from the main screen to enable sticky app selection.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                }
+            } else {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                        ),
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        // Option for no sticky app
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .selectable(
+                                        selected = currentStickyApp == null,
+                                        onClick = {
+                                            currentStickyApp?.let { stickyApp ->
+                                                appViewModel.toggleStickyApp(stickyApp)
+                                            }
+                                        },
+                                        role = Role.RadioButton,
+                                    )
+                                    .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(
+                                selected = currentStickyApp == null,
+                                onClick = null,
+                            )
+                            Text(
+                                text = "No sticky app",
+                                modifier = Modifier.padding(start = 16.dp),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+
+                        // List of monitored apps
+                        monitoredApps.forEach { app ->
+                            Row(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .selectable(
+                                            selected = currentStickyApp?.packageName == app.packageName,
+                                            onClick = {
+                                                appViewModel.toggleStickyApp(app)
+                                            },
+                                            role = Role.RadioButton,
+                                        )
+                                        .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                RadioButton(
+                                    selected = currentStickyApp?.packageName == app.packageName,
+                                    onClick = null,
+                                )
+                                Column(modifier = Modifier.padding(start = 16.dp)) {
+                                    Text(
+                                        text = app.appName,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                    Text(
+                                        text = app.packageName,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.Gray,
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

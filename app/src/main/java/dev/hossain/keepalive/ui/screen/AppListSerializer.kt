@@ -9,7 +9,15 @@ import java.io.InputStream
 import java.io.OutputStream
 
 @Serializable
-data class AppInfo(val packageName: String, val appName: String)
+data class AppInfo(
+    val packageName: String,
+    val appName: String,
+    /**
+     * Flag to indicate if this app should be started at the end
+     * to bring it on top of the recent apps list.
+     */
+    val isSticky: Boolean = false,
+)
 
 object AppListSerializer : Serializer<List<AppInfo>> {
     // Provide a default value for the DataStore
