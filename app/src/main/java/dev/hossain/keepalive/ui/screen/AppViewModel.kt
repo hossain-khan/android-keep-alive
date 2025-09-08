@@ -111,4 +111,49 @@ class AppViewModel(private val dataStore: DataStore<List<AppInfo>>) : ViewModel(
             .distinctBy { it.packageName }
             .sortedBy { it.appName }
     }
+
+    /**
+     * Updates the sticky status of apps, ensuring only one app can be sticky at a time.
+     * If the provided app is already sticky, it will be made non-sticky.
+     * If another app was sticky, it will be made non-sticky and the new app will become sticky.
+     *
+     * @param targetApp The [AppInfo] object whose sticky status should be toggled.
+     */
+    fun toggleStickyApp(targetApp: AppInfo) {
+        viewModelScope.launch {
+            val currentList = appList.value ?: emptyList()
+            val updatedList =
+                currentList.map { app ->
+                    when {
+                        // If this is the target app and it's already sticky, make it non-sticky
+                        app.packageName == targetApp.packageName && app.isSticky -> app.copy(isSticky = false)
+                        // If this is the target app and it's not sticky, make it sticky
+                        app.packageName == targetApp.packageName && !app.isSticky -> app.copy(isSticky = true)
+                        // If this is not the target app but it's sticky, make it non-sticky (only one can be sticky)
+                        app.packageName != targetApp.packageName && app.isSticky -> app.copy(isSticky = false)
+                        // Otherwise, keep the app unchanged
+                        else -> app
+                    }
+                }
+            dataStore.updateData { updatedList }
+        }
+    }
+
+    /**
+     * Returns the currently sticky app, if any.
+     *
+     * @return The [AppInfo] object that is currently marked as sticky, or null if no app is sticky.
+     */
+    fun getStickyApp(): AppInfo? {
+        return appList.value?.find { it.isSticky }
+    }
+
+    /**
+     * LiveData that emits the currently sticky app.
+     * Observers can use this to react to changes in the sticky app selection.
+     */
+    val stickyApp: LiveData<AppInfo?> =
+        dataStore.data.map { apps ->
+            apps.find { it.isSticky }
+        }.asLiveData()
 }
