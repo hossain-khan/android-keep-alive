@@ -27,6 +27,7 @@ import dev.hossain.keepalive.data.PermissionType.PERMISSION_IGNORE_BATTERY_OPTIM
 import dev.hossain.keepalive.data.PermissionType.PERMISSION_PACKAGE_USAGE_STATS
 import dev.hossain.keepalive.data.PermissionType.PERMISSION_POST_NOTIFICATIONS
 import dev.hossain.keepalive.data.PermissionType.PERMISSION_SYSTEM_APPLICATION_OVERLAY
+import dev.hossain.keepalive.data.SettingsRepository
 import dev.hossain.keepalive.ui.BottomNavigationWrapper
 import dev.hossain.keepalive.ui.screen.MainViewModel
 import dev.hossain.keepalive.ui.theme.KeepAliveTheme
@@ -76,7 +77,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            KeepAliveTheme {
+            // Observe theme preference
+            val settingsRepository = remember { SettingsRepository(applicationContext) }
+            val themeMode by settingsRepository.themeModeFlow.collectAsState(initial = dev.hossain.keepalive.ui.theme.ThemeMode.SYSTEM)
+
+            KeepAliveTheme(themeMode = themeMode) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     showPermissionRequestDialog = remember { mutableStateOf(false) }
                     nextPermissionType = remember { mutableStateOf(PERMISSION_POST_NOTIFICATIONS) }

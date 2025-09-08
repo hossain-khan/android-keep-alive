@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -17,6 +18,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -32,10 +34,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import dev.hossain.keepalive.data.SettingsRepository
+import dev.hossain.keepalive.ui.theme.ThemeMode
 import dev.hossain.keepalive.util.AppConfig.APP_CHECK_INTERVAL_STEP
 import dev.hossain.keepalive.util.AppConfig.DEFAULT_APP_CHECK_INTERVAL_MIN
 import dev.hossain.keepalive.util.AppConfig.MAX_APP_CHECK_INTERVAL_SLIDER
@@ -67,6 +71,9 @@ fun AppConfigScreen(
     val airtableToken by settingsRepository.airtableTokenFlow.collectAsState(initial = "")
     val airtableDataUrl by settingsRepository.airtableDataUrlFlow.collectAsState(initial = "")
 
+    // Theme mode setting
+    val themeMode by settingsRepository.themeModeFlow.collectAsState(initial = ThemeMode.SYSTEM)
+
     var appCheckIntervalValue by remember { mutableStateOf(appCheckInterval.toFloat()) }
     var isForceStartAppsEnabledValue by remember { mutableStateOf(isForceStartAppsEnabled) }
     var isHealthCheckEnabledValue by remember { mutableStateOf(isHealthCheckEnabled) }
@@ -79,6 +86,9 @@ fun AppConfigScreen(
     var airtableDataUrlValue by remember { mutableStateOf(airtableDataUrl) }
     var airtableTokenError by remember { mutableStateOf<String?>(null) }
     var airtableDataUrlError by remember { mutableStateOf<String?>(null) }
+
+    // Theme mode mutable state
+    var selectedThemeMode by remember { mutableStateOf(themeMode) }
 
     Scaffold(
         topBar = {
@@ -324,6 +334,58 @@ fun AppConfigScreen(
                 }
             }
 
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Theme Selection Setting
+            Text(
+                text = "Theme",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+            Text(
+                text = "Choose the appearance theme for the app",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray,
+                modifier = Modifier.padding(bottom = 16.dp),
+            )
+
+            Column {
+                ThemeMode.values().forEach { mode ->
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .selectable(
+                                    selected = selectedThemeMode == mode,
+                                    onClick = {
+                                        selectedThemeMode = mode
+                                        coroutineScope.launch {
+                                            settingsRepository.saveThemeMode(mode)
+                                        }
+                                    },
+                                    role = Role.RadioButton,
+                                )
+                                .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(
+                            selected = selectedThemeMode == mode,
+                            // Handled by the parent Row's onClick
+                            onClick = null,
+                        )
+                        Text(
+                            text =
+                                when (mode) {
+                                    ThemeMode.LIGHT -> "Light"
+                                    ThemeMode.DARK -> "Dark"
+                                    ThemeMode.SYSTEM -> "System default"
+                                },
+                            modifier = Modifier.padding(start = 16.dp),
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             // Done Button
@@ -362,6 +424,10 @@ fun AppConfigScreen(
 
         LaunchedEffect(airtableDataUrl) {
             airtableDataUrlValue = airtableDataUrl
+        }
+
+        LaunchedEffect(themeMode) {
+            selectedThemeMode = themeMode
         }
     }
 }

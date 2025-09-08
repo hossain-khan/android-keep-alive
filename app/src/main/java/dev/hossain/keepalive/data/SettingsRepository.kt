@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import dev.hossain.keepalive.ui.theme.ThemeMode
 import dev.hossain.keepalive.util.AppConfig.DEFAULT_APP_CHECK_INTERVAL_MIN
 import dev.hossain.keepalive.util.AppConfig.MINIMUM_APP_CHECK_INTERVAL_MIN
 import kotlinx.coroutines.flow.Flow
@@ -52,6 +53,9 @@ class SettingsRepository(private val context: Context) {
 
         /** [Preferences.Key] for storing the Airtable data URL. */
         val AIRTABLE_DATA_URL = stringPreferencesKey("airtable_data_url")
+
+        /** [Preferences.Key] for storing the selected theme mode. */
+        val THEME_MODE = stringPreferencesKey("theme_mode")
     }
 
     /**
@@ -124,6 +128,21 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.data
             .map { preferences ->
                 preferences[AIRTABLE_DATA_URL] ?: "" // Default to empty string
+            }
+
+    /**
+     * A [Flow] that emits the current theme mode preference.
+     * Defaults to [ThemeMode.SYSTEM] if not set.
+     */
+    val themeModeFlow: Flow<ThemeMode> =
+        context.dataStore.data
+            .map { preferences ->
+                val themeMode = preferences[THEME_MODE] ?: ThemeMode.SYSTEM.name
+                try {
+                    ThemeMode.valueOf(themeMode)
+                } catch (e: IllegalArgumentException) {
+                    ThemeMode.SYSTEM // Default to system if invalid value
+                }
             }
 
     /**
@@ -220,6 +239,17 @@ class SettingsRepository(private val context: Context) {
     suspend fun saveAirtableDataUrl(url: String) {
         context.dataStore.edit { preferences ->
             preferences[AIRTABLE_DATA_URL] = url
+        }
+    }
+
+    /**
+     * Saves the selected theme mode to DataStore.
+     *
+     * @param themeMode The theme mode to save.
+     */
+    suspend fun saveThemeMode(themeMode: ThemeMode) {
+        context.dataStore.edit { preferences ->
+            preferences[THEME_MODE] = themeMode.name
         }
     }
 }
