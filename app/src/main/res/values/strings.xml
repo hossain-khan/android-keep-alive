@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Keep Alive</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_name_watchdog_service">Watchdog Service</string>
+    <string name="notification_title_app_watchdog">App Watchdog</string>
+    <string name="notification_content_monitoring_apps">Monitoring your apps to keep them alive.</string>
+
 </resources>

@@ -8,6 +8,7 @@ espressoCore = "3.6.1"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 kotlin = "2.0.10"
+kotlinxCoroutines = "1.8.1"
 ktlint = "12.1.1"
 lifecycleRuntimeKtx = "2.8.5"
 runtimeLivedata = "1.7.0"
@@ -31,6 +32,7 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.4.1" }
 okhttp3 = { group = "com.squareup.okhttp3", name = "okhttp", version = "4.9.1" }
 timber = { group = "com.jakewharton.timber", name = "timber", version = "5.0.1" }
@@ -42,4 +44,3 @@ jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "composePlugin"
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version = "1.5.21" }
-

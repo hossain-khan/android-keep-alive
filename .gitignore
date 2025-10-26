@@ -36,3 +36,7 @@ google-services.json
 # Android Profiling
 *.hprof
 
+.DS_Store
+secret.properties
+keystore-test-local/
+test-local-keystore-signing.sh

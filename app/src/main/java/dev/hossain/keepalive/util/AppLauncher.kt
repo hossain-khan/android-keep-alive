@@ -7,7 +7,19 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import timber.log.Timber
 
+/**
+ * Utility object for launching other applications.
+ */
 object AppLauncher {
+    /**
+     * Opens the specified application using its package name.
+     *
+     * It retrieves the main launch intent for the package and starts it as a new task.
+     * If no launch intent is found for the package, an error is logged.
+     *
+     * @param context The [Context] to use for accessing the [PackageManager] and starting the activity.
+     * @param packageName The package name of the application to open.
+     */
     fun openApp(
         context: Context,
         packageName: String,
@@ -22,7 +34,20 @@ object AppLauncher {
         }
     }
 
-    private fun startApplication(
+    /**
+     * Starts a specific activity within an application package.
+     *
+     * This method is useful if you need to launch a non-default activity or be very specific.
+     * It constructs an intent with `ACTION_MAIN` and `CATEGORY_LAUNCHER` for the given
+     * package and activity name.
+     *
+     * Note: This method is currently private and unused. It can be made public if needed.
+     *
+     * @param context The [Context] to use for starting the activity.
+     * @param packageName The package name of the application.
+     * @param activityName The fully qualified class name of the activity to start.
+     */
+    private fun startSpecificActivity(
         context: Context,
         packageName: String,
         activityName: String,
@@ -39,13 +64,19 @@ object AppLauncher {
         try {
             context.startActivity(launchIntent)
         } catch (e: ActivityNotFoundException) {
-            e.printStackTrace()
-            Timber.e(e, "Unable to find activity: $launchIntent")
+            Timber.e(e, "Unable to find activity: $activityName in package: $packageName")
         }
     }
 
     /**
-     * Checks if the activity is available in the package.
+     * Checks if a specific activity is available (exported and enabled) within a given package.
+     *
+     * Note: This method is currently private and unused. It can be made public if needed.
+     *
+     * @param context The [Context] to use for accessing the [PackageManager].
+     * @param packageName The package name of the application.
+     * @param activityName The fully qualified class name of the activity to check.
+     * @return `true` if the activity is available, `false` otherwise.
      */
     private fun isActivityAvailable(
         context: Context,
@@ -60,7 +91,13 @@ object AppLauncher {
     }
 
     /**
-     * Checks if the app is installed.
+     * Checks if an application with the given package name is installed on the device.
+     *
+     * Note: This method is currently private and unused. It can be made public if needed.
+     *
+     * @param context The [Context] to use for accessing the [PackageManager].
+     * @param packageName The package name of the application to check.
+     * @return `true` if the app is installed, `false` otherwise.
      */
     private fun isAppInstalled(
         context: Context,

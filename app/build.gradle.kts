@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
@@ -30,12 +32,49 @@ android {
          * or you can override View.onWindowVisibilityChanged() to get notified whenever the visibility changes.
          */
         targetSdk = 34
-        versionCode = 10
-        versionName = "1.10"
+        versionCode = 17
+        versionName = "2.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
+        }
+    }
+
+    signingConfigs {
+        create("release") {
+            val props = Properties()
+            val secretPropsFile = rootProject.file("secret.properties")
+            // The template file is used for CI/CD with debug keystore signing
+            val templatePropsFile = rootProject.file("secret.template.properties")
+            when {
+                secretPropsFile.exists() -> {
+                    println("🔑 Using secret.properties for signing config ✅ ")
+                    props.load(secretPropsFile.inputStream())
+                }
+                templatePropsFile.exists() -> {
+                    println("⚠️ Using secret.template.properties for signing config ⚠️ ")
+                    props.load(templatePropsFile.inputStream())
+                }
+                else -> {
+                    println("❌ No signing properties file found")
+                }
+            }
+            val keystoreFile = props["KEYSTORE_FILE"] as String?
+            if (!keystoreFile.isNullOrBlank()) {
+                val ciKeystore =
+                    System.getenv("CI")?.let {
+                        val ciKeystorePath = rootProject.file("keystore/keep-alive.keystore")
+                        if (ciKeystorePath.exists()) ciKeystorePath else null
+                    }
+                storeFile = ciKeystore ?: file(keystoreFile)
+            }
+            val resolvedStorePassword = System.getenv("KEYSTORE_PASSWORD") ?: props["KEYSTORE_PASSWORD"] as String?
+            val resolvedKeyAlias = System.getenv("KEY_ALIAS") ?: props["KEY_ALIAS"] as String?
+            val resolvedKeyPassword = System.getenv("KEY_PASSWORD") ?: props["KEY_PASSWORD"] as String?
+            storePassword = resolvedStorePassword
+            keyAlias = resolvedKeyAlias
+            keyPassword = resolvedKeyPassword
         }
     }
 
@@ -46,6 +85,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
@@ -93,6 +133,7 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)

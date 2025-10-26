@@ -1,0 +1,149 @@
+name: Android Release Build
+
+# Workflow that builds signed release APK and attaches it to GitHub releases
+# This automates the process of building and distributing release APKs
+# when a new GitHub release is published.
+#
+# This workflow requires the following GitHub secrets:
+# - KEYSTORE_BASE64: Base64-encoded production keystore file
+# - KEYSTORE_PASSWORD: Password for the keystore
+# - KEY_ALIAS: Alias of the key inside the keystore
+# - KEY_PASSWORD: Password for the key (if different from keystore password)
+#
+# The workflow will:
+# 1. Build a signed release APK using the production keystore
+# 2. Rename it to follow the pattern: keep-alive-release-v{version}.apk
+# 3. Attach the APK to the GitHub release for easy distribution
+
+on:
+  # Trigger when a GitHub release is published
+  release:
+    types: [published]
+  # Allow manual triggering for testing
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Identify build context
+        run: |
+          echo "🔍 Build context information:"
+          echo "Event name: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Ref name: ${{ github.ref_name }}"
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "🎉 Building for GitHub release: ${{ github.ref_name }}"
+          else
+            echo "📦 Manual workflow dispatch build"
+          fi
+
+      - name: Decode keystore from base64
+        run: |
+          echo "🔑 Setting up production keystore for signing..."
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore/keep-alive.keystore
+          echo "✅ Keystore decoded successfully"
+
+      - name: Build Release APK
+        run: |
+          echo "🏗️ Building signed release APK..."
+          ./gradlew assembleRelease
+          echo "✅ Release APK built successfully"
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Extract version information
+        id: version
+        run: |
+          VERSION_NAME=$(grep -o 'versionName = "[^"]*"' app/build.gradle.kts | cut -d'"' -f2)
+          echo "VERSION=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "📋 App version extracted: $VERSION_NAME"
+
+      - name: Rename and prepare APK
+        run: |
+          echo "📦 Preparing release APK..."
+          mkdir -p release-artifacts
+          cp app/build/outputs/apk/release/app-release.apk release-artifacts/keep-alive-release-v${{ steps.version.outputs.VERSION }}.apk
+          echo "✅ APK renamed to: keep-alive-release-v${{ steps.version.outputs.VERSION }}.apk"
+
+      - name: Upload Release APK as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: keep-alive-release-apk
+          path: release-artifacts/keep-alive-release-v${{ steps.version.outputs.VERSION }}.apk
+          retention-days: 30
+
+      - name: Attach APK to GitHub Release
+        if: github.event_name == 'release'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🚀 Attaching APK to GitHub release..."
+          
+          # Get release information
+          RELEASE_ID=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" | \
+            jq -r .id)
+          
+          if [ "$RELEASE_ID" = "null" ] || [ -z "$RELEASE_ID" ]; then
+            echo "❌ Could not find release for tag ${{ github.ref_name }}"
+            exit 1
+          fi
+          
+          echo "📍 Found release ID: $RELEASE_ID"
+          
+          # Upload APK to the release
+          APK_FILE="release-artifacts/keep-alive-release-v${{ steps.version.outputs.VERSION }}.apk"
+          APK_NAME="keep-alive-release-v${{ steps.version.outputs.VERSION }}.apk"
+          
+          echo "⬆️ Uploading $APK_NAME to release..."
+          
+          UPLOAD_RESPONSE=$(curl -s -w "%{http_code}" -o upload_response.json \
+            -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @"$APK_FILE" \
+            "https://uploads.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=$APK_NAME")
+          
+          HTTP_CODE="${UPLOAD_RESPONSE: -3}"
+          
+          if [ "$HTTP_CODE" = "201" ]; then
+            echo "✅ Successfully attached APK to GitHub release"
+            DOWNLOAD_URL=$(jq -r .browser_download_url upload_response.json)
+            echo "📥 APK download URL: $DOWNLOAD_URL"
+          else
+            echo "❌ Failed to upload APK (HTTP $HTTP_CODE)"
+            cat upload_response.json
+            exit 1
+          fi
+
+      - name: Build Summary
+        run: |
+          echo "## 🎉 Release Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **APK Name**: keep-alive-release-v${{ steps.version.outputs.VERSION }}.apk" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Type**: Release (Signed)" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "- **Action**: Attached to GitHub release ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Action**: Manual build (APK available as workflow artifact)" >> $GITHUB_STEP_SUMMARY
+          fi
