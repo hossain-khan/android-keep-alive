@@ -15,6 +15,7 @@ class BootCompleteReceiver : BroadcastReceiver() {
         intent: Intent,
     ) {
         Timber.d("BootCompleteReceiver onReceive() called with: context = $context, intent = $intent")
+        Timber.d("BootCompleteReceiver received action: ${intent.action}")
 
         // Use device protected storage context
         val directBootContext: Context = context.createDeviceProtectedStorageContext()
@@ -24,9 +25,17 @@ class BootCompleteReceiver : BroadcastReceiver() {
             intent.action == Intent.ACTION_MY_PACKAGE_REPLACED
         ) {
             // Start the WatchdogService
-            Timber.d("BootCompleteReceiver onReceive: Starting WatchdogService")
-            val serviceIntent = Intent(directBootContext, WatchdogService::class.java)
-            directBootContext.startForegroundService(serviceIntent)
+            Timber.d("BootCompleteReceiver onReceive: Starting WatchdogService for action: ${intent.action}")
+
+            try {
+                val serviceIntent = Intent(directBootContext, WatchdogService::class.java)
+                directBootContext.startForegroundService(serviceIntent)
+                Timber.d("BootCompleteReceiver: Successfully called startForegroundService() for WatchdogService")
+            } catch (e: Exception) {
+                Timber.e(e, "BootCompleteReceiver: Failed to start WatchdogService")
+            }
+        } else {
+            Timber.w("BootCompleteReceiver: Received unexpected action: ${intent.action}")
         }
     }
 }

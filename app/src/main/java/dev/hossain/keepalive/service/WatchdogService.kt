@@ -152,7 +152,7 @@ class WatchdogService : Service() {
                 val monitoredApps: List<AppInfo> = dataStore.data.first()
 
                 // Use the latest interval value that's being updated by the collector above
-                Timber.d("Scheduling next check using current interval: $currentCheckInterval minutes.")
+                Timber.d("[Instance ID: $currentServiceInstanceId] Scheduling next check in $currentCheckInterval minutes.")
                 delay(TimeUnit.MINUTES.toMillis(currentCheckInterval.toLong()))
 
                 // 👆🏽 Comment above first to disable configured delay 👆🏽
@@ -161,7 +161,7 @@ class WatchdogService : Service() {
                 // delay(20_000L) // ⛔️ DO NOT COMMIT ⛔️
 
                 if (monitoredApps.isEmpty()) {
-                    Timber.w("No apps configured yet. Skipping the check.")
+                    Timber.w("[Instance ID: $currentServiceInstanceId] No apps configured yet. Skipping the check.")
                     continue
                 }
 
@@ -169,9 +169,9 @@ class WatchdogService : Service() {
                 val shouldForceStart = appSettings.enableForceStartAppsFlow.first()
 
                 if (shouldForceStart) {
-                    Timber.d("Force start apps settings is enabled.")
+                    Timber.d("[Instance ID: $currentServiceInstanceId] Force start apps setting is enabled.")
                 } else {
-                    Timber.d("Force start apps settings is disabled.")
+                    Timber.d("[Instance ID: $currentServiceInstanceId] Force start apps setting is disabled.")
                 }
 
                 monitoredApps.forEach { appInfo ->

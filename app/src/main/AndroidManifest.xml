@@ -78,6 +78,7 @@
         -->
         <service
             android:name=".service.WatchdogService"
+            android:directBootAware="true"
             android:foregroundServiceType="specialUse" />
 
         <receiver
