@@ -12,5 +12,5 @@ jobs:
     - uses: actions/first-interaction@v1
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
-        issue-message: "👋 Welcome to the project! We're thrilled that you've taken the time to open an issue. Your feedback and contributions are invaluable to us. If you have any questions or need help, feel free to reach out. Thank you for helping us improve!"
-        pr-message: "🎉 Thank you for your first pull request! We're so happy to see your contribution. Our team will review it soon, and in the meantime, feel free to check out our contribution guidelines. Your efforts make this project better for everyone!"
+        issue-message: "👋 Hi! welcome to Keep Alive project! 📱 Thank you for taking the time to open an issue. Your feedback and contributions are invaluable. Be sure to check out existing [known limitations](https://github.com/hossain-khan/android-keep-alive?tab=readme-ov-file#limitations-)"
+        pr-message: "🎉 Thank you for your first pull request for the Keep Alive project! Project contributor will review it soon, and in the meantime, feel free to check out our contribution guidelines. Your efforts make this project better for everyone! 🙌🏽"
