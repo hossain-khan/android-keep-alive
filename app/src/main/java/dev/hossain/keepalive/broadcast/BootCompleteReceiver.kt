@@ -3,6 +3,7 @@ package dev.hossain.keepalive.broadcast
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import dev.hossain.keepalive.service.WatchdogService
 import timber.log.Timber
 
@@ -19,7 +20,11 @@ class BootCompleteReceiver : BroadcastReceiver() {
             // Start the WatchdogService
             Timber.d("BootCompleteReceiver onReceive: Starting WatchdogService")
             val serviceIntent = Intent(context, WatchdogService::class.java)
-            context.startForegroundService(serviceIntent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent)
+            } else {
+                context.startService(serviceIntent)
+            }
         }
     }
 }

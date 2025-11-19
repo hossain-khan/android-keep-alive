@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "dev.hossain.keepalive"
-        minSdk = 28
+        minSdk = 24
         /*
          * DO NOT TARGET API 35 YET - IT WILL BREAK THE APP
          * Previously, if an app held the SYSTEM_ALERT_WINDOW permission, it could launch a foreground service

@@ -3,6 +3,7 @@ package dev.hossain.keepalive.util
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import dev.hossain.keepalive.service.WatchdogService
 import timber.log.Timber
 
@@ -18,7 +19,8 @@ object ServiceManager {
      *
      * This method first checks if the service is currently running using [isServiceRunning].
      * If not, it creates an intent for [WatchdogService] and starts it as a foreground service
-     * using `context.startForegroundService()`. This is crucial for long-running background tasks.
+     * using `context.startForegroundService()` on API 26+ or `context.startService()` on older versions.
+     * This is crucial for long-running background tasks.
      *
      * @param context The [Context] used to start the service and check its status.
      */
@@ -27,7 +29,11 @@ object ServiceManager {
         if (!isServiceRunning(context, WatchdogService::class.java)) {
             Timber.i("WatchdogService is not running. Starting it now as a foreground service.")
             val serviceIntent = Intent(context, WatchdogService::class.java)
-            context.startForegroundService(serviceIntent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent)
+            } else {
+                context.startService(serviceIntent)
+            }
         } else {
             Timber.d("WatchdogService is already running. No action needed.")
         }
@@ -38,7 +44,8 @@ object ServiceManager {
      *
      * This is typically called when configuration changes need to be applied to the service,
      * as services often read their configuration upon starting.
-     * The method first stops the service if it's running, then starts it again as a foreground service.
+     * The method first stops the service if it's running, then starts it again as a foreground service
+     * on API 26+ or as a regular service on older versions.
      *
      * @param context The [Context] used to stop and start the service.
      */
@@ -56,7 +63,11 @@ object ServiceManager {
 
         // Start the service again
         Timber.d("Starting new WatchdogService instance as a foreground service.")
-        context.startForegroundService(serviceIntent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(serviceIntent)
+        } else {
+            context.startService(serviceIntent)
+        }
     }
 
     /**

@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import dev.hossain.keepalive.MainActivity
 import dev.hossain.keepalive.R
@@ -39,21 +40,23 @@ class NotificationHelper(private val context: Context) {
      * This method should be called before trying to display any notifications on Android Oreo (API 26) or higher.
      * It creates a [NotificationChannel] with a default importance and registers it with the [NotificationManager].
      * If the channel already exists, this operation has no effect.
+     * For devices below API 26, this method does nothing as notification channels are not required.
      */
     fun createNotificationChannel() {
         Timber.d("createNotificationChannel() called")
 
         // NotificationChannel is only available on API 26+
-        // No need for an explicit Build.VERSION.SDK_INT check here, as NotificationChannel constructor handles it.
-        val channel =
-            NotificationChannel(
-                CHANNEL_ID,
-                context.getString(R.string.notification_channel_name_watchdog_service),
-                NotificationManager.IMPORTANCE_DEFAULT,
-            )
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel =
+                NotificationChannel(
+                    CHANNEL_ID,
+                    context.getString(R.string.notification_channel_name_watchdog_service),
+                    NotificationManager.IMPORTANCE_DEFAULT,
+                )
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        manager.createNotificationChannel(channel)
+            manager.createNotificationChannel(channel)
+        }
     }
 
     /**

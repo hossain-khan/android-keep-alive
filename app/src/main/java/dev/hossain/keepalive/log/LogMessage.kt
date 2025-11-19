@@ -4,7 +4,6 @@ import android.os.Build
 import android.util.Log
 import dev.hossain.keepalive.BuildConfig
 import org.json.JSONObject
-import java.time.Instant
 
 /**
  * Cell name for saving device information. Cell type: single line text
@@ -22,7 +21,7 @@ data class LogMessage(
     val message: String,
     val throwable: Throwable?,
     val logSequence: Int,
-    val logTime: Instant = Instant.now(),
+    val logTime: Long = System.currentTimeMillis(),
     val device: String = Build.MODEL,
 ) {
     fun toLogRecord(): JSONObject {
