@@ -77,23 +77,39 @@ class BootCompleteReceiver : BroadcastReceiver() {
 
             configuredApps.forEach { appInfo ->
                 Timber.d("BootCompleteReceiver: Launching app: ${appInfo.appName} (${appInfo.packageName})")
-                val launched = AppLauncher.launchApp(context, appInfo.packageName)
-
-                // Log the boot launch activity
-                val logEntry =
-                    AppActivityLog(
-                        timestamp = Date().time,
-                        packageName = appInfo.packageName,
-                        appName = appInfo.appName,
-                        action = if (launched) "BOOT_LAUNCH_SUCCESS" else "BOOT_LAUNCH_FAILED",
-                        message = if (launched) "App launched on boot" else "Failed to launch app on boot",
-                    )
-                activityLogger.logActivity(logEntry)
-
-                if (launched) {
+                
+                try {
+                    AppLauncher.openApp(context, appInfo.packageName)
+                    
+                    // Log the successful boot launch activity
+                    val logEntry =
+                        AppActivityLog(
+                            packageId = appInfo.packageName,
+                            appName = appInfo.appName,
+                            wasRunningRecently = false,
+                            wasAttemptedToStart = true,
+                            timestamp = Date().time,
+                            forceStartEnabled = false,
+                            message = "App launched on boot",
+                        )
+                    activityLogger.logAppActivity(logEntry)
+                    
                     Timber.d("BootCompleteReceiver: Successfully launched ${appInfo.appName}")
-                } else {
-                    Timber.w("BootCompleteReceiver: Failed to launch ${appInfo.appName}")
+                } catch (e: Exception) {
+                    // Log the failed boot launch activity
+                    val logEntry =
+                        AppActivityLog(
+                            packageId = appInfo.packageName,
+                            appName = appInfo.appName,
+                            wasRunningRecently = false,
+                            wasAttemptedToStart = true,
+                            timestamp = Date().time,
+                            forceStartEnabled = false,
+                            message = "Failed to launch app on boot: ${e.message}",
+                        )
+                    activityLogger.logAppActivity(logEntry)
+                    
+                    Timber.w(e, "BootCompleteReceiver: Failed to launch ${appInfo.appName}")
                 }
             }
         } catch (e: Exception) {
