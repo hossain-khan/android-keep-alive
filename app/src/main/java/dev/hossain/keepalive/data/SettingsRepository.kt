@@ -39,6 +39,9 @@ class SettingsRepository(private val context: Context) {
         /** [Preferences.Key] for storing the toggle state of forcing app starts. */
         val ENABLE_FORCE_START_APPS = booleanPreferencesKey("enable_force_start_apps")
 
+        /** [Preferences.Key] for storing the toggle state of launching apps on boot. */
+        val LAUNCH_APPS_ON_BOOT = booleanPreferencesKey("launch_apps_on_boot")
+
         /** [Preferences.Key] for storing the toggle state of health checks. */
         val ENABLE_HEALTH_CHECK = booleanPreferencesKey("enable_health_check")
 
@@ -78,6 +81,16 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.data
             .map { preferences ->
                 preferences[ENABLE_FORCE_START_APPS] ?: false // Default to disabled
+            }
+
+    /**
+     * A [Flow] that emits `true` if launching apps on boot is enabled, `false` otherwise.
+     * Defaults to `false` (disabled) if not set.
+     */
+    val launchAppsOnBootFlow: Flow<Boolean> =
+        context.dataStore.data
+            .map { preferences ->
+                preferences[LAUNCH_APPS_ON_BOOT] ?: false // Default to disabled
             }
 
     /**
@@ -181,6 +194,18 @@ class SettingsRepository(private val context: Context) {
     suspend fun saveEnableForceStartApps(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[ENABLE_FORCE_START_APPS] = enabled
+        }
+    }
+
+    /**
+     * Saves the preference for enabling or disabling launching apps immediately on boot.
+     * When enabled, all configured apps will be launched when the device boots up.
+     *
+     * @param enabled `true` to enable launching apps on boot, `false` to disable.
+     */
+    suspend fun saveLaunchAppsOnBoot(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[LAUNCH_APPS_ON_BOOT] = enabled
         }
     }
 

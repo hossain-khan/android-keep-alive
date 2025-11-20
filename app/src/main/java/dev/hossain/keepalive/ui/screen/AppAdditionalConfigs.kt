@@ -67,6 +67,7 @@ fun AppConfigScreen(
     val isForceStartAppsEnabled by settingsRepository.enableForceStartAppsFlow.collectAsState(
         initial = false,
     )
+    val launchAppsOnBoot by settingsRepository.launchAppsOnBootFlow.collectAsState(initial = false)
     val isHealthCheckEnabled by settingsRepository.enableHealthCheckFlow.collectAsState(initial = false)
     val healthCheckUUID by settingsRepository.healthCheckUUIDFlow.collectAsState(initial = "")
 
@@ -80,6 +81,7 @@ fun AppConfigScreen(
 
     var appCheckIntervalValue by remember { mutableStateOf(appCheckInterval.toFloat()) }
     var isForceStartAppsEnabledValue by remember { mutableStateOf(isForceStartAppsEnabled) }
+    var launchAppsOnBootValue by remember { mutableStateOf(launchAppsOnBoot) }
     var isHealthCheckEnabledValue by remember { mutableStateOf(isHealthCheckEnabled) }
     var healthCheckUUIDValue by remember { mutableStateOf(healthCheckUUID) }
     var healthCheckUUIDError by remember { mutableStateOf<String?>(null) }
@@ -147,6 +149,33 @@ fun AppConfigScreen(
                     }
                 },
             )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Launch Apps on Boot Setting
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = launchAppsOnBootValue,
+                    onCheckedChange = {
+                        launchAppsOnBootValue = it
+                        coroutineScope.launch {
+                            settingsRepository.saveLaunchAppsOnBoot(it)
+                        }
+                    },
+                )
+                Column {
+                    Text(text = "Launch apps immediately on boot")
+                    Text(
+                        text =
+                            """
+                        |When enabled, all configured apps will be launched immediately after the device boots up.
+                        |Note: Device must be unlocked after boot for this to work (see known issue #70).
+                            """.trimMargin(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray,
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
 
