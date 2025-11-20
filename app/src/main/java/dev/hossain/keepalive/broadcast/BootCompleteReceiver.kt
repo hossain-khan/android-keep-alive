@@ -13,6 +13,7 @@ import dev.hossain.keepalive.util.AppLauncher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -95,6 +96,9 @@ class BootCompleteReceiver : BroadcastReceiver() {
                     activityLogger.logAppActivity(logEntry)
 
                     Timber.d("BootCompleteReceiver: Successfully launched ${appInfo.appName}")
+
+                    // Add delay between app launches
+                    delay(200)
                 } catch (e: Exception) {
                     // Log the failed boot launch activity
                     val logEntry =
