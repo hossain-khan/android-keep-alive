@@ -11,11 +11,11 @@ plugins {
 
 android {
     namespace = "dev.hossain.keepalive"
-    compileSdk = 34
+    compileSdk = 34 // Android 15 (Vanilla Ice Cream)
 
     defaultConfig {
         applicationId = "dev.hossain.keepalive"
-        minSdk = 28
+        minSdk = 28 // Android 9 (Pie)
         /*
          * DO NOT TARGET API 35 YET - IT WILL BREAK THE APP
          * Previously, if an app held the SYSTEM_ALERT_WINDOW permission, it could launch a foreground service
