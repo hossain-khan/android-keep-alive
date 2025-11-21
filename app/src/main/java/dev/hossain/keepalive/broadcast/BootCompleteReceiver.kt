@@ -3,6 +3,7 @@ package dev.hossain.keepalive.broadcast
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import dev.hossain.keepalive.data.AppDataStore
 import dev.hossain.keepalive.data.SettingsRepository
 import dev.hossain.keepalive.data.logging.AppActivityLogger
@@ -37,7 +38,11 @@ class BootCompleteReceiver : BroadcastReceiver() {
             // Start the WatchdogService for periodic monitoring
             Timber.d("BootCompleteReceiver onReceive: Starting WatchdogService")
             val serviceIntent = Intent(context, WatchdogService::class.java)
-            context.startForegroundService(serviceIntent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent)
+            } else {
+                context.startService(serviceIntent)
+            }
 
             // Check if we should launch apps immediately on boot
             val settingsRepository = SettingsRepository(context)

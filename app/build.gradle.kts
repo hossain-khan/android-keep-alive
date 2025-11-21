@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "dev.hossain.keepalive"
-        minSdk = 28 // Android 9 (Pie)
+        minSdk = 24 // Android 7 (Nougat)
 
         /*
          * DO NOT TARGET API 35 YET - IT WILL BREAK THE APP

@@ -4,7 +4,13 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!--
+    **`android.permission.FOREGROUND_SERVICE_SPECIAL_USE`:** This permission is required for special use
+    foreground services on Android 14 (API 34) and above.
+    -->
+    <uses-permission
+        android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"
+        android:minSdkVersion="34" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
@@ -73,12 +79,15 @@
             WatchdogService: This service runs in the foreground with a special use case.
             It is responsible for monitoring and ensuring the app's continuous operation.
 
-            "specialUse"`: This attribute specifies that the service is a special use foreground service.
-            It indicates that the service performs a task that is critical to the app's functionality and should not be interrupted.
+            The foregroundServiceType="specialUse" attribute specifies that the service is a special use
+            foreground service (API 34+). It indicates that the service performs a task that is critical
+            to the app's functionality and should not be interrupted. On devices below API 34, the service
+            will still run as a foreground service without the specific type designation.
         -->
         <service
             android:name=".service.WatchdogService"
-            android:foregroundServiceType="specialUse" />
+            android:foregroundServiceType="specialUse"
+            tools:targetApi="upside_down_cake" />
 
         <receiver
             android:name=".broadcast.BootCompleteReceiver"
