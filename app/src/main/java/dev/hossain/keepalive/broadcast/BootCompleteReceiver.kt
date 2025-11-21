@@ -95,11 +95,11 @@ class BootCompleteReceiver : BroadcastReceiver() {
                             wasAttemptedToStart = true,
                             timestamp = Date().time,
                             forceStartEnabled = false,
-                            message = "App launched on boot",
+                            message = "Launch attempted on boot",
                         )
                     activityLogger.logAppActivity(logEntry)
 
-                    Timber.d("BootCompleteReceiver: Successfully launched ${appInfo.appName}")
+                    Timber.d("BootCompleteReceiver: Launch attempt made for ${appInfo.appName}")
 
                     // Add delay between app launches
                     delay(200)
