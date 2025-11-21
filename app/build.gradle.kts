@@ -11,11 +11,12 @@ plugins {
 
 android {
     namespace = "dev.hossain.keepalive"
-    compileSdk = 34
+    compileSdk = 34 // Android 15 (Vanilla Ice Cream)
 
     defaultConfig {
         applicationId = "dev.hossain.keepalive"
-        minSdk = 28
+        minSdk = 28 // Android 9 (Pie)
+
         /*
          * DO NOT TARGET API 35 YET - IT WILL BREAK THE APP
          * Previously, if an app held the SYSTEM_ALERT_WINDOW permission, it could launch a foreground service
@@ -31,9 +32,9 @@ android {
          * You can check if your overlay window is currently visible by calling View.getWindowVisibility(),
          * or you can override View.onWindowVisibilityChanged() to get notified whenever the visibility changes.
          */
-        targetSdk = 34
-        versionCode = 17
-        versionName = "2.3"
+        targetSdk = 34 // Android 15 (Vanilla Ice Cream)
+        versionCode = 18
+        versionName = "2.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
