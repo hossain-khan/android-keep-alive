@@ -14,6 +14,7 @@ This app is designed with a very specific use case in mind. It is important to u
 
 ### Limitations 💔
 Despite having many needed permissions, this app may still not work due to the strict security of Android. 
+* Android 16 (API 36) and newer releases are **not supported** because their expanded background-start and overlay restrictions prevent the watchdog foreground service from reliably launching other apps; testing shows the core use case fails.
 * One known issue is related to receiving `RECEIVE_BOOT_COMPLETED` event that is needed to start the watchdog service of this app. However, the `RECEIVE_BOOT_COMPLETED` event is not delivered until user unlocks the device after phone is restarted or incase phone got soft-started because of very low memory pressure.
   * In that case, this "Keep Alive" app will fail to start configured apps until the device is unlocked manually. (See https://github.com/hossain-khan/android-keep-alive/issues/70 for technical details)
 * Another known issue is, even though foreground service is running, it does not trigger the periodic checks based on your configured interval. I have noticed this happen in Samsung Galaxy S23, on other phone it works. So, there might be some bug or manufacturer or device specific issue. Take a look into "Monitor Activity" to see how checks are doing.

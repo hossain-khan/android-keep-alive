@@ -31,6 +31,7 @@ android {
          * your app already has an active overlay window before it attempts to start a foreground service from the background.
          * You can check if your overlay window is currently visible by calling View.getWindowVisibility(),
          * or you can override View.onWindowVisibilityChanged() to get notified whenever the visibility changes.
+         * Reference: https://developer.android.com/about/versions/15/behavior-changes-15#bg-starts
          */
         targetSdk = 34 // Android 15 (Vanilla Ice Cream)
         versionCode = 19
