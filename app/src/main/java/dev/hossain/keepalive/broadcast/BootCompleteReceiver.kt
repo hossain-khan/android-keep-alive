@@ -60,6 +60,10 @@ class BootCompleteReceiver : BroadcastReceiver() {
     /**
      * Launches all configured apps from the AppDataStore.
      * Logs each launch attempt for monitoring purposes.
+     *
+     * See:
+     * - https://github.com/hossain-khan/android-keep-alive/issues/151
+     * - https://github.com/hossain-khan/android-keep-alive/pull/157
      */
     private suspend fun launchConfiguredApps(
         context: Context,

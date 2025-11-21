@@ -551,6 +551,10 @@ fun AppConfigScreen(
             isForceStartAppsEnabledValue = isForceStartAppsEnabled
         }
 
+        LaunchedEffect(launchAppsOnBoot) {
+            launchAppsOnBootValue = launchAppsOnBoot
+        }
+
         LaunchedEffect(isHealthCheckEnabled) {
             isHealthCheckEnabledValue = isHealthCheckEnabled
         }
