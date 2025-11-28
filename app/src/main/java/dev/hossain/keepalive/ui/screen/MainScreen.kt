@@ -1,6 +1,9 @@
 package dev.hossain.keepalive.ui.screen
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -29,6 +32,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -172,8 +176,32 @@ fun MainLandingScreen(
 
                 // Battery drain warning card
                 val context = LocalContext.current
-                val isCharging = remember { BatteryUtil.isCharging(context) }
+                var isCharging by remember { mutableStateOf(BatteryUtil.isCharging(context)) }
                 var isDismissed by remember { mutableStateOf(AppSessionState.isBatteryWarningDismissed) }
+
+                // Listen for battery state changes using a BroadcastReceiver
+                DisposableEffect(context) {
+                    val powerConnectionReceiver =
+                        object : BroadcastReceiver() {
+                            override fun onReceive(
+                                receiverContext: Context?,
+                                intent: Intent?,
+                            ) {
+                                isCharging = BatteryUtil.isCharging(context)
+                            }
+                        }
+
+                    val intentFilter =
+                        IntentFilter().apply {
+                            addAction(Intent.ACTION_POWER_CONNECTED)
+                            addAction(Intent.ACTION_POWER_DISCONNECTED)
+                        }
+                    context.registerReceiver(powerConnectionReceiver, intentFilter)
+
+                    onDispose {
+                        context.unregisterReceiver(powerConnectionReceiver)
+                    }
+                }
 
                 AnimatedVisibility(
                     visible = allPermissionsGranted && !isCharging && !isDismissed,

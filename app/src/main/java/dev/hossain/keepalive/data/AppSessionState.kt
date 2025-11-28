@@ -12,6 +12,10 @@ object AppSessionState {
      * for the current app session.
      *
      * This value resets to `false` when the app process is restarted (e.g., after phone restart).
+     *
+     * Marked as `@Volatile` to ensure thread-safe reads and writes since this
+     * can be accessed from different threads (UI thread and composition).
      */
+    @Volatile
     var isBatteryWarningDismissed: Boolean = false
 }
