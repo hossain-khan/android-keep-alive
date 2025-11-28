@@ -1,5 +1,6 @@
 package dev.hossain.keepalive.data
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -102,7 +103,7 @@ class AirtableConfigTest {
             )
 
         assertTrue(config.isEnabled)
-        assert(config.token == "test_token")
-        assert(config.dataUrl == "https://example.com")
+        assertEquals("test_token", config.token)
+        assertEquals("https://example.com", config.dataUrl)
     }
 }
