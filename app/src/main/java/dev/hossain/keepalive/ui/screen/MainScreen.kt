@@ -1,6 +1,9 @@
 package dev.hossain.keepalive.ui.screen
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -21,23 +24,34 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import dev.hossain.keepalive.R
+import dev.hossain.keepalive.data.AppSessionState
 import dev.hossain.keepalive.data.PermissionType
 import dev.hossain.keepalive.ui.theme.KeepAliveTheme
+import dev.hossain.keepalive.util.BatteryUtil
 
 /**
  * Main landing screen composable for the Keep Alive app.
@@ -159,6 +173,52 @@ fun MainLandingScreen(
                         )
                     }
                 }
+
+                // Battery drain warning card
+                val context = LocalContext.current
+                var isCharging by remember { mutableStateOf(BatteryUtil.isCharging(context)) }
+                var isDismissed by remember { mutableStateOf(AppSessionState.isBatteryWarningDismissed) }
+
+                // Listen for battery state changes using a BroadcastReceiver
+                DisposableEffect(context) {
+                    val powerConnectionReceiver =
+                        object : BroadcastReceiver() {
+                            override fun onReceive(
+                                receiverContext: Context?,
+                                intent: Intent?,
+                            ) {
+                                isCharging = BatteryUtil.isCharging(context)
+                            }
+                        }
+
+                    val intentFilter =
+                        IntentFilter().apply {
+                            addAction(Intent.ACTION_POWER_CONNECTED)
+                            addAction(Intent.ACTION_POWER_DISCONNECTED)
+                        }
+                    context.registerReceiver(powerConnectionReceiver, intentFilter)
+
+                    onDispose {
+                        context.unregisterReceiver(powerConnectionReceiver)
+                    }
+                }
+
+                AnimatedVisibility(
+                    visible = allPermissionsGranted && !isCharging && !isDismissed,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                ) {
+                    BatteryWarningCard(
+                        onDismiss = {
+                            AppSessionState.isBatteryWarningDismissed = true
+                            isDismissed = true
+                        },
+                    )
+                }
             }
         }
     }
@@ -182,6 +242,60 @@ fun AppHeading(
         modifier = modifier,
         style = MaterialTheme.typography.headlineLarge,
     )
+}
+
+/**
+ * Warning card displayed when the device is not plugged into a charger.
+ * Warns users about potential battery drain from running the app.
+ *
+ * @param onDismiss Callback invoked when the user dismisses the warning.
+ */
+@Composable
+fun BatteryWarningCard(
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+            ),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.battery_warning_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.battery_warning_message),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.align(Alignment.End),
+            ) {
+                Text(
+                    text = stringResource(R.string.battery_warning_dismiss),
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun BatteryWarningCardPreview() {
+    KeepAliveTheme {
+        BatteryWarningCard(onDismiss = {})
+    }
 }
 
 @Preview(showBackground = true)
