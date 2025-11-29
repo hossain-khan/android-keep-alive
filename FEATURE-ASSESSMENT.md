@@ -12,9 +12,9 @@ This document provides a comprehensive assessment of the Keep Alive app's curren
 5. **Launch on Boot** - Option to launch all configured apps immediately after device boot
 6. **Sticky App** - Designate one app to always be launched last (stays on top)
 
-### Remote Monitoring Features
-1. **Health Check Integration** - Send heartbeat pings to healthchecks.io
-2. **Remote Logging** - Log activity to Airtable for monitoring
+### Remote Monitoring Features (Optional)
+1. **Health Check Integration** - Send heartbeat pings to healthchecks.io (optional, can be disabled)
+2. **Remote Logging** - Log activity to Airtable for monitoring (optional, can be disabled)
 
 ### User Experience
 1. **Permission Management** - Guided permission flow for required system permissions
@@ -218,7 +218,7 @@ Suggest apps to monitor based on:
 **Impact:** Low | **Effort:** Medium | **ROI:** ★★★☆☆
 
 Add support for multiple languages:
-- Extract all strings to resources (partially done)
+- Extract all strings to resources (currently only some notification strings are in resources)
 - Implement RTL support
 - Add translations for common languages
 
@@ -277,7 +277,7 @@ These items have high ROI due to low effort:
 
 ## Architecture Improvements
 
-For long-term maintainability (as noted in CONTRIBUTING.md):
+For long-term maintainability (as noted in CONTRIBUTING.md: "the app does not follow any well-known Android architecture"):
 
 1. **Implement MVVM/MVI Architecture** - Improve code organization and testability
 2. **Add Dependency Injection** (Hilt/Koin) - Better separation of concerns
@@ -292,10 +292,10 @@ For long-term maintainability (as noted in CONTRIBUTING.md):
 Based on impact and feasibility:
 
 ### Phase 1 (Quick Wins - 1-2 weeks)
-1. ✅ Manual "Check Now" button
-2. ✅ Notification improvements
-3. ✅ Activity log filtering
-4. ✅ "Last checked" timestamp on home screen
+1. Manual "Check Now" button
+2. Notification improvements
+3. Activity log filtering
+4. "Last checked" timestamp on home screen
 
 ### Phase 2 (Core Improvements - 2-4 weeks)
 1. Per-app configuration
