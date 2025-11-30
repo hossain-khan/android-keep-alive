@@ -4,6 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.view.HapticFeedbackConstants
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -23,8 +26,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
@@ -105,6 +112,7 @@ fun AppActivityLogScreen(
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var selectedActionType by rememberSaveable { mutableStateOf(LogActionType.ALL) }
     var selectedDateFilter by rememberSaveable { mutableStateOf(DateFilter.ALL) }
+    var showFilters by rememberSaveable { mutableStateOf(false) }
 
     // Filter logs based on search query, action type, and date range
     val filteredLogs by remember(logs, searchQuery, selectedActionType, selectedDateFilter) {
@@ -212,12 +220,15 @@ fun AppActivityLogScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Filter chips row
-                FilterChipsRow(
+                // Collapsible filter section
+                CollapsibleFilterSection(
+                    isExpanded = showFilters,
+                    onToggle = { showFilters = it },
                     selectedActionType = selectedActionType,
                     onActionTypeSelected = { selectedActionType = it },
                     selectedDateFilter = selectedDateFilter,
                     onDateFilterSelected = { selectedDateFilter = it },
+                    hasActiveFilters = selectedActionType != LogActionType.ALL || selectedDateFilter != DateFilter.ALL,
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -622,6 +633,107 @@ private fun SearchBar(
         },
         singleLine = true,
     )
+}
+
+/**
+ * Collapsible filter section that can be expanded/collapsed to save vertical space.
+ */
+@Composable
+private fun CollapsibleFilterSection(
+    isExpanded: Boolean,
+    onToggle: (Boolean) -> Unit,
+    selectedActionType: LogActionType,
+    onActionTypeSelected: (LogActionType) -> Unit,
+    selectedDateFilter: DateFilter,
+    onDateFilterSelected: (DateFilter) -> Unit,
+    hasActiveFilters: Boolean,
+) {
+    Column {
+        // Filter header button
+        Button(
+            onClick = { onToggle(!isExpanded) },
+            modifier = Modifier.fillMaxWidth(),
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor =
+                        if (hasActiveFilters) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant
+                        },
+                ),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.List,
+                        contentDescription = "Filters",
+                        modifier = Modifier.size(18.dp),
+                        tint =
+                            if (hasActiveFilters) {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text =
+                            if (hasActiveFilters) {
+                                "Search Filters (Active)"
+                            } else {
+                                "Search Filters"
+                            },
+                        color =
+                            if (hasActiveFilters) {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                    )
+                }
+                Icon(
+                    imageVector =
+                        if (isExpanded) {
+                            Icons.Filled.KeyboardArrowUp
+                        } else {
+                            Icons.Filled.KeyboardArrowDown
+                        },
+                    contentDescription =
+                        if (isExpanded) "Collapse filters" else "Expand filters",
+                    tint =
+                        if (hasActiveFilters) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                )
+            }
+        }
+
+        // Expandable filter content with animation
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = expandVertically(),
+            exit = shrinkVertically(),
+        ) {
+            Column {
+                Spacer(modifier = Modifier.height(8.dp))
+                FilterChipsRow(
+                    selectedActionType = selectedActionType,
+                    onActionTypeSelected = { onActionTypeSelected(it) },
+                    selectedDateFilter = selectedDateFilter,
+                    onDateFilterSelected = { onDateFilterSelected(it) },
+                )
+            }
+        }
+    }
 }
 
 /**
