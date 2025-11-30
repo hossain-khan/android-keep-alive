@@ -36,7 +36,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -128,7 +127,7 @@ fun AppConfigScreen(
             |If not, it will re-start those apps to foreground so that the app and it's services can run again.
                     """.trimMargin(),
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Slider(
                 value = appCheckIntervalValue,
@@ -172,7 +171,7 @@ fun AppConfigScreen(
                         |Note: Device must be unlocked after boot for this to work (see known issue #70).
                             """.trimMargin(),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -199,7 +198,7 @@ fun AppConfigScreen(
                         |This will ensure that the selected app is always attempted to be started at the interval specified above.
                             """.trimMargin(),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -226,7 +225,7 @@ fun AppConfigScreen(
                         |Ping will be sent at specified interval and only when your selected app(s) are validated to be alive or restart by this app.
                             """.trimMargin(),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -292,7 +291,7 @@ fun AppConfigScreen(
                         |Additional guide is available at bit.ly/keep-alive-readme
                             """.trimMargin(),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -387,7 +386,7 @@ fun AppConfigScreen(
                     |This is useful for apps that need to stay prominent or accessible. Only one app can be sticky at a time.
                     """.trimMargin(),
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 16.dp),
             )
 
@@ -402,7 +401,7 @@ fun AppConfigScreen(
                     Text(
                         text = "No apps are being monitored yet. Add apps from the main screen to enable sticky app selection.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(16.dp),
                     )
                 }
@@ -471,7 +470,7 @@ fun AppConfigScreen(
                                     Text(
                                         text = app.packageName,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = Color.Gray,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
                             }
@@ -491,7 +490,7 @@ fun AppConfigScreen(
             Text(
                 text = "Choose the appearance theme for the app",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 16.dp),
             )
 

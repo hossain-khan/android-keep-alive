@@ -19,11 +19,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -125,12 +122,11 @@ fun BottomNavigationBar(
                                             .size(20.dp)
                                             .clip(CircleShape),
                                     containerColor = MaterialTheme.colorScheme.primary,
-                                    contentColor = Color.White,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary,
                                 ) {
                                     Text(
                                         text = configuredAppsCount.toString(),
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.labelSmall,
                                         textAlign = TextAlign.Center,
                                         modifier = Modifier.padding(4.dp),
                                     )

@@ -86,7 +86,7 @@ fun AppActivityLogScreen(
             Text(
                 text = "Recent app monitoring activity:",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -132,7 +132,7 @@ fun AppActivityLogScreen(
                     Text(
                         text = "No activity logs yet. Logs will appear after the watchdog service checks monitored apps.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             } else {
@@ -203,7 +203,7 @@ fun CurrentSettingsCard(
                         if (isForceStartAppsEnabled) {
                             MaterialTheme.colorScheme.primary
                         } else {
-                            Color.Gray
+                            MaterialTheme.colorScheme.onSurfaceVariant
                         },
                 )
             }
@@ -243,7 +243,7 @@ fun ActivityLogItem(log: AppActivityLog) {
             Text(
                 text = "Package: ${log.packageId}",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -260,7 +260,7 @@ fun ActivityLogItem(log: AppActivityLog) {
                 Text(
                     text = log.message,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
@@ -270,7 +270,7 @@ fun ActivityLogItem(log: AppActivityLog) {
             Text(
                 text = formatTimestamp(log.timestamp),
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
