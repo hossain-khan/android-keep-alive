@@ -483,7 +483,7 @@ private fun SearchBar(
         value = searchQuery,
         onValueChange = onSearchQueryChange,
         modifier = Modifier.fillMaxWidth(),
-        placeholder = { Text("Search by app name...") },
+        placeholder = { Text("Search by app name or package...") },
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
