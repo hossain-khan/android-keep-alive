@@ -1,6 +1,9 @@
 package dev.hossain.keepalive.ui.screen
 
 import android.content.Context
+import android.content.Intent
+import android.widget.Toast
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,40 +13,57 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.navigation.NavController
 import dev.hossain.keepalive.data.SettingsRepository
 import dev.hossain.keepalive.data.logging.AppActivityLogger
 import dev.hossain.keepalive.data.model.AppActivityLog
+import dev.hossain.keepalive.data.model.LogActionType
 import dev.hossain.keepalive.util.AppConfig.DEFAULT_APP_CHECK_INTERVAL_MIN
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -61,6 +81,18 @@ fun AppActivityLogScreen(
     val coroutineScope = rememberCoroutineScope()
     val isLoading = remember { mutableStateOf(false) }
 
+    // Search and filter state
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var selectedActionType by rememberSaveable { mutableStateOf(LogActionType.ALL) }
+    var selectedDateFilter by rememberSaveable { mutableStateOf(DateFilter.ALL) }
+
+    // Filter logs based on search query, action type, and date range
+    val filteredLogs by remember(logs, searchQuery, selectedActionType, selectedDateFilter) {
+        derivedStateOf {
+            filterLogs(logs, searchQuery, selectedActionType, selectedDateFilter)
+        }
+    }
+
     // Initialize SettingsRepository to get current settings
     val settingsRepository = remember { SettingsRepository(context) }
     val appCheckInterval by settingsRepository.appCheckIntervalFlow.collectAsState(initial = DEFAULT_APP_CHECK_INTERVAL_MIN)
@@ -72,6 +104,22 @@ fun AppActivityLogScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Activity Logs") },
+                actions = {
+                    // Export button
+                    IconButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                exportLogsToFile(context, filteredLogs)
+                            }
+                        },
+                        enabled = filteredLogs.isNotEmpty(),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Export Logs",
+                        )
+                    }
+                },
             )
         },
     ) { innerPadding ->
@@ -80,30 +128,51 @@ fun AppActivityLogScreen(
                 Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .padding(24.dp),
+                    .padding(horizontal = 16.dp),
         ) {
-            // Header subtitle
-            Text(
-                text = "Recent app monitoring activity:",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            // Search bar
+            SearchBar(
+                searchQuery = searchQuery,
+                onSearchQueryChange = { searchQuery = it },
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Clear logs button
-            Button(
-                onClick = {
-                    isLoading.value = true
-                    coroutineScope.launch {
-                        activityLogger.clearLogs()
-                        isLoading.value = false
-                    }
-                },
-                enabled = !isLoading.value && logs.isNotEmpty(),
-                modifier = Modifier.align(Alignment.End),
+            // Filter chips row
+            FilterChipsRow(
+                selectedActionType = selectedActionType,
+                onActionTypeSelected = { selectedActionType = it },
+                selectedDateFilter = selectedDateFilter,
+                onDateFilterSelected = { selectedDateFilter = it },
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Header subtitle with count
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("Clear Logs")
+                Text(
+                    text = "Showing ${filteredLogs.size} of ${logs.size} logs",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                // Clear logs button
+                Button(
+                    onClick = {
+                        isLoading.value = true
+                        coroutineScope.launch {
+                            activityLogger.clearLogs()
+                            isLoading.value = false
+                        }
+                    },
+                    enabled = !isLoading.value && logs.isNotEmpty(),
+                ) {
+                    Text("Clear Logs")
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -135,6 +204,23 @@ fun AppActivityLogScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
+            } else if (filteredLogs.isEmpty()) {
+                // Show Settings Card even when no matching logs
+                CurrentSettingsCard(appCheckInterval, isForceStartAppsEnabled)
+
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                ) {
+                    Text(
+                        text = "No logs match the current filters.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             } else {
                 LazyColumn {
                     // Add Settings Card as first item
@@ -142,7 +228,7 @@ fun AppActivityLogScreen(
                         CurrentSettingsCard(appCheckInterval, isForceStartAppsEnabled)
                     }
 
-                    items(logs) { logEntry ->
+                    items(filteredLogs) { logEntry ->
                         ActivityLogItem(logEntry)
                         HorizontalDivider()
                     }
@@ -337,5 +423,282 @@ private fun formatMinutesToHoursAndMinutes(minutes: Int): String {
         val hoursText = if (hours == 1) "$hours hour" else "$hours hours"
         val minutesText = if (remainingMinutes == 1) "$remainingMinutes minute" else "$remainingMinutes minutes"
         "$hoursText $minutesText"
+    }
+}
+
+/**
+ * Enum representing date filter options for logs.
+ */
+enum class DateFilter {
+    ALL,
+    TODAY,
+    LAST_7_DAYS,
+    LAST_30_DAYS,
+    ;
+
+    fun displayName(): String =
+        when (this) {
+            ALL -> "All Time"
+            TODAY -> "Today"
+            LAST_7_DAYS -> "Last 7 Days"
+            LAST_30_DAYS -> "Last 30 Days"
+        }
+
+    /**
+     * Returns the start timestamp for this date filter.
+     * Returns null for ALL (no filtering).
+     */
+    fun getStartTimestamp(): Long? {
+        val calendar = Calendar.getInstance()
+        return when (this) {
+            ALL -> null
+            TODAY -> {
+                calendar.set(Calendar.HOUR_OF_DAY, 0)
+                calendar.set(Calendar.MINUTE, 0)
+                calendar.set(Calendar.SECOND, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
+                calendar.timeInMillis
+            }
+            LAST_7_DAYS -> {
+                calendar.add(Calendar.DAY_OF_YEAR, -7)
+                calendar.timeInMillis
+            }
+            LAST_30_DAYS -> {
+                calendar.add(Calendar.DAY_OF_YEAR, -30)
+                calendar.timeInMillis
+            }
+        }
+    }
+}
+
+/**
+ * Search bar composable for filtering logs by app name.
+ */
+@Composable
+private fun SearchBar(
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+) {
+    OutlinedTextField(
+        value = searchQuery,
+        onValueChange = onSearchQueryChange,
+        modifier = Modifier.fillMaxWidth(),
+        placeholder = { Text("Search by app name...") },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Search",
+            )
+        },
+        trailingIcon = {
+            if (searchQuery.isNotEmpty()) {
+                IconButton(onClick = { onSearchQueryChange("") }) {
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = "Clear search",
+                    )
+                }
+            }
+        },
+        singleLine = true,
+    )
+}
+
+/**
+ * Row of filter chips for action type and date filtering.
+ */
+@Composable
+private fun FilterChipsRow(
+    selectedActionType: LogActionType,
+    onActionTypeSelected: (LogActionType) -> Unit,
+    selectedDateFilter: DateFilter,
+    onDateFilterSelected: (DateFilter) -> Unit,
+) {
+    Column {
+        // Action type filters
+        Text(
+            text = "Filter by action:",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            LogActionType.entries.forEach { actionType ->
+                FilterChip(
+                    selected = selectedActionType == actionType,
+                    onClick = { onActionTypeSelected(actionType) },
+                    label = { Text(actionType.displayName()) },
+                    leadingIcon =
+                        if (selectedActionType == actionType) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                            }
+                        } else {
+                            null
+                        },
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Date filters
+        Text(
+            text = "Filter by date:",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            DateFilter.entries.forEach { dateFilter ->
+                FilterChip(
+                    selected = selectedDateFilter == dateFilter,
+                    onClick = { onDateFilterSelected(dateFilter) },
+                    label = { Text(dateFilter.displayName()) },
+                    leadingIcon =
+                        if (selectedDateFilter == dateFilter) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                            }
+                        } else {
+                            null
+                        },
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Filters logs based on search query, action type, and date range.
+ */
+private fun filterLogs(
+    logs: List<AppActivityLog>,
+    searchQuery: String,
+    actionType: LogActionType,
+    dateFilter: DateFilter,
+): List<AppActivityLog> {
+    var filtered = logs
+
+    // Filter by search query (app name or package ID)
+    if (searchQuery.isNotBlank()) {
+        val query = searchQuery.lowercase()
+        filtered =
+            filtered.filter { log ->
+                log.appName.lowercase().contains(query) ||
+                    log.packageId.lowercase().contains(query)
+            }
+    }
+
+    // Filter by action type
+    if (actionType != LogActionType.ALL) {
+        filtered =
+            filtered.filter { log ->
+                LogActionType.fromLog(log) == actionType
+            }
+    }
+
+    // Filter by date
+    val startTimestamp = dateFilter.getStartTimestamp()
+    if (startTimestamp != null) {
+        filtered = filtered.filter { log -> log.timestamp >= startTimestamp }
+    }
+
+    return filtered
+}
+
+/**
+ * Exports filtered logs to a file and shares it.
+ */
+private suspend fun exportLogsToFile(
+    context: Context,
+    logs: List<AppActivityLog>,
+) {
+    withContext(Dispatchers.IO) {
+        try {
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault())
+            val timestamp = dateFormat.format(Date())
+            val fileName = "activity_logs_$timestamp.txt"
+
+            val exportDir = File(context.cacheDir, "exports")
+            exportDir.mkdirs()
+            val file = File(exportDir, fileName)
+
+            val logContent =
+                buildString {
+                    appendLine("Keep Alive Activity Logs")
+                    val exportDateFormat =
+                        SimpleDateFormat("MMM d, yyyy 'at' h:mm:ss a", Locale.getDefault())
+                    appendLine("Exported: ${exportDateFormat.format(Date())}")
+                    appendLine("Total logs: ${logs.size}")
+                    appendLine("=".repeat(50))
+                    appendLine()
+
+                    logs.forEach { log ->
+                        appendLine("App: ${log.appName}")
+                        appendLine("Package: ${log.packageId}")
+                        appendLine("Status: ${log.getStatusSummary()}")
+                        val logDateFormat =
+                            SimpleDateFormat(
+                                "MMM d, yyyy 'at' h:mm:ss a",
+                                Locale.getDefault(),
+                            )
+                        appendLine("Time: ${logDateFormat.format(Date(log.timestamp))}")
+                        if (log.message.isNotEmpty()) {
+                            appendLine("Message: ${log.message}")
+                        }
+                        appendLine("-".repeat(30))
+                        appendLine()
+                    }
+                }
+
+            file.writeText(logContent)
+
+            withContext(Dispatchers.Main) {
+                val uri =
+                    FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.provider",
+                        file,
+                    )
+
+                val shareIntent =
+                    Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+
+                context.startActivity(
+                    Intent.createChooser(shareIntent, "Share Activity Logs").apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    },
+                )
+            }
+        } catch (e: Exception) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Failed to export logs: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }
