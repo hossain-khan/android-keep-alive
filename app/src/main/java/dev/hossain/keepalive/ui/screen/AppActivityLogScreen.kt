@@ -4,6 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.view.HapticFeedbackConstants
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -21,10 +24,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
@@ -660,15 +665,36 @@ private fun CollapsibleFilterSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = if (hasActiveFilters) "Filters (Active)" else "Filters",
-                    color =
-                        if (hasActiveFilters) {
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.List,
+                        contentDescription = "Filters",
+                        modifier = Modifier.size(18.dp),
+                        tint =
+                            if (hasActiveFilters) {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text =
+                            if (hasActiveFilters) {
+                                "Search Filters (Active)"
+                            } else {
+                                "Search Filters"
+                            },
+                        color =
+                            if (hasActiveFilters) {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                    )
+                }
                 Icon(
                     imageVector =
                         if (isExpanded) {
@@ -676,7 +702,8 @@ private fun CollapsibleFilterSection(
                         } else {
                             Icons.Filled.KeyboardArrowDown
                         },
-                    contentDescription = if (isExpanded) "Collapse filters" else "Expand filters",
+                    contentDescription =
+                        if (isExpanded) "Collapse filters" else "Expand filters",
                     tint =
                         if (hasActiveFilters) {
                             MaterialTheme.colorScheme.onPrimaryContainer
@@ -687,15 +714,21 @@ private fun CollapsibleFilterSection(
             }
         }
 
-        // Expandable filter content
-        if (isExpanded) {
-            Spacer(modifier = Modifier.height(8.dp))
-            FilterChipsRow(
-                selectedActionType = selectedActionType,
-                onActionTypeSelected = { onActionTypeSelected(it) },
-                selectedDateFilter = selectedDateFilter,
-                onDateFilterSelected = { onDateFilterSelected(it) },
-            )
+        // Expandable filter content with animation
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = expandVertically(),
+            exit = shrinkVertically(),
+        ) {
+            Column {
+                Spacer(modifier = Modifier.height(8.dp))
+                FilterChipsRow(
+                    selectedActionType = selectedActionType,
+                    onActionTypeSelected = { onActionTypeSelected(it) },
+                    selectedDateFilter = selectedDateFilter,
+                    onDateFilterSelected = { onDateFilterSelected(it) },
+                )
+            }
         }
     }
 }
