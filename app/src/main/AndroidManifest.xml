@@ -98,5 +98,11 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+
+        <!-- Receiver for notification action buttons -->
+        <receiver
+            android:name=".broadcast.NotificationActionReceiver"
+            android:enabled="true"
+            android:exported="false" />
     </application>
 </manifest>

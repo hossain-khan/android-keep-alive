@@ -4,6 +4,7 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import dev.hossain.keepalive.data.AppDataStore
+import dev.hossain.keepalive.data.NotificationVerbosity
 import dev.hossain.keepalive.data.SettingsRepository
 import dev.hossain.keepalive.data.logging.AppActivityLogger
 import dev.hossain.keepalive.data.model.AppActivityLog
@@ -20,7 +21,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -42,6 +42,9 @@ import java.util.concurrent.TimeUnit
  * - Optionally, force-starting applications regardless of their recent running state.
  * - Logging application monitoring activities.
  * - Optionally, sending health check pings to a predefined URL if an app is running.
+ * - Supporting notification verbosity levels (quiet, normal, verbose).
+ * - Providing action buttons in notification (Check Now, Pause/Resume Monitoring).
+ * - Showing notifications when apps are restarted.
  *
  * The service utilizes [AppDataStore] for accessing the list of monitored apps and
  * [SettingsRepository] for configuration settings like check interval and health check details.
@@ -51,7 +54,10 @@ import java.util.concurrent.TimeUnit
 class WatchdogService : Service() {
     companion object {
         /** Notification ID for the foreground service notification. */
-        private const val NOTIFICATION_ID = 1
+        const val NOTIFICATION_ID = 1
+
+        /** Action to trigger an immediate app check from notification. */
+        const val ACTION_CHECK_NOW = "dev.hossain.keepalive.ACTION_CHECK_NOW"
     }
 
     /** Job for managing coroutines within this service. Using a SupervisorJob to prevent failure of one child from affecting others. */
@@ -64,16 +70,26 @@ class WatchdogService : Service() {
     private val pingSender = HttpPingSender(this)
 
     /** Utility class instance for creating and managing notifications. */
-    private val notificationHelper = NotificationHelper(this)
+    private lateinit var notificationHelper: NotificationHelper
 
     /** Logger for recording app activity related to the watchdog service. */
     private lateinit var activityLogger: AppActivityLogger
+
+    /** Settings repository for accessing app preferences. */
+    private lateinit var appSettings: SettingsRepository
 
     /**
      * Unique ID for the current instance of the service, provided by `onStartCommand`.
      * This helps in tracking logs specific to a particular service start instance, especially when the service restarts.
      */
     private var currentServiceInstanceId: Int = 0
+
+    /** Current notification verbosity level. */
+    private var currentVerbosity: NotificationVerbosity = NotificationVerbosity.NORMAL
+
+    /** Whether an immediate check was requested. */
+    @Volatile
+    private var immediateCheckRequested: Boolean = false
 
     /**
      * Called when a component attempts to bind to the service.
@@ -122,16 +138,39 @@ class WatchdogService : Service() {
     ): Int {
         Timber.d("onStartCommand() called with: intent = $intent, flags = $flags, startId = $startId")
         currentServiceInstanceId = startId
+
+        // Handle "Check Now" action from notification
+        if (intent?.action == ACTION_CHECK_NOW) {
+            Timber.d("Received ACTION_CHECK_NOW - triggering immediate check")
+            immediateCheckRequested = true
+            return START_STICKY
+        }
+
+        notificationHelper = NotificationHelper(this)
         notificationHelper.createNotificationChannel()
         activityLogger = AppActivityLogger(applicationContext)
+        appSettings = SettingsRepository(applicationContext)
 
-        startForeground(
-            NOTIFICATION_ID,
-            notificationHelper.buildNotification(),
-        )
+        // Build initial notification with default values
+        serviceScope.launch {
+            currentVerbosity = appSettings.notificationVerbosityFlow.first()
+            val isPaused = appSettings.isMonitoringPausedFlow.first()
+            val lastCheckTime = appSettings.lastCheckTimeFlow.first()
+            val dataStore = AppDataStore.store(context = applicationContext)
+            val monitoredAppsCount = dataStore.data.first().size
+
+            startForeground(
+                NOTIFICATION_ID,
+                notificationHelper.buildNotification(
+                    lastCheckTime = lastCheckTime,
+                    isPaused = isPaused,
+                    verbosity = currentVerbosity,
+                    monitoredAppsCount = monitoredAppsCount,
+                ),
+            )
+        }
 
         val dataStore = AppDataStore.store(context = applicationContext)
-        val appSettings = SettingsRepository(applicationContext)
 
         // Launch a coroutine to monitor the app check interval flow
         // This ensures we always have the most recent interval value
@@ -143,6 +182,14 @@ class WatchdogService : Service() {
             }
         }
 
+        // Launch a coroutine to monitor the notification verbosity flow
+        serviceScope.launch {
+            appSettings.notificationVerbosityFlow.collect { verbosity ->
+                Timber.d("Notification verbosity updated to $verbosity")
+                currentVerbosity = verbosity
+            }
+        }
+
         serviceScope.launch {
             // Preloads the initial value of the app check interval
             currentCheckInterval = appSettings.appCheckIntervalFlow.first()
@@ -151,9 +198,23 @@ class WatchdogService : Service() {
                 Timber.d("[Instance ID: $currentServiceInstanceId] Current time: ${System.currentTimeMillis()} @ ${Date()}")
                 val monitoredApps: List<AppInfo> = dataStore.data.first()
 
+                // Check if monitoring is paused
+                val isPaused = appSettings.isMonitoringPausedFlow.first()
+                if (isPaused && !immediateCheckRequested) {
+                    Timber.d("Monitoring is paused. Skipping the check.")
+                    delay(TimeUnit.MINUTES.toMillis(1)) // Check pause state every minute
+                    continue
+                }
+
                 // Use the latest interval value that's being updated by the collector above
-                Timber.d("Scheduling next check using current interval: $currentCheckInterval minutes.")
-                delay(TimeUnit.MINUTES.toMillis(currentCheckInterval.toLong()))
+                // Skip delay if immediate check was requested
+                if (!immediateCheckRequested) {
+                    Timber.d("Scheduling next check using current interval: $currentCheckInterval minutes.")
+                    delay(TimeUnit.MINUTES.toMillis(currentCheckInterval.toLong()))
+                } else {
+                    Timber.d("Immediate check requested, skipping delay")
+                    immediateCheckRequested = false
+                }
 
                 // 👆🏽 Comment above first to disable configured delay 👆🏽
                 // - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -210,6 +271,13 @@ class WatchdogService : Service() {
                                 "Attempting to start it now. shouldForceStart=$shouldForceStart",
                         )
                         AppLauncher.openApp(this@WatchdogService, appInfo.packageName)
+
+                        // Show app restart notification (respecting verbosity)
+                        notificationHelper.showAppRestartNotification(
+                            appName = appInfo.appName,
+                            packageName = appInfo.packageName,
+                            verbosity = currentVerbosity,
+                        )
                     } else {
                         // If app is already running, send health check ping
                         conditionallySendHealthCheck(appSettings)
@@ -246,6 +314,19 @@ class WatchdogService : Service() {
                 } else {
                     Timber.d("[Instance ID: $currentServiceInstanceId] No sticky app configured.")
                 }
+
+                // Update last check time and notification
+                val checkTime = System.currentTimeMillis()
+                appSettings.saveLastCheckTime(checkTime)
+
+                // Update the notification with the new last check time
+                notificationHelper.updateNotification(
+                    notificationId = NOTIFICATION_ID,
+                    lastCheckTime = checkTime,
+                    isPaused = false,
+                    verbosity = currentVerbosity,
+                    monitoredAppsCount = monitoredApps.size,
+                )
             }
         }
 
