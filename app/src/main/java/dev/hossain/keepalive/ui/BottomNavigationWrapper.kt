@@ -44,6 +44,8 @@ fun BottomNavigationWrapper(
     totalRequiredCount: Int,
     grantedCount: Int,
     configuredAppsCount: Int,
+    lastCheckTime: Long = 0L,
+    serviceStartTime: Long = 0L,
 ) {
     Scaffold(
         bottomBar = {
@@ -72,6 +74,8 @@ fun BottomNavigationWrapper(
                     totalRequiredCount = totalRequiredCount,
                     grantedCount = grantedCount,
                     configuredAppsCount = configuredAppsCount,
+                    lastCheckTime = lastCheckTime,
+                    serviceStartTime = serviceStartTime,
                 )
             }
             composable(Screen.WatchDogConfig.route) {

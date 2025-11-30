@@ -2,7 +2,9 @@ package dev.hossain.keepalive.ui.screen
 
 import android.content.Context
 import android.content.Intent
+import android.view.HapticFeedbackConstants
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -24,7 +27,9 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,7 +41,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -49,9 +56,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import androidx.core.graphics.drawable.toBitmap
 import androidx.navigation.NavController
 import dev.hossain.keepalive.data.SettingsRepository
 import dev.hossain.keepalive.data.logging.AppActivityLogger
@@ -59,6 +69,7 @@ import dev.hossain.keepalive.data.model.AppActivityLog
 import dev.hossain.keepalive.data.model.LogActionType
 import dev.hossain.keepalive.util.AppConfig.DEFAULT_APP_CHECK_INTERVAL_MIN
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -80,6 +91,13 @@ fun AppActivityLogScreen(
     val logs by activityLogger.getRecentLogs().collectAsState(initial = emptyList())
     val coroutineScope = rememberCoroutineScope()
     val isLoading = remember { mutableStateOf(false) }
+    var isRefreshing by remember { mutableStateOf(false) }
+
+    // State for clear logs confirmation dialog
+    var showClearLogsDialog by remember { mutableStateOf(false) }
+
+    // Get view for haptic feedback
+    val view = LocalView.current
 
     // Search and filter state
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -100,6 +118,43 @@ fun AppActivityLogScreen(
         initial = false,
     )
 
+    // Clear logs confirmation dialog
+    if (showClearLogsDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearLogsDialog = false },
+            title = { Text("Clear All Logs") },
+            text = {
+                Text(
+                    "Are you sure you want to clear all ${logs.size} activity logs? This action cannot be undone.",
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                        showClearLogsDialog = false
+                        isLoading.value = true
+                        coroutineScope.launch {
+                            activityLogger.clearLogs()
+                            isLoading.value = false
+                        }
+                    },
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                        ),
+                ) {
+                    Text("Clear All")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearLogsDialog = false }) {
+                    Text("Cancel")
+                }
+            },
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -108,6 +163,7 @@ fun AppActivityLogScreen(
                     // Export button
                     IconButton(
                         onClick = {
+                            view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
                             coroutineScope.launch {
                                 exportLogsToFile(context, filteredLogs)
                             }
@@ -123,118 +179,150 @@ fun AppActivityLogScreen(
             )
         },
     ) { innerPadding ->
-        Column(
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                isRefreshing = true
+                coroutineScope.launch {
+                    // Small delay to show the refresh indicator
+                    delay(500)
+                    isRefreshing = false
+                }
+            },
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = 16.dp),
+                    .padding(innerPadding),
         ) {
-            // Search bar
-            SearchBar(
-                searchQuery = searchQuery,
-                onSearchQueryChange = { searchQuery = it },
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Filter chips row
-            FilterChipsRow(
-                selectedActionType = selectedActionType,
-                onActionTypeSelected = { selectedActionType = it },
-                selectedDateFilter = selectedDateFilter,
-                onDateFilterSelected = { selectedDateFilter = it },
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Header subtitle with count
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
             ) {
-                Text(
-                    text = "Showing ${filteredLogs.size} of ${logs.size} logs",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                // Search bar
+                SearchBar(
+                    searchQuery = searchQuery,
+                    onSearchQueryChange = { searchQuery = it },
                 )
 
-                // Clear logs button
-                Button(
-                    onClick = {
-                        isLoading.value = true
-                        coroutineScope.launch {
-                            activityLogger.clearLogs()
-                            isLoading.value = false
-                        }
-                    },
-                    enabled = !isLoading.value && logs.isNotEmpty(),
-                ) {
-                    Text("Clear Logs")
-                }
-            }
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Spacer(modifier = Modifier.height(8.dp))
+                // Filter chips row
+                FilterChipsRow(
+                    selectedActionType = selectedActionType,
+                    onActionTypeSelected = { selectedActionType = it },
+                    selectedDateFilter = selectedDateFilter,
+                    onDateFilterSelected = { selectedDateFilter = it },
+                )
 
-            if (isLoading.value) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else if (logs.isEmpty()) {
-                // Show Settings Card even when no logs
-                CurrentSettingsCard(appCheckInterval, isForceStartAppsEnabled)
+                Spacer(modifier = Modifier.height(8.dp))
 
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
+                // Header subtitle with count
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "No activity logs yet. Logs will appear after the watchdog service checks monitored apps.",
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = "Showing ${filteredLogs.size} of ${logs.size} logs",
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                }
-            } else if (filteredLogs.isEmpty()) {
-                // Show Settings Card even when no matching logs
-                CurrentSettingsCard(appCheckInterval, isForceStartAppsEnabled)
 
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                ) {
-                    Text(
-                        text = "No logs match the current filters.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            } else {
-                LazyColumn {
-                    // Add Settings Card as first item
-                    item {
-                        CurrentSettingsCard(appCheckInterval, isForceStartAppsEnabled)
+                    // Clear logs button - now shows confirmation dialog
+                    Button(
+                        onClick = {
+                            view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+                            showClearLogsDialog = true
+                        },
+                        enabled = !isLoading.value && logs.isNotEmpty(),
+                    ) {
+                        Text("Clear Logs")
                     }
+                }
 
-                    items(filteredLogs) { logEntry ->
-                        ActivityLogItem(logEntry)
-                        HorizontalDivider()
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (isLoading.value) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else if (logs.isEmpty()) {
+                    // Show Settings Card even when no logs
+                    CurrentSettingsCard(appCheckInterval, isForceStartAppsEnabled)
+
+                    EmptyStateMessage(
+                        title = "No Activity Logs Yet",
+                        message = "Logs will appear here after the watchdog service checks your monitored apps.",
+                        suggestion = "💡 Make sure you have added apps to the watchlist and the service is running.",
+                    )
+                } else if (filteredLogs.isEmpty()) {
+                    // Show Settings Card even when no matching logs
+                    CurrentSettingsCard(appCheckInterval, isForceStartAppsEnabled)
+
+                    EmptyStateMessage(
+                        title = "No Matching Logs",
+                        message = "No logs match the current filters.",
+                        suggestion = "💡 Try adjusting your search query or filter settings to see more results.",
+                    )
+                } else {
+                    LazyColumn {
+                        // Add Settings Card as first item
+                        item {
+                            CurrentSettingsCard(appCheckInterval, isForceStartAppsEnabled)
+                        }
+
+                        items(filteredLogs) { logEntry ->
+                            ActivityLogItem(logEntry, context)
+                            HorizontalDivider()
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+/**
+ * Displays an empty state message with title, description, and helpful suggestion.
+ */
+@Composable
+private fun EmptyStateMessage(
+    title: String,
+    message: String,
+    suggestion: String,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = suggestion,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
+        )
     }
 }
 
@@ -298,7 +386,20 @@ fun CurrentSettingsCard(
 }
 
 @Composable
-fun ActivityLogItem(log: AppActivityLog) {
+fun ActivityLogItem(
+    log: AppActivityLog,
+    context: Context,
+) {
+    // Try to get the app icon
+    val appIcon =
+        remember(log.packageId) {
+            try {
+                context.packageManager.getApplicationIcon(log.packageId)
+            } catch (e: Exception) {
+                null
+            }
+        }
+
     Card(
         modifier =
             Modifier
@@ -311,14 +412,29 @@ fun ActivityLogItem(log: AppActivityLog) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // App name
-                Text(
-                    text = log.appName,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                // App icon and name row
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f),
-                )
+                ) {
+                    // App icon
+                    if (appIcon != null) {
+                        Image(
+                            bitmap = appIcon.toBitmap(width = 40, height = 40).asImageBitmap(),
+                            contentDescription = "${log.appName} icon",
+                            modifier = Modifier.size(32.dp),
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+
+                    // App name
+                    Text(
+                        text = log.appName,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
 
                 // Status indicator
                 StatusIcon(log)

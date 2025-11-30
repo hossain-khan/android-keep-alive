@@ -153,6 +153,12 @@ class WatchdogService : Service() {
 
         // Build initial notification with default values
         serviceScope.launch {
+            // Save service start time when service is first started
+            val existingStartTime = appSettings.serviceStartTimeFlow.first()
+            if (existingStartTime == 0L) {
+                appSettings.saveServiceStartTime(System.currentTimeMillis())
+            }
+
             currentVerbosity = appSettings.notificationVerbosityFlow.first()
             val isPaused = appSettings.isMonitoringPausedFlow.first()
             val lastCheckTime = appSettings.lastCheckTimeFlow.first()
