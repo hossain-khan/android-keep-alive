@@ -3,6 +3,8 @@ package dev.hossain.keepalive.ui
 import android.content.Context
 import android.content.Intent
 import androidx.activity.result.ActivityResultLauncher
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -48,6 +50,7 @@ fun BottomNavigationWrapper(
     serviceStartTime: Long = 0L,
 ) {
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             if (allPermissionsGranted) {
                 BottomNavigationBar(
@@ -113,7 +116,9 @@ fun BottomNavigationBar(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    NavigationBar {
+    NavigationBar(
+        windowInsets = WindowInsets.navigationBars,
+    ) {
         items.forEach { screen ->
             NavigationBarItem(
                 icon = {
