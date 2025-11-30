@@ -68,6 +68,9 @@ class SettingsRepository(private val context: Context) {
 
         /** [Preferences.Key] for storing whether monitoring is paused. */
         val IS_MONITORING_PAUSED = booleanPreferencesKey("is_monitoring_paused")
+
+        /** [Preferences.Key] for storing the service start timestamp in milliseconds. */
+        val SERVICE_START_TIME = stringPreferencesKey("service_start_time")
     }
 
     /**
@@ -217,6 +220,16 @@ class SettingsRepository(private val context: Context) {
             }
 
     /**
+     * A [Flow] that emits the service start timestamp in milliseconds.
+     * Defaults to 0L if not set (indicating service hasn't been started yet).
+     */
+    val serviceStartTimeFlow: Flow<Long> =
+        context.dataStore.data
+            .map { preferences ->
+                preferences[SERVICE_START_TIME]?.toLongOrNull() ?: 0L
+            }
+
+    /**
      * Saves the app check interval in minutes to DataStore.
      * Note: The actual interval used by the app will be at least [MINIMUM_APP_CHECK_INTERVAL_MIN],
      * as enforced by [appCheckIntervalFlow].
@@ -352,6 +365,17 @@ class SettingsRepository(private val context: Context) {
     suspend fun saveIsMonitoringPaused(paused: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[IS_MONITORING_PAUSED] = paused
+        }
+    }
+
+    /**
+     * Saves the service start timestamp to DataStore.
+     *
+     * @param timestamp The timestamp in milliseconds when the service started.
+     */
+    suspend fun saveServiceStartTime(timestamp: Long) {
+        context.dataStore.edit { preferences ->
+            preferences[SERVICE_START_TIME] = timestamp.toString()
         }
     }
 }

@@ -1,6 +1,7 @@
 package dev.hossain.keepalive.ui.screen
 
 import android.content.Context
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -49,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.navigation.NavHostController
@@ -107,6 +109,7 @@ fun AppListScreen(
     val showDialog = remember { mutableStateOf(false) }
     val showDeleteDialog = remember { mutableStateOf<AppInfo?>(null) }
     val coroutineScope = rememberCoroutineScope()
+    val view = LocalView.current
 
     Column(modifier = modifier) {
         Text(
@@ -127,11 +130,31 @@ fun AppListScreen(
         LazyColumn {
             if (appList.isEmpty()) {
                 item {
-                    Text(
-                        text = "No apps are added to the watch list.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(16.dp),
-                    )
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            text = "No Apps in Watchlist",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Your watchlist is empty. Add apps to start monitoring.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "💡 Tap the \"Add App\" button below to select apps you want to keep running.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                 }
             } else {
                 items(appList, key = { it.packageName }) { app ->
@@ -156,7 +179,10 @@ fun AppListScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { showDialog.value = true },
+            onClick = {
+                view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+                showDialog.value = true
+            },
             modifier =
                 Modifier
                     .wrapContentWidth()
@@ -181,6 +207,7 @@ fun AppListScreen(
             ShowAppSelectionDialog(
                 installedApps = installedApps,
                 onAppSelected = {
+                    view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                     viewModel.addApp(it)
                     showDialog.value = false
                 },
@@ -203,6 +230,7 @@ fun AppListScreen(
                 confirmButton = {
                     Button(
                         onClick = {
+                            view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                             viewModel.removeApp(appToDelete)
                             showDeleteDialog.value = null
 

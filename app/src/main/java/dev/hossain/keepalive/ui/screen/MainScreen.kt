@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -33,8 +34,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -52,6 +55,11 @@ import dev.hossain.keepalive.data.AppSessionState
 import dev.hossain.keepalive.data.PermissionType
 import dev.hossain.keepalive.ui.theme.KeepAliveTheme
 import dev.hossain.keepalive.util.BatteryUtil
+import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 /**
  * Main landing screen composable for the Keep Alive app.
@@ -70,7 +78,22 @@ fun MainLandingScreen(
     totalRequiredCount: Int,
     grantedCount: Int,
     configuredAppsCount: Int,
+    lastCheckTime: Long = 0L,
+    serviceStartTime: Long = 0L,
 ) {
+    // Track current time for uptime calculation - updates every minute when service is running
+    var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
+
+    // Only run the timer when there's a valid service start time (service is running)
+    if (serviceStartTime > 0L) {
+        LaunchedEffect(Unit) {
+            while (true) {
+                delay(60_000L) // Update every minute
+                currentTime = System.currentTimeMillis()
+            }
+        }
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
     ) { innerPadding ->
@@ -105,7 +128,26 @@ fun MainLandingScreen(
                         .align(Alignment.CenterHorizontally)
                         .padding(bottom = 16.dp),
             )
-            Spacer(modifier = Modifier.height(128.dp))
+
+            // Service Status Card - shows last checked and uptime
+            AnimatedVisibility(
+                visible = allPermissionsGranted && (lastCheckTime > 0L || serviceStartTime > 0L),
+                enter = fadeIn(),
+                exit = fadeOut(),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 8.dp),
+            ) {
+                ServiceStatusCard(
+                    lastCheckTime = lastCheckTime,
+                    serviceStartTime = serviceStartTime,
+                    currentTime = currentTime,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(if (lastCheckTime > 0L || serviceStartTime > 0L) 80.dp else 128.dp))
             Column {
                 Row(
                     modifier =
@@ -288,6 +330,117 @@ fun BatteryWarningCard(
             }
         }
     }
+}
+
+/**
+ * Card displaying service status information including last check time and service uptime.
+ */
+@Composable
+fun ServiceStatusCard(
+    lastCheckTime: Long,
+    serviceStartTime: Long,
+    currentTime: Long,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+        ) {
+            Text(
+                text = "📊 Service Status",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Last checked time
+            if (lastCheckTime > 0L) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = "Last checked:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = formatLastCheckTime(lastCheckTime),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+
+            // Service uptime
+            if (serviceStartTime > 0L) {
+                if (lastCheckTime > 0L) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = "Service uptime:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = formatUptime(serviceStartTime, currentTime),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Formats the last check timestamp to a human-readable string.
+ */
+private fun formatLastCheckTime(timestamp: Long): String {
+    val dateFormat = SimpleDateFormat("MMM d 'at' h:mm a", Locale.getDefault())
+    return dateFormat.format(Date(timestamp))
+}
+
+/**
+ * Formats the service uptime to a human-readable string.
+ */
+private fun formatUptime(
+    startTime: Long,
+    currentTime: Long,
+): String {
+    val uptimeMillis = currentTime - startTime
+    if (uptimeMillis < 0) return "Not running"
+
+    val days = TimeUnit.MILLISECONDS.toDays(uptimeMillis)
+    val hours = TimeUnit.MILLISECONDS.toHours(uptimeMillis) % 24
+    val minutes = TimeUnit.MILLISECONDS.toMinutes(uptimeMillis) % 60
+
+    return buildString {
+        if (days > 0) {
+            append("$days day${if (days > 1) "s" else ""}")
+            if (hours > 0 || minutes > 0) append(" ")
+        }
+        if (hours > 0) {
+            append("$hours hr${if (hours > 1) "s" else ""}")
+            if (minutes > 0) append(" ")
+        }
+        if (minutes > 0 || (days == 0L && hours == 0L)) {
+            append("$minutes min${if (minutes != 1L) "s" else ""}")
+        }
+    }.trim()
 }
 
 @Preview(showBackground = true)

@@ -93,6 +93,10 @@ class MainActivity : ComponentActivity() {
                     val configuredAppsCount by AppDataStore.getConfiguredAppsCount(applicationContext)
                         .collectAsState(initial = 0)
 
+                    // Get the last check time and service start time
+                    val lastCheckTime by settingsRepository.lastCheckTimeFlow.collectAsState(initial = 0L)
+                    val serviceStartTime by settingsRepository.serviceStartTimeFlow.collectAsState(initial = 0L)
+
                     BottomNavigationWrapper(
                         navController = navController,
                         context = applicationContext,
@@ -105,6 +109,8 @@ class MainActivity : ComponentActivity() {
                         totalRequiredCount = mainViewModel.totalPermissionRequired,
                         grantedCount = grantedPermissionCount,
                         configuredAppsCount = configuredAppsCount,
+                        lastCheckTime = lastCheckTime,
+                        serviceStartTime = serviceStartTime,
                     )
                 }
             }
