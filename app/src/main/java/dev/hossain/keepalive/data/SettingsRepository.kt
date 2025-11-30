@@ -59,6 +59,15 @@ class SettingsRepository(private val context: Context) {
 
         /** [Preferences.Key] for storing the selected theme mode. */
         val THEME_MODE = stringPreferencesKey("theme_mode")
+
+        /** [Preferences.Key] for storing the notification verbosity level. */
+        val NOTIFICATION_VERBOSITY = stringPreferencesKey("notification_verbosity")
+
+        /** [Preferences.Key] for storing the last successful check timestamp in milliseconds. */
+        val LAST_CHECK_TIME = stringPreferencesKey("last_check_time")
+
+        /** [Preferences.Key] for storing whether monitoring is paused. */
+        val IS_MONITORING_PAUSED = booleanPreferencesKey("is_monitoring_paused")
     }
 
     /**
@@ -173,6 +182,41 @@ class SettingsRepository(private val context: Context) {
         }
 
     /**
+     * A [Flow] that emits the current notification verbosity level.
+     * Defaults to [NotificationVerbosity.NORMAL] if not set.
+     */
+    val notificationVerbosityFlow: Flow<NotificationVerbosity> =
+        context.dataStore.data
+            .map { preferences ->
+                val verbosity = preferences[NOTIFICATION_VERBOSITY] ?: NotificationVerbosity.NORMAL.name
+                try {
+                    NotificationVerbosity.valueOf(verbosity)
+                } catch (e: IllegalArgumentException) {
+                    NotificationVerbosity.NORMAL // Default to normal if invalid value
+                }
+            }
+
+    /**
+     * A [Flow] that emits the last successful check timestamp in milliseconds.
+     * Defaults to 0L if not set (indicating no check has been performed yet).
+     */
+    val lastCheckTimeFlow: Flow<Long> =
+        context.dataStore.data
+            .map { preferences ->
+                preferences[LAST_CHECK_TIME]?.toLongOrNull() ?: 0L
+            }
+
+    /**
+     * A [Flow] that emits `true` if monitoring is paused, `false` otherwise.
+     * Defaults to `false` (not paused) if not set.
+     */
+    val isMonitoringPausedFlow: Flow<Boolean> =
+        context.dataStore.data
+            .map { preferences ->
+                preferences[IS_MONITORING_PAUSED] ?: false
+            }
+
+    /**
      * Saves the app check interval in minutes to DataStore.
      * Note: The actual interval used by the app will be at least [MINIMUM_APP_CHECK_INTERVAL_MIN],
      * as enforced by [appCheckIntervalFlow].
@@ -275,6 +319,39 @@ class SettingsRepository(private val context: Context) {
     suspend fun saveThemeMode(themeMode: ThemeMode) {
         context.dataStore.edit { preferences ->
             preferences[THEME_MODE] = themeMode.name
+        }
+    }
+
+    /**
+     * Saves the notification verbosity level to DataStore.
+     *
+     * @param verbosity The notification verbosity level to save.
+     */
+    suspend fun saveNotificationVerbosity(verbosity: NotificationVerbosity) {
+        context.dataStore.edit { preferences ->
+            preferences[NOTIFICATION_VERBOSITY] = verbosity.name
+        }
+    }
+
+    /**
+     * Saves the last successful check timestamp to DataStore.
+     *
+     * @param timestamp The timestamp in milliseconds.
+     */
+    suspend fun saveLastCheckTime(timestamp: Long) {
+        context.dataStore.edit { preferences ->
+            preferences[LAST_CHECK_TIME] = timestamp.toString()
+        }
+    }
+
+    /**
+     * Saves the monitoring paused state to DataStore.
+     *
+     * @param paused `true` if monitoring should be paused, `false` otherwise.
+     */
+    suspend fun saveIsMonitoringPaused(paused: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[IS_MONITORING_PAUSED] = paused
         }
     }
 }
