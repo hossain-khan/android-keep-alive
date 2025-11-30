@@ -81,12 +81,16 @@ fun MainLandingScreen(
     lastCheckTime: Long = 0L,
     serviceStartTime: Long = 0L,
 ) {
-    // Track current time for uptime calculation - updates every minute
+    // Track current time for uptime calculation - updates every minute when service is running
     var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(serviceStartTime) {
-        while (true) {
-            delay(60_000L) // Update every minute
-            currentTime = System.currentTimeMillis()
+
+    // Only run the timer when there's a valid service start time (service is running)
+    if (serviceStartTime > 0L) {
+        LaunchedEffect(Unit) {
+            while (true) {
+                delay(60_000L) // Update every minute
+                currentTime = System.currentTimeMillis()
+            }
         }
     }
 

@@ -184,7 +184,8 @@ fun AppActivityLogScreen(
             onRefresh = {
                 isRefreshing = true
                 coroutineScope.launch {
-                    // Small delay to show the refresh indicator
+                    // The logs are collected via Flow from DataStore, so they're always up-to-date.
+                    // This refresh provides visual feedback that the list has been checked.
                     delay(500)
                     isRefreshing = false
                 }
