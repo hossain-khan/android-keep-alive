@@ -65,6 +65,12 @@ class NotificationHelper(private val context: Context) {
          * Request code for the "Resume Monitoring" action.
          */
         const val REQUEST_CODE_RESUME_MONITORING = 102
+
+        /**
+         * Maximum number of unique app restart notifications to prevent notification ID overflow.
+         * This limits the range of notification IDs used for app restart notifications.
+         */
+        private const val MAX_APP_RESTART_NOTIFICATIONS = 1000
     }
 
     private val notificationManager =
@@ -333,7 +339,9 @@ class NotificationHelper(private val context: Context) {
                 .build()
 
         // Use a unique notification ID based on package name
-        val notificationId = APP_RESTART_NOTIFICATION_ID_BASE + (packageName.hashCode() and 0x7FFFFFFF) % 1000
+        val notificationId =
+            APP_RESTART_NOTIFICATION_ID_BASE +
+                (packageName.hashCode() and 0x7FFFFFFF) % MAX_APP_RESTART_NOTIFICATIONS
         notificationManager.notify(notificationId, notification)
     }
 

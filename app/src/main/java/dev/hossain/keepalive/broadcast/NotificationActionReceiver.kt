@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import dev.hossain.keepalive.data.AppDataStore
 import dev.hossain.keepalive.data.SettingsRepository
 import dev.hossain.keepalive.service.WatchdogService
 import dev.hossain.keepalive.util.NotificationHelper
@@ -108,13 +109,16 @@ class NotificationActionReceiver : BroadcastReceiver() {
         val verbosity = settingsRepository.notificationVerbosityFlow.first()
         val lastCheckTime = settingsRepository.lastCheckTimeFlow.first()
 
+        // Get the actual count of monitored apps from the data store
+        val dataStore = AppDataStore.store(context)
+        val monitoredAppsCount = dataStore.data.first().size
+
         notificationHelper.updateNotification(
             notificationId = WatchdogService.NOTIFICATION_ID,
             lastCheckTime = lastCheckTime,
             isPaused = isPaused,
             verbosity = verbosity,
-            // Will be updated by the service
-            monitoredAppsCount = 0,
+            monitoredAppsCount = monitoredAppsCount,
         )
     }
 }
