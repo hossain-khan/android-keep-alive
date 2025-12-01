@@ -46,7 +46,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -144,6 +143,7 @@ fun MainLandingScreen(
                     lastCheckTime = lastCheckTime,
                     serviceStartTime = serviceStartTime,
                     currentTime = currentTime,
+                    configuredAppsCount = configuredAppsCount,
                 )
             }
 
@@ -179,40 +179,6 @@ fun MainLandingScreen(
                         onClick = { onRequestPermissions() },
                     ) {
                         Text("Grant Permission")
-                    }
-                }
-                AnimatedVisibility(
-                    visible = allPermissionsGranted,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
-                    modifier =
-                        Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(bottom = 32.dp),
-                ) {
-                    Column(
-                        modifier = Modifier.wrapContentSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        // Display subtitle with appropriate text based on configured app count
-                        Text(
-                            text =
-                                if (configuredAppsCount == 0) {
-                                    "No app added to watch list - Configure apps to get started"
-                                } else {
-                                    "Currently watching $configuredAppsCount apps"
-                                },
-                            style = MaterialTheme.typography.bodySmall,
-                            color =
-                                if (configuredAppsCount == 0) {
-                                    MaterialTheme.colorScheme.error
-                                } else {
-                                    MaterialTheme.colorScheme.primary
-                                },
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(top = 2.dp),
-                        )
                     }
                 }
 
@@ -333,13 +299,14 @@ fun BatteryWarningCard(
 }
 
 /**
- * Card displaying service status information including last check time and service uptime.
+ * Card displaying service status information including last check time, service uptime, and apps watched count.
  */
 @Composable
 fun ServiceStatusCard(
     lastCheckTime: Long,
     serviceStartTime: Long,
     currentTime: Long,
+    configuredAppsCount: Int,
     modifier: Modifier = Modifier,
 ) {
     Card(
@@ -401,6 +368,37 @@ fun ServiceStatusCard(
                         color = MaterialTheme.colorScheme.primary,
                     )
                 }
+            }
+
+            // Apps watched count
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 8.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = "Apps watched:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text =
+                        if (configuredAppsCount == 0) {
+                            "None"
+                        } else {
+                            "$configuredAppsCount app${if (configuredAppsCount > 1) "s" else ""}"
+                        },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color =
+                        if (configuredAppsCount == 0) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        },
+                )
             }
         }
     }
