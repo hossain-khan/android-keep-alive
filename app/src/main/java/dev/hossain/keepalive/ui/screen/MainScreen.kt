@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
@@ -100,23 +102,24 @@ fun MainLandingScreen(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .wrapContentSize(Alignment.Center)
-                    .padding(innerPadding),
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            // Add top spacing for visual balance
+            Spacer(modifier = Modifier.height(32.dp))
             Image(
                 painter = painterResource(id = R.drawable.baseline_radar_24),
                 contentDescription = "App Icon",
                 modifier =
                     Modifier
                         .size(64.dp)
-                        .align(Alignment.CenterHorizontally)
                         .padding(bottom = 16.dp),
             )
             AppHeading(
                 title = "Keep Alive",
                 modifier =
                     Modifier
-                        .align(Alignment.CenterHorizontally)
                         .padding(bottom = 8.dp),
             )
             Text(
@@ -124,7 +127,6 @@ fun MainLandingScreen(
                 style = MaterialTheme.typography.bodyLarge,
                 modifier =
                     Modifier
-                        .align(Alignment.CenterHorizontally)
                         .padding(bottom = 16.dp),
             )
 
