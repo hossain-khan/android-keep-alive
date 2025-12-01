@@ -106,8 +106,9 @@ fun MainLandingScreen(
                     .padding(innerPadding)
                     .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
         ) {
+            // Add top spacing for visual balance
+            Spacer(modifier = Modifier.height(32.dp))
             Image(
                 painter = painterResource(id = R.drawable.baseline_radar_24),
                 contentDescription = "App Icon",
