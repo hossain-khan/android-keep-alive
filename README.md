@@ -68,6 +68,15 @@ Here are the permissions needed for the app along with a summary of why they are
 
 Most of the permissions listed above are discouraged and or restricted. Please be sure to use the app with caution.
 
+## Safety
+Is it safe to use the app? Based on recent Google Play protect check, it passed. Besides that, there is no analytics or any library that is used to collect any user or personal information.
+
+| 🖼️ | 🖼️ | ✅ | 
+| ---- | ----- | ------ |
+| ![Screenshot_20251130-183201](https://github.com/user-attachments/assets/47a7a47a-5662-4970-ab03-926172d7f2dc) | ![Screenshot_20251130-183204](https://github.com/user-attachments/assets/85b0bf33-d344-48b1-a54d-4fa79bbcc5ad)| ![Screenshot_20251130-183211](https://github.com/user-attachments/assets/9da2ee3f-e257-4ef0-a83e-6f0be268d487) | 
+
+
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines before submitting a pull request.
