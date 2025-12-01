@@ -28,7 +28,9 @@ Despite having many needed permissions, this app may still not work due to the s
 4. Done ✔️
     1. This app will always run in the foreground, continuously checking if your selected apps are active. If any are not, it will automatically restart them for you.  
 
-![Keep Alive App](assets/screenshots/app-screenshots-v2.png)
+| App Dashboard | App Config | App Settings | Activity Log |
+| ------------- | ---------- | ------------- | -------------- |
+| ![](assets/screenshots/Screenshots-v2.6/Screenshot_20251130-184019.png) | ![](assets/screenshots/Screenshots-v2.6/Screenshot_20251130-185522.png) | ![](assets/screenshots/Screenshots-v2.6/Screenshot_20251130-185532.png) | ![](assets/screenshots/Screenshots-v2.6/Screenshot_20251130-185434.png) |
 
 #### 🎥 Video Demo
 https://github.com/user-attachments/assets/8bf71b38-9fb4-43a4-8ee6-ab27d743c202
