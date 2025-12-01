@@ -30,7 +30,7 @@ Despite having many needed permissions, this app may still not work due to the s
 
 | App Dashboard | App Config | App Settings | Activity Log |
 | ------------- | ---------- | ------------- | -------------- |
-| ![](assets/screenshots/Screenshots-v2.6/Screenshot_20251130-184019.png) | ![](assets/screenshots/Screenshots-v2.6/Screenshot_20251130-185522.png) | ![](assets/screenshots/Screenshots-v2.6/Screenshot_20251130-185532.png) | ![](assets/screenshots/Screenshots-v2.6/Screenshot_20251130-185434.png) |
+| ![](assets/screenshots/Screenshots-v2.6/Screenshot_20251130-184019.png) | ![](assets/screenshots/Screenshots-v2.6/Screenshot_20251130-185522.png) | ![](assets/screenshots/Screenshots-v2.6/Screenshot_20251130-205452.png) | ![](assets/screenshots/Screenshots-v2.6/Screenshot_20251130-185434.png) |
 
 #### 🎥 Video Demo
 https://github.com/user-attachments/assets/8bf71b38-9fb4-43a4-8ee6-ab27d743c202
