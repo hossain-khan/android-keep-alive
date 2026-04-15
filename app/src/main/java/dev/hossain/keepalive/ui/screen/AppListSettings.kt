@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -112,22 +111,26 @@ fun AppListScreen(
     val view = LocalView.current
 
     Column(modifier = modifier) {
-        Text(
-            text = "Apps that are kept running:",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(vertical = 8.dp),
-        )
-        Text(
-            text =
-                "These apps will be periodically checked if they were recently run, " +
-                    "if not, they will be restarted based on app configuration you choose.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        LazyColumn {
+        LazyColumn(modifier = Modifier.weight(1f)) {
+            item {
+                Text(
+                    text = "Apps that are kept running:",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(vertical = 8.dp),
+                )
+            }
+            item {
+                Text(
+                    text =
+                        "These apps will be periodically checked if they were recently run, " +
+                            "if not, they will be restarted based on app configuration you choose.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
             if (appList.isEmpty()) {
                 item {
                     Column(
@@ -178,29 +181,28 @@ fun AppListScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-            onClick = {
-                view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
-                showDialog.value = true
-            },
-            modifier =
-                Modifier
-                    .wrapContentWidth()
-                    .align(Alignment.CenterHorizontally),
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Add App")
-                Text("Add a new app to the watchlist.", style = MaterialTheme.typography.labelSmall)
+            Button(
+                onClick = {
+                    view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+                    showDialog.value = true
+                },
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Add App")
+                    Text("Add a new app to the watchlist.", style = MaterialTheme.typography.labelSmall)
+                }
             }
-        }
 
-        Spacer(modifier = Modifier.height(8.dp))
-        // Done Button
-        Button(
-            onClick = { navController.popBackStack() },
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-        ) {
-            Text("Done")
+            Button(
+                onClick = { navController.popBackStack() },
+            ) {
+                Text("Done")
+            }
         }
 
         if (showDialog.value) {
