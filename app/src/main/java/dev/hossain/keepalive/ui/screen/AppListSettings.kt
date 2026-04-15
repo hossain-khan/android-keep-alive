@@ -104,7 +104,7 @@ fun AppListScreen(
 ) {
     val appList by viewModel.appList.observeAsState(emptyList())
     val selectedApps by viewModel.selectedApps.observeAsState(emptySet())
-    val installedApps = viewModel.getInstalledApps(context)
+    val installedApps = remember(context) { viewModel.getInstalledApps(context) }
     val showDialog = remember { mutableStateOf(false) }
     val showDeleteDialog = remember { mutableStateOf<AppInfo?>(null) }
     val coroutineScope = rememberCoroutineScope()
