@@ -19,6 +19,14 @@ Before starting a release, ensure you have:
 
 ### 1. Prepare the Version
 
+> **Note:** Direct commits to `main` are not supported. All release preparation must be done on a dedicated release branch and merged via a Pull Request.
+
+Create a release branch from `main`:
+```bash
+git checkout main && git pull
+git checkout -b release/vX.Y
+```
+
 Update the version in `app/build.gradle.kts`:
 
 ```kotlin
@@ -26,12 +34,14 @@ versionCode = 17  // Increment by 1
 versionName = "2.3"  // Update semantic version
 ```
 
-Commit the version change:
+Commit the version change and push the branch:
 ```bash
 git add app/build.gradle.kts
 git commit -m "[BUMP] Prepare for v2.3 release"
-git push origin main
+git push origin release/v2.3
 ```
+
+Then open a PR from `release/v2.3` → `main` and merge it before proceeding.
 
 ### 2. Generate Changelog
 
