@@ -47,6 +47,10 @@ fun BottomNavigationWrapper(
     lastCheckTime: Long = 0L,
     serviceStartTime: Long = 0L,
 ) {
+    // Edge-to-edge: this top-level Scaffold is the single source of truth for system bar insets.
+    // Its innerPadding includes status bar (top) and navigation bar (bottom) insets.
+    // Passing innerPadding to the NavHost via Modifier.padding(innerPadding) ensures all
+    // nested screens are automatically inset-safe without needing individual WindowInsets handling.
     Scaffold(
         bottomBar = {
             if (allPermissionsGranted) {
