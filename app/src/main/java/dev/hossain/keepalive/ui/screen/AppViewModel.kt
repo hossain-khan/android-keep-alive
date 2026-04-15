@@ -48,7 +48,7 @@ class AppViewModel(private val dataStore: DataStore<List<AppInfo>>) : ViewModel(
      */
     fun toggleAppSelection(appInfo: AppInfo) {
         _selectedApps.value =
-            _selectedApps.value?.toMutableSet()?.apply {
+            (_selectedApps.value ?: emptySet()).toMutableSet().apply {
                 if (contains(appInfo)) remove(appInfo) else add(appInfo)
             }
     }
