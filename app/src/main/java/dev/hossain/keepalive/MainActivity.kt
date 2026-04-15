@@ -94,6 +94,7 @@ class MainActivity : ComponentActivity() {
                     nextPermissionType = remember { mutableStateOf(PERMISSION_POST_NOTIFICATIONS) }
                     val grantedPermissionCount by mainViewModel.totalApprovedPermissions.observeAsState(0)
                     val allPermissionsGranted by mainViewModel.allPermissionsGranted.observeAsState(false)
+                    val grantedPermissionsSet by mainViewModel.grantedPermissionsSet.observeAsState(emptySet())
                     val navController = rememberNavController()
 
                     // Get the configured apps count from AppDataStore
@@ -115,6 +116,7 @@ class MainActivity : ComponentActivity() {
                         onRequestPermissions = { requestNextRequiredPermission() },
                         totalRequiredCount = mainViewModel.totalPermissionRequired,
                         grantedCount = grantedPermissionCount,
+                        grantedPermissionsSet = grantedPermissionsSet,
                         configuredAppsCount = configuredAppsCount,
                         lastCheckTime = lastCheckTime,
                         serviceStartTime = serviceStartTime,

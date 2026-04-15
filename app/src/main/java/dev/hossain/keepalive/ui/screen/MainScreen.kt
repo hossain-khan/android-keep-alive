@@ -9,6 +9,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -77,12 +78,14 @@ fun MainLandingScreen(
     onRequestPermissions: () -> Unit,
     totalRequiredCount: Int,
     grantedCount: Int,
+    grantedPermissionsSet: Set<PermissionType> = emptySet(),
     configuredAppsCount: Int,
     lastCheckTime: Long = 0L,
     serviceStartTime: Long = 0L,
 ) {
     // Track current time for uptime calculation - updates every minute when service is running
     var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var showPermissionStatusSheet by remember { mutableStateOf(false) }
 
     // Only run the timer when there's a valid service start time (service is running)
     if (serviceStartTime > 0L) {
@@ -154,6 +157,7 @@ fun MainLandingScreen(
                     modifier =
                         Modifier
                             .fillMaxWidth()
+                            .clickable { showPermissionStatusSheet = true }
                             .padding(24.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
@@ -239,6 +243,14 @@ fun MainLandingScreen(
         activityResultLauncher = activityResultLauncher,
         requestPermissionLauncher = requestPermissionLauncher,
     )
+
+    if (showPermissionStatusSheet) {
+        PermissionStatusBottomSheet(
+            grantedPermissions = grantedPermissionsSet,
+            totalRequiredCount = totalRequiredCount,
+            onDismiss = { showPermissionStatusSheet = false },
+        )
+    }
 }
 
 @Composable

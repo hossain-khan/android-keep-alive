@@ -46,6 +46,9 @@ class MainViewModel : ViewModel() {
     /** LiveData holding the count of currently approved (granted) permissions. */
     val totalApprovedPermissions = MutableLiveData(0)
 
+    /** LiveData holding the set of currently granted [PermissionType] entries. Updated by [checkAllPermissions]. */
+    val grantedPermissionsSet = MutableLiveData<Set<PermissionType>>(emptySet())
+
     /**
      * A mutable set of [PermissionType] that are currently required by the app but have not yet been granted.
      * This set is populated by [checkAllPermissions]. If this set is empty, it implies all permissions are granted.
@@ -122,6 +125,7 @@ class MainViewModel : ViewModel() {
 
         Timber.d("requiredPermissionRemaining=$requiredPermissionRemaining")
         totalApprovedPermissions.value = grantedPermissions.size
+        grantedPermissionsSet.value = grantedPermissions.toSet()
         allPermissionsGranted.value = requiredPermissionRemaining.isEmpty()
     }
 
