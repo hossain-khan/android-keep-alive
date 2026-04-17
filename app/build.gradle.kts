@@ -34,8 +34,8 @@ android {
          * Reference: https://developer.android.com/about/versions/15/behavior-changes-15#bg-starts
          */
         targetSdk = 34 // Android 15 (Vanilla Ice Cream)
-        versionCode = 24
-        versionName = "2.10"
+        versionCode = 25
+        versionName = "2.11"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
