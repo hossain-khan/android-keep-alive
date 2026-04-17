@@ -82,6 +82,7 @@ class MainActivity : ComponentActivity() {
         // NOTE: If a screen is ever shown outside of BottomNavigationWrapper (e.g. a standalone
         // Activity or dialog-style flow), it must handle WindowInsets itself.
         enableEdgeToEdge()
+        window.isNavigationBarContrastEnforced = false
 
         setContent {
             // Observe theme preference
