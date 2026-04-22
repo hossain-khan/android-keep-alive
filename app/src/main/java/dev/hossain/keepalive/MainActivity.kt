@@ -3,6 +3,7 @@ package dev.hossain.keepalive
 import android.Manifest.permission.PACKAGE_USAGE_STATS
 import android.Manifest.permission.POST_NOTIFICATIONS
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
@@ -82,7 +83,9 @@ class MainActivity : ComponentActivity() {
         // NOTE: If a screen is ever shown outside of BottomNavigationWrapper (e.g. a standalone
         // Activity or dialog-style flow), it must handle WindowInsets itself.
         enableEdgeToEdge()
-        window.isNavigationBarContrastEnforced = false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
+        }
 
         setContent {
             // Observe theme preference
