@@ -11,7 +11,7 @@ plugins {
 
 android {
     namespace = "dev.hossain.keepalive"
-    compileSdk = 34 // Android 15 (Vanilla Ice Cream)
+    compileSdk = 34 // Android 14 (Upside Down Cake)
 
     defaultConfig {
         applicationId = "dev.hossain.keepalive"
@@ -33,7 +33,7 @@ android {
          * or you can override View.onWindowVisibilityChanged() to get notified whenever the visibility changes.
          * Reference: https://developer.android.com/about/versions/15/behavior-changes-15#bg-starts
          */
-        targetSdk = 34 // Android 15 (Vanilla Ice Cream)
+        targetSdk = 34 // Android 14 (Upside Down Cake)
         versionCode = 25
         versionName = "2.11"
 

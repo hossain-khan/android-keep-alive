@@ -6,7 +6,7 @@ package dev.hossain.keepalive.data
  * See additional permissions in AndroidManifest.xml
  *
  * Notes:
- * - https://github.com/hossain-khan/android-keep-alive?tab=readme-ov-file#-questionable-permissions-required-%EF%B8%8F
+ * - https://github.com/hossain-khan/android-keep-alive?tab=readme-ov-file#-sensitive-permissions-required-%EF%B8%8F
  * - https://github.com/hossain-khan/android-keep-alive/issues/41
  */
 enum class PermissionType {
