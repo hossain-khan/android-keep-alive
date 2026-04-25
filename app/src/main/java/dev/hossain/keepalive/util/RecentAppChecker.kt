@@ -37,21 +37,21 @@ object RecentAppChecker {
     }
 
     /**
-     * Retrieves a list of [UsageStats] for apps that have been used within a specified lookback period.
+     * Retrieves a list of [UsageStats] for apps that have been used within a fixed lookback window.
      *
-     * This method queries the [UsageStatsManager] for app usage within the interval
-     * `(endTime - lookbackIntervalMs, endTime)`. It then sorts these stats by `lastTimeUsed`
-     * and returns a limited number of the most recent entries (currently takes top 5).
+     * This method queries the [UsageStatsManager] for app usage within the last ~16.6 minutes
+     * (fixed at 1,000,000 ms before the current time). It then sorts these stats by `lastTimeUsed`
+     * and returns the 5 most recently used entries.
      *
      * Note: The actual data returned by `queryUsageStats` can be granular and might not
-     * perfectly align with intuitive notions of "recently running." The interpretation
-     * and filtering (like taking top 5) are specific to this method's implementation.
+     * perfectly align with intuitive notions of "recently running." The filtering
+     * (taking top 5) is specific to this method's implementation.
      *
      * @param context The [Context] required to access the [UsageStatsManager].
-     * @param lookbackIntervalMs The duration in milliseconds to look back from the current time
-     *                           to query usage statistics. Defaults to 10 minutes (600,000 ms).
-     *                           The actual query uses a fixed 1,000,000 ms interval for `queryUsageStats`.
-     *                           This parameter currently primarily influences logging rather than the query window itself.
+     * @param lookbackIntervalMs This parameter is accepted for API compatibility but does **not**
+     *                           change the query window. The query always looks back ~16.6 minutes
+     *                           (1,000,000 ms) from the current time. The value is used only for
+     *                           diagnostic logging.
      * @return A list of [UsageStats] for the most recently used apps, sorted by `lastTimeUsed` (descending).
      *         Returns an empty list if no usage stats are available or if the permission is not granted.
      */

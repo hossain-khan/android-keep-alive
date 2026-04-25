@@ -21,7 +21,9 @@ import timber.log.Timber
 import java.util.Date
 
 /**
- * Receiver to start the WatchdogService on boot complete.
+ * Receiver to start the WatchdogService on boot complete or when the app package is replaced.
+ * Handles [android.content.Intent.ACTION_BOOT_COMPLETED] and [android.content.Intent.ACTION_MY_PACKAGE_REPLACED]
+ * to ensure the watchdog service is restarted after device boot or app updates.
  * Optionally launches configured apps immediately after boot if the setting is enabled.
  */
 class BootCompleteReceiver : BroadcastReceiver() {

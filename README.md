@@ -15,18 +15,20 @@ This app is designed with a very specific use case in mind. It is important to u
 ### Limitations 💔
 Despite having many needed permissions, this app may still not work due to the strict security of Android. 
 * Android 16 (API 36) and newer releases are **not supported** because their expanded background-start and overlay restrictions prevent the watchdog foreground service from reliably launching other apps; testing shows the core use case fails.
-* One known issue is related to receiving `RECEIVE_BOOT_COMPLETED` event that is needed to start the watchdog service of this app. However, the `RECEIVE_BOOT_COMPLETED` event is not delivered until user unlocks the device after phone is restarted or incase phone got soft-started because of very low memory pressure.
+* One known issue is related to receiving the `RECEIVE_BOOT_COMPLETED` event that is needed to start the watchdog service. However, this event is not delivered until the user unlocks the device after the phone is restarted, or in case the phone got soft-started because of very low memory pressure.
   * In that case, this "Keep Alive" app will fail to start configured apps until the device is unlocked manually. (See https://github.com/hossain-khan/android-keep-alive/issues/70 for technical details)
-* Another known issue is, even though foreground service is running, it does not trigger the periodic checks based on your configured interval. I have noticed this happen in Samsung Galaxy S23, on other phone it works. So, there might be some bug or manufacturer or device specific issue. Take a look into "Monitor Activity" to see how checks are doing.
+* Another known issue is that, even though the foreground service is running, it does not trigger the periodic checks based on your configured interval. This has been noticed on Samsung Galaxy S23; on other phones it works. So, there might be some bug or a manufacturer/device-specific issue. Take a look into "Activity Log" to see how checks are doing.
 
 ### 📚 How to use the app
 1. Launch the app and accept all the required permissions.
-2. Once all permission are active, you will see 2 options
-    1. Configure apps that should be running
-    2. Configure app settings like interval of checking for app
-3. Add app that you want to be checked periodically
+2. Once all permissions are active, you will see a dashboard with options to:
+    1. Configure apps that should be kept running
+    2. Configure app settings like the interval for checking apps, notification verbosity, and optional remote features
+3. Add apps that you want to be checked periodically
 4. Done ✔️
-    1. This app will always run in the foreground, continuously checking if your selected apps are active. If any are not, it will automatically restart them for you.  
+    1. The app will always run in the foreground, continuously checking if your selected apps are active. If any are not, it will automatically attempt to restart them for you.
+    2. You can pause/resume monitoring at any time from the persistent notification.
+    3. Use "Check Now" in the notification to trigger an immediate check outside the normal interval.
 
 | App Dashboard | App Config | App Settings | Activity Log |
 | ------------- | ---------- | ------------- | -------------- |
@@ -58,7 +60,7 @@ Here are the permissions needed for the app along with a summary of why they are
    - **Reason**: Allows the app to receive the `BOOT_COMPLETED` broadcast, enabling it to start itself and monitor the apps that are configured to keep alive.
 
 5. **`android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`**:
-   - **Reason**: Needed to request the user to exclude the app from battery optimizations, ensuring the app and it's `WatchdogService` can run continuously without being restricted by the system.
+   - **Reason**: Needed to request the user to exclude the app from battery optimizations, ensuring the app and its `WatchdogService` can run continuously without being restricted by the system.
 
 6. **`android.permission.POST_NOTIFICATIONS`**:
    - **Reason**: Allows the app to post notifications, which is essential for notifying users about ongoing watchdog activity.
@@ -72,7 +74,7 @@ Here are the permissions needed for the app along with a summary of why they are
 9. **`android.permission.SYSTEM_ALERT_WINDOW`**:
    - **Reason**: Required to draw overlays on top of other apps, which is necessary for certain UI elements or notifications that need to be displayed over other apps. And also start other apps from the background service.
 
-Most of the permissions listed above are discouraged and or restricted. Please be sure to use the app with caution.
+Most of the permissions listed above are discouraged and/or restricted. Please be sure to use the app with caution.
 
 ## Safety
 Is it safe to use the app? Based on recent Google Play protect check, it passed. Besides that, there is no analytics or any library that is used to collect any user or personal information.
