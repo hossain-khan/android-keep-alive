@@ -31,6 +31,8 @@ Despite having many needed permissions, this app may still not work due to the s
 | App Dashboard | App Config | App Settings | Activity Log |
 | ------------- | ---------- | ------------- | -------------- |
 | ![](https://github.com/user-attachments/assets/844d6655-ef84-4fe5-b454-587b01fdbb9e) | ![](https://github.com/user-attachments/assets/9f14e243-5018-4c38-b398-9d6f1abcdadb) | ![](https://github.com/user-attachments/assets/f5599109-681a-40a3-bfc2-4adfd303d69f) | ![](https://github.com/user-attachments/assets/d38fac80-8deb-43c9-8341-110f8399a873) |
+| App Permissions | - | More Settings | Log Filter |
+| ![](https://github.com/user-attachments/assets/4b333003-6406-4e17-b276-518830aad80e) | - | ![](https://github.com/user-attachments/assets/ecf90c4d-19b0-4fec-8ee0-e77b9f92702a) | ![](https://github.com/user-attachments/assets/257b20be-a5e9-4955-b5c8-bc8db50e24e2) | 
 
 
 
