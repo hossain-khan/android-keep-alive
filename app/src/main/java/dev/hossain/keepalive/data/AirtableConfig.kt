@@ -3,7 +3,11 @@ package dev.hossain.keepalive.data
 import dev.hossain.keepalive.util.Validator.isValidUrl
 
 /**
- * Represents the configuration for Airtable integration.
+ * Represents the configuration for Airtable integration used for remote logging.
+ *
+ * @property isEnabled Whether remote logging to Airtable is currently enabled by the user.
+ * @property token The Airtable personal access token used to authenticate API requests.
+ * @property dataUrl The full Airtable API endpoint URL (e.g., `https://api.airtable.com/v0/appXXXX/RemoteLog`).
  */
 data class AirtableConfig(
     val isEnabled: Boolean,
