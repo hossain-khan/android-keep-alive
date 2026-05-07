@@ -194,4 +194,62 @@ class AppListSerializerTest {
             assertEquals(longPackageName, result[0].packageName)
             assertEquals(longAppName, result[0].appName)
         }
+
+    @Test
+    fun `AppInfo isSticky defaults to false`() {
+        val app = AppInfo("com.example.app", "Example App")
+        assertEquals(false, app.isSticky)
+    }
+
+    @Test
+    fun `writeTo and readFrom preserves isSticky true`() =
+        runTest {
+            val stickyApp = listOf(AppInfo("com.example.app", "Sticky App", isSticky = true))
+            val outputStream = ByteArrayOutputStream()
+
+            AppListSerializer.writeTo(stickyApp, outputStream)
+
+            val inputStream = ByteArrayInputStream(outputStream.toByteArray())
+            val result = AppListSerializer.readFrom(inputStream)
+
+            assertEquals(stickyApp, result)
+            assertEquals(true, result[0].isSticky)
+        }
+
+    @Test
+    fun `writeTo and readFrom preserves isSticky false`() =
+        runTest {
+            val nonStickyApp = listOf(AppInfo("com.example.app", "Non-Sticky App", isSticky = false))
+            val outputStream = ByteArrayOutputStream()
+
+            AppListSerializer.writeTo(nonStickyApp, outputStream)
+
+            val inputStream = ByteArrayInputStream(outputStream.toByteArray())
+            val result = AppListSerializer.readFrom(inputStream)
+
+            assertEquals(nonStickyApp, result)
+            assertEquals(false, result[0].isSticky)
+        }
+
+    @Test
+    fun `writeTo and readFrom with mixed isSticky values`() =
+        runTest {
+            val mixedApps =
+                listOf(
+                    AppInfo("com.example.app1", "App One", isSticky = true),
+                    AppInfo("com.example.app2", "App Two", isSticky = false),
+                    AppInfo("com.example.app3", "App Three", isSticky = true),
+                )
+            val outputStream = ByteArrayOutputStream()
+
+            AppListSerializer.writeTo(mixedApps, outputStream)
+
+            val inputStream = ByteArrayInputStream(outputStream.toByteArray())
+            val result = AppListSerializer.readFrom(inputStream)
+
+            assertEquals(mixedApps, result)
+            assertEquals(true, result[0].isSticky)
+            assertEquals(false, result[1].isSticky)
+            assertEquals(true, result[2].isSticky)
+        }
 }
