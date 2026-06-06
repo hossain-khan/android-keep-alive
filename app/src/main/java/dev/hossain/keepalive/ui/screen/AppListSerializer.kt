@@ -8,37 +8,53 @@ import kotlinx.serialization.json.Json
 import java.io.InputStream
 import java.io.OutputStream
 
+/**
+ * Data class representing an application that the user has configured for monitoring.
+ *
+ * @property packageName The unique package identifier of the application (e.g., "com.example.app").
+ * @property appName The human-readable name of the application as displayed to the user.
+ * @property isSticky Whether this app should be relaunched at the end of each check cycle
+ *   to bring it to the top of the recent apps list. Only one app can be sticky at a time.
+ */
 @Serializable
 data class AppInfo(
     val packageName: String,
     val appName: String,
-    /**
-     * Flag to indicate if this app should be started at the end
-     * to bring it on top of the recent apps list.
-     */
     val isSticky: Boolean = false,
 )
 
+/**
+ * [Serializer] implementation for persisting a [List] of [AppInfo] objects in a DataStore.
+ *
+ * Serializes the list to a JSON string when writing and deserializes it when reading.
+ * Returns an empty list as the default value if no data has been stored yet or
+ * if deserialization fails.
+ */
 object AppListSerializer : Serializer<List<AppInfo>> {
-    // Provide a default value for the DataStore
+    /** Default value returned by DataStore when no data has been written yet. */
     override val defaultValue: List<AppInfo> = emptyList()
 
-    // Reading from the DataStore (deserialize the stored data)
+    /**
+     * Deserializes a [List] of [AppInfo] from [input] by reading all bytes and parsing the
+     * resulting JSON string. Returns an empty list if the stream is empty or deserialization fails.
+     */
     override suspend fun readFrom(input: InputStream): List<AppInfo> {
         return try {
             val jsonString = input.readBytes().decodeToString()
-            Json.decodeFromString(jsonString) // Deserialize JSON to List<AppInfo>
+            Json.decodeFromString(jsonString)
         } catch (e: Exception) {
-            emptyList() // Return empty list if there's an issue with deserialization
+            emptyList()
         }
     }
 
-    // Writing to the DataStore (serialize the data)
+    /**
+     * Serializes [t] (a [List] of [AppInfo]) to JSON and writes the encoded bytes to [output].
+     */
     override suspend fun writeTo(
         t: List<AppInfo>,
         output: OutputStream,
     ) {
-        val jsonString = Json.encodeToString(t) // Serialize List<AppInfo> to JSON
-        output.write(jsonString.encodeToByteArray()) // Write to output stream
+        val jsonString = Json.encodeToString(t)
+        output.write(jsonString.encodeToByteArray())
     }
 }

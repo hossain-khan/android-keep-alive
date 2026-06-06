@@ -31,6 +31,31 @@ import dev.hossain.keepalive.ui.screen.AppConfigScreen
 import dev.hossain.keepalive.ui.screen.MainLandingScreen
 import dev.hossain.keepalive.ui.screen.SettingsScreen
 
+/**
+ * Top-level composable that provides bottom navigation and routes between the main app screens.
+ *
+ * This composable wraps the app's navigation host in a [Scaffold] with a [BottomNavigationBar],
+ * which is only displayed once all required permissions have been granted. It serves as the
+ * single source of truth for edge-to-edge system bar insets; its `innerPadding` is passed down
+ * to the [NavHost] so nested screens do not need to handle insets individually.
+ *
+ * @param navController The [NavHostController] used to navigate between screens.
+ * @param context The application [Context], forwarded to screens that require it.
+ * @param allPermissionsGranted Whether all required permissions have been granted. The bottom
+ *   navigation bar is only shown when this is `true`.
+ * @param activityResultLauncher Launcher for system-settings intents (e.g., overlay permission).
+ * @param requestPermissionLauncher Launcher for standard runtime permission requests.
+ * @param permissionType The next [PermissionType] to be requested, used by the home screen.
+ * @param showPermissionRequestDialog Mutable state controlling the visibility of the permission dialog.
+ * @param onRequestPermissions Callback invoked when the user initiates a permission request.
+ * @param totalRequiredCount Total number of permissions required by the app.
+ * @param grantedCount Number of permissions currently granted.
+ * @param grantedPermissionsSet Set of [PermissionType] values that have already been granted.
+ * @param configuredAppsCount Number of apps currently configured for monitoring; shown as a badge.
+ * @param lastCheckTime Timestamp (ms) of the last completed monitoring check, or 0 if none.
+ * @param serviceStartTime Timestamp (ms) when the [dev.hossain.keepalive.service.WatchdogService]
+ *   was first started, or 0 if not yet started.
+ */
 @Composable
 fun BottomNavigationWrapper(
     navController: NavHostController,
@@ -103,6 +128,17 @@ fun BottomNavigationWrapper(
     }
 }
 
+/**
+ * Bottom navigation bar composable that renders navigation items for the main app screens.
+ *
+ * Shows a badge with the configured app count on the [Screen.AppWatchList] item when
+ * [configuredAppsCount] is greater than zero, giving the user a quick visual indicator
+ * of how many apps are being monitored.
+ *
+ * @param navController The [NavHostController] used to navigate when an item is selected.
+ * @param configuredAppsCount The number of apps currently configured for monitoring. When
+ *   greater than zero, a count badge is displayed on the "Apps" navigation item.
+ */
 @Composable
 fun BottomNavigationBar(
     navController: NavHostController,

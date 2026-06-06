@@ -81,6 +81,13 @@ class ApiLoggingTree(
         }
     }
 
+    /**
+     * Overrides [Timber.Tree.log] to enqueue [message] as a [LogMessage] for remote delivery.
+     *
+     * If logging is disabled this method returns immediately. Otherwise it appends the new
+     * message to [logQueue] and (re)starts [startFlushJob] if the flush coroutine is not
+     * already running and the API failure threshold has not been exceeded.
+     */
     override fun log(
         priority: Int,
         tag: String?,
@@ -98,6 +105,13 @@ class ApiLoggingTree(
         }
     }
 
+    /**
+     * Starts a long-lived coroutine on [Dispatchers.IO] that repeatedly calls [flushLogs]
+     * once per second (with a 1,100 ms delay to stay within the Airtable rate limit).
+     *
+     * The job stops itself if [apiFailureCount] exceeds [MAX_SUBSEQUENT_API_FAILURE_COUNT],
+     * acting as a circuit-breaker to avoid hammering a failing endpoint.
+     */
     private fun startFlushJob() {
         flushJob =
             CoroutineScope(Dispatchers.IO).launch {
@@ -133,6 +147,11 @@ class ApiLoggingTree(
         }.toString()
     }
 
+    /**
+     * Drains up to [MAX_RECORDS_PER_REQUEST] messages from [logQueue] and returns them as a list.
+     *
+     * @return A list of [LogMessage] objects ready to be serialized and sent in a single API request.
+     */
     private fun getMaximumAllowedLogs(): List<LogMessage> {
         val logs = mutableListOf<LogMessage>()
         while (logQueue.isNotEmpty() && logs.size < MAX_RECORDS_PER_REQUEST) {
@@ -144,6 +163,12 @@ class ApiLoggingTree(
         return logs
     }
 
+    /**
+     * Sends up to [MAX_LOG_COUNT_PER_SECOND] batches of log records to the remote API in a
+     * single flush cycle, inserting a short delay between batches to preserve log ordering.
+     *
+     * After draining the queue, the [flushJob] is cancelled if [logQueue] is empty.
+     */
     private suspend fun flushLogs() {
         var sentLogCount = 0
 
@@ -164,6 +189,15 @@ class ApiLoggingTree(
         }
     }
 
+    /**
+     * Posts [logPayloadJson] to [endpointUrl] as an asynchronous (non-blocking) HTTP request.
+     *
+     * Increments [apiFailureCount] on network errors or non-2xx responses, and resets it to zero
+     * on a successful response. The [endpointUrl] must accept POST requests with a JSON body
+     * matching the Airtable "Create Records" format.
+     *
+     * @param logPayloadJson A JSON string containing one or more Airtable record objects.
+     */
     private fun sendLogToApi(logPayloadJson: String) {
         val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
         val body = logPayloadJson.toRequestBody(mediaType)
@@ -205,6 +239,10 @@ class ApiLoggingTree(
         )
     }
 
+    /**
+     * Returns `true` if the receiver integer has reached or exceeded [MAX_SUBSEQUENT_API_FAILURE_COUNT],
+     * indicating that the flush job should stop to prevent excessive retries against a failing endpoint.
+     */
     private fun Int.exceededFailureCount(): Boolean {
         return this >= MAX_SUBSEQUENT_API_FAILURE_COUNT
     }
