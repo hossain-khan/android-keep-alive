@@ -37,11 +37,11 @@ versionName = "2.3"  // Update semantic version
 Commit the version change and push the branch:
 ```bash
 git add app/build.gradle.kts
-git commit -m "[BUMP] Prepare for v2.3 release"
-git push origin release/v2.3
+git commit -m "[BUMP] Prepare for new release"
+git push origin release/vX.YY
 ```
 
-Then open a PR from `release/v2.3` → `main` and merge it before proceeding.
+Then open a PR from `release/vX.YY` → `main` and merge it before proceeding.
 
 ### 2. Generate Changelog
 
