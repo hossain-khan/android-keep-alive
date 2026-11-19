@@ -58,6 +58,14 @@ class WatchdogService : Service() {
 
         /** Action to trigger an immediate app check from notification. */
         const val ACTION_CHECK_NOW = "dev.hossain.keepalive.ACTION_CHECK_NOW"
+
+        /**
+         * Tracks whether [WatchdogService] is currently running in this process.
+         * Updated in [onCreate], [onStartCommand], and [onDestroy].
+         */
+        @Volatile
+        var isRunning: Boolean = false
+            internal set
     }
 
     /** Job for managing coroutines within this service. Using a SupervisorJob to prevent failure of one child from affecting others. */
@@ -99,6 +107,12 @@ class WatchdogService : Service() {
      * @return Return an IBinder through which clients can call on to the service.
      * Return null if clients cannot bind to the service.
      */
+    override fun onCreate() {
+        super.onCreate()
+        isRunning = true
+        Timber.d("onCreate: WatchdogService created.")
+    }
+
     override fun onBind(intent: Intent?): IBinder? {
         Timber.d("onBind: $intent")
         return null
@@ -137,6 +151,7 @@ class WatchdogService : Service() {
         startId: Int,
     ): Int {
         Timber.d("onStartCommand() called with: intent = $intent, flags = $flags, startId = $startId")
+        isRunning = true
         currentServiceInstanceId = startId
 
         // Handle "Check Now" action from notification
@@ -366,6 +381,7 @@ class WatchdogService : Service() {
     }
 
     override fun onDestroy() {
+        isRunning = false
         super.onDestroy()
 
         Timber.d("onDestroy: Service is being destroyed. Service ID: $currentServiceInstanceId ($this)")

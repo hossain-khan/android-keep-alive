@@ -1,6 +1,5 @@
 package dev.hossain.keepalive.util
 
-import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -10,23 +9,23 @@ import timber.log.Timber
 /**
  * Utility object for managing the [WatchdogService].
  *
- * Provides methods to start, restart, and check the running status of the [WatchdogService].
+ * Provides methods to start and restart the [WatchdogService].
  * It ensures that the service is started as a foreground service.
  */
 object ServiceManager {
     /**
      * Starts the [WatchdogService] if it is not already running.
      *
-     * This method first checks if the service is currently running using [isServiceRunning].
-     * If not, it creates an intent for [WatchdogService] and starts it as a foreground service
+     * This method first checks [WatchdogService.isRunning].
+     * If not running, it creates an intent for [WatchdogService] and starts it as a foreground service
      * using `context.startForegroundService()` on API 26+ or `context.startService()` on older versions.
      * This is crucial for long-running background tasks.
      *
-     * @param context The [Context] used to start the service and check its status.
+     * @param context The [Context] used to start the service.
      */
     fun startWatchdogService(context: Context) {
         Timber.d("Attempting to start WatchdogService if not already running.")
-        if (!isServiceRunning(context, WatchdogService::class.java)) {
+        if (!WatchdogService.isRunning) {
             Timber.i("WatchdogService is not running. Starting it now as a foreground service.")
             val serviceIntent = Intent(context, WatchdogService::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -54,7 +53,7 @@ object ServiceManager {
         val serviceIntent = Intent(context, WatchdogService::class.java)
 
         // Stop the service if it's running
-        if (isServiceRunning(context, WatchdogService::class.java)) {
+        if (WatchdogService.isRunning) {
             Timber.d("Stopping existing WatchdogService instance.")
             context.stopService(serviceIntent)
         } else {
@@ -68,50 +67,5 @@ object ServiceManager {
         } else {
             context.startService(serviceIntent)
         }
-    }
-
-    /**
-     * Checks if a specific service class is currently running.
-     *
-     * It uses [ActivityManager.getRunningServices] to iterate through running services.
-     *
-     * Important Note on `getRunningServices()`:
-     * As of Android API level 26 (Oreo) and higher, this method is deprecated for retrieving
-     * information about services run by other applications. However, for services within
-     * the calling application's own package (like [WatchdogService] here), it still works.
-     * The `@Suppress("DEPRECATION")` annotation is used because of this specific use case.
-     *
-     * @param context The [Context] to access the [ActivityManager].
-     * @param serviceClass The [Class] object of the service to check (e.g., `WatchdogService::class.java`).
-     * @return `true` if the service is found in the list of running services, `false` otherwise.
-     */
-    @Suppress("DEPRECATION")
-    private fun isServiceRunning(
-        context: Context,
-        serviceClass: Class<*>,
-    ): Boolean {
-        val activityManager =
-            context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager?
-                ?: return false // Should not happen, but good practice to check
-
-        // DEPRECATED: `getRunningServices()` method is no longer available to third party applications.
-        // For backwards compatibility, it will still return the caller's own services.
-        // So, this method is still useful for detecting if your own services are running.
-        try {
-            for (service in activityManager.getRunningServices(Int.MAX_VALUE)) {
-                if (serviceClass.name == service.service.className) {
-                    return true
-                }
-            }
-        } catch (e: SecurityException) {
-            // Catch SecurityException, which might occur on some modified ROMs.
-            Timber.e(e, "SecurityException while checking if service ${serviceClass.name} is running.")
-            return false // Assume not running if a security error occurs
-        } catch (e: RuntimeException) {
-            // Catch other runtime exceptions that might occur unexpectedly.
-            Timber.e(e, "RuntimeException while checking if service ${serviceClass.name} is running.")
-            return false // Assume not running if a runtime error occurs
-        }
-        return false
     }
 }
