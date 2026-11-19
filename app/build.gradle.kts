@@ -34,8 +34,8 @@ android {
          * Reference: https://developer.android.com/about/versions/15/behavior-changes-15#bg-starts
          */
         targetSdk = 34 // Android 14 (Upside Down Cake)
-        versionCode = 27
-        versionName = "2.13"
+        versionCode = 28
+        versionName = "2.14"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
