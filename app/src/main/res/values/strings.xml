@@ -33,4 +33,10 @@
     <string name="unsupported_android_version_title">Unsupported Android Version</string>
     <string name="unsupported_android_version_message">This app is supported up to Android 14. Your device is running Android %1$s (API %2$d), so app monitoring may not work reliably.</string>
 
+    <!-- Permission Revoked Alert -->
+    <string name="notification_channel_name_permission_alert">Permission Alerts</string>
+    <string name="notification_channel_description_permission_alert">Alerts when required background permissions are revoked (e.g., after an OS update)</string>
+    <string name="notification_title_permission_revoked">Keep Alive Permissions Reset</string>
+    <string name="notification_content_permission_revoked">Missing %1$s. Tap to restore so monitoring keeps working.</string>
+
 </resources>

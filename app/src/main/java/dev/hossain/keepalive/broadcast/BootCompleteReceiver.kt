@@ -11,6 +11,8 @@ import dev.hossain.keepalive.data.model.AppActivityLog
 import dev.hossain.keepalive.service.WatchdogService
 import dev.hossain.keepalive.ui.screen.AppInfo
 import dev.hossain.keepalive.util.AppLauncher
+import dev.hossain.keepalive.util.NotificationHelper
+import dev.hossain.keepalive.util.PermissionHealthChecker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -49,8 +51,18 @@ class BootCompleteReceiver : BroadcastReceiver() {
             // Check if we should launch apps immediately on boot
             val settingsRepository = SettingsRepository(context)
             val activityLogger = AppActivityLogger(context)
+            val notificationHelper = NotificationHelper(context)
 
             receiverScope.launch {
+                val configuredApps = AppDataStore.store(context).data.first()
+                PermissionHealthChecker.checkAndAlertIfRevoked(
+                    context = context,
+                    settingsRepository = settingsRepository,
+                    activityLogger = activityLogger,
+                    notificationHelper = notificationHelper,
+                    isAppConfigured = configuredApps.isNotEmpty(),
+                )
+
                 val launchOnBoot = settingsRepository.launchAppsOnBootFlow.first()
                 Timber.d("BootCompleteReceiver: Launch apps on boot setting = $launchOnBoot")
 

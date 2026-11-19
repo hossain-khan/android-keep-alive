@@ -14,6 +14,7 @@ import dev.hossain.keepalive.util.AppConfig.DELAY_BETWEEN_MULTIPLE_APP_CHECKS_MS
 import dev.hossain.keepalive.util.AppLauncher
 import dev.hossain.keepalive.util.HttpPingSender
 import dev.hossain.keepalive.util.NotificationHelper
+import dev.hossain.keepalive.util.PermissionHealthChecker
 import dev.hossain.keepalive.util.RecentAppChecker
 import dev.hossain.keepalive.util.Validator.isValidUUID
 import kotlinx.coroutines.CoroutineScope
@@ -246,6 +247,14 @@ class WatchdogService : Service() {
                     Timber.w("No apps configured yet. Skipping the check.")
                     continue
                 }
+
+                PermissionHealthChecker.checkAndAlertIfRevoked(
+                    context = applicationContext,
+                    settingsRepository = appSettings,
+                    activityLogger = activityLogger,
+                    notificationHelper = notificationHelper,
+                    isAppConfigured = true,
+                )
 
                 val recentlyUsedAppStats = RecentAppChecker.getRecentlyRunningAppStats(this@WatchdogService)
                 val shouldForceStart = appSettings.enableForceStartAppsFlow.first()
