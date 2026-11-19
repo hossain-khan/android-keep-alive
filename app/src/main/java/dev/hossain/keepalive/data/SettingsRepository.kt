@@ -71,6 +71,12 @@ class SettingsRepository(private val context: Context) {
 
         /** [Preferences.Key] for storing the service start timestamp in milliseconds. */
         val SERVICE_START_TIME = stringPreferencesKey("service_start_time")
+
+        /** [Preferences.Key] for tracking whether critical permissions were previously granted. */
+        val WAS_CRITICAL_PERMISSIONS_GRANTED = booleanPreferencesKey("was_critical_permissions_granted")
+
+        /** [Preferences.Key] for deduplicating revoked-permission alert notifications. */
+        val PERMISSION_REVOKED_ALERT_SHOWN = booleanPreferencesKey("permission_revoked_alert_shown")
     }
 
     /**
@@ -376,6 +382,37 @@ class SettingsRepository(private val context: Context) {
     suspend fun saveServiceStartTime(timestamp: Long) {
         context.dataStore.edit { preferences ->
             preferences[SERVICE_START_TIME] = timestamp.toString()
+        }
+    }
+
+    /**
+     * A [Flow] that emits `true` if critical background permissions were previously observed as granted.
+     */
+    val wasCriticalPermissionsGrantedFlow: Flow<Boolean> =
+        context.dataStore.data
+            .map { preferences ->
+                preferences[WAS_CRITICAL_PERMISSIONS_GRANTED] ?: false
+            }
+
+    /**
+     * A [Flow] that emits `true` if a permission-revoked alert has already been shown for the current outage.
+     */
+    val permissionRevokedAlertShownFlow: Flow<Boolean> =
+        context.dataStore.data
+            .map { preferences ->
+                preferences[PERMISSION_REVOKED_ALERT_SHOWN] ?: false
+            }
+
+    /**
+     * Updates whether critical permissions were previously granted and whether an alert was shown.
+     */
+    suspend fun savePermissionAlertState(
+        wasGranted: Boolean,
+        alertShown: Boolean,
+    ) {
+        context.dataStore.edit { preferences ->
+            preferences[WAS_CRITICAL_PERMISSIONS_GRANTED] = wasGranted
+            preferences[PERMISSION_REVOKED_ALERT_SHOWN] = alertShown
         }
     }
 }

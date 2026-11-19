@@ -46,6 +46,16 @@ class NotificationHelper(private val context: Context) {
         const val APP_RESTART_CHANNEL_ID = "AppRestartChannel"
 
         /**
+         * Unique ID for the notification channel used for permission revocation alerts.
+         */
+        const val PERMISSION_ALERT_CHANNEL_ID = "PermissionAlertChannel"
+
+        /**
+         * Notification ID for permission revocation alerts.
+         */
+        const val PERMISSION_REVOKED_NOTIFICATION_ID = 2
+
+        /**
          * Base notification ID for app restart notifications.
          * Each app will have a unique notification ID based on this plus a hash of the package name.
          */
@@ -112,8 +122,19 @@ class NotificationHelper(private val context: Context) {
                     description = context.getString(R.string.notification_channel_description_app_restart)
                 }
 
+            // Permission alert channel (high importance so silent OTA resets are noticed)
+            val permissionAlertChannel =
+                NotificationChannel(
+                    PERMISSION_ALERT_CHANNEL_ID,
+                    context.getString(R.string.notification_channel_name_permission_alert),
+                    NotificationManager.IMPORTANCE_HIGH,
+                ).apply {
+                    description = context.getString(R.string.notification_channel_description_permission_alert)
+                }
+
             notificationManager.createNotificationChannel(watchdogChannel)
             notificationManager.createNotificationChannel(appRestartChannel)
+            notificationManager.createNotificationChannel(permissionAlertChannel)
         }
     }
 
@@ -343,6 +364,44 @@ class NotificationHelper(private val context: Context) {
             APP_RESTART_NOTIFICATION_ID_BASE +
                 (packageName.hashCode() and 0x7FFFFFFF) % MAX_APP_RESTART_NOTIFICATIONS
         notificationManager.notify(notificationId, notification)
+    }
+
+    /**
+     * Shows a high-priority notification when critical background permissions are missing or revoked
+     * (for example, after an OEM OTA update). Tapping opens [MainActivity] to re-grant them.
+     */
+    fun showPermissionRevokedNotification(missingPermissions: List<String>) {
+        if (missingPermissions.isEmpty()) return
+
+        createNotificationChannel()
+
+        val notificationIntent =
+            Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+        val pendingIntent =
+            PendingIntent.getActivity(
+                context,
+                PERMISSION_REVOKED_NOTIFICATION_ID,
+                notificationIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
+
+        val missingSummary = missingPermissions.joinToString(", ")
+        val contentText = context.getString(R.string.notification_content_permission_revoked, missingSummary)
+
+        val notification =
+            NotificationCompat.Builder(context, PERMISSION_ALERT_CHANNEL_ID)
+                .setContentTitle(context.getString(R.string.notification_title_permission_revoked))
+                .setContentText(contentText)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
+                .setSmallIcon(R.drawable.baseline_radar_24)
+                .setContentIntent(pendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .build()
+
+        notificationManager.notify(PERMISSION_REVOKED_NOTIFICATION_ID, notification)
     }
 
     /**
