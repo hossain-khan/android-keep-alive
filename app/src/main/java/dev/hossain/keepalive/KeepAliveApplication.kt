@@ -3,6 +3,7 @@ package dev.hossain.keepalive
 import android.app.Application
 import dev.hossain.keepalive.data.SettingsRepository
 import dev.hossain.keepalive.log.ApiLoggingTree
+import dev.hossain.keepalive.worker.WatchdogMonitorWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -23,6 +24,10 @@ class KeepAliveApplication : Application() {
 
         // Add logging tree regardless of the DEBUG/RELEASE build type
         Timber.plant(Timber.DebugTree())
+
+        applicationScope.launch(Dispatchers.IO) {
+            WatchdogMonitorWorker.ensureScheduled(this@KeepAliveApplication)
+        }
 
         val settingsRepository = SettingsRepository(this)
         applicationScope.launch {
