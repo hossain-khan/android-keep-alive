@@ -13,6 +13,7 @@ import dev.hossain.keepalive.ui.screen.AppInfo
 import dev.hossain.keepalive.util.AppLauncher
 import dev.hossain.keepalive.util.NotificationHelper
 import dev.hossain.keepalive.util.PermissionHealthChecker
+import dev.hossain.keepalive.worker.WatchdogMonitorWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -54,6 +55,8 @@ class BootCompleteReceiver : BroadcastReceiver() {
             val notificationHelper = NotificationHelper(context)
 
             receiverScope.launch {
+                WatchdogMonitorWorker.ensureScheduled(context)
+
                 val configuredApps = AppDataStore.store(context).data.first()
                 PermissionHealthChecker.checkAndAlertIfRevoked(
                     context = context,

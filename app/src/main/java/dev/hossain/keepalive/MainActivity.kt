@@ -22,6 +22,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import dev.hossain.keepalive.data.AppDataStore
 import dev.hossain.keepalive.data.PermissionType
@@ -34,6 +35,9 @@ import dev.hossain.keepalive.ui.BottomNavigationWrapper
 import dev.hossain.keepalive.ui.screen.MainViewModel
 import dev.hossain.keepalive.ui.theme.KeepAliveTheme
 import dev.hossain.keepalive.util.ServiceManager
+import dev.hossain.keepalive.worker.WatchdogMonitorWorker
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
@@ -131,6 +135,9 @@ class MainActivity : ComponentActivity() {
 
         // Start the WatchdogService - this is required to monitor other apps and keep them alive.
         ServiceManager.startWatchdogService(this)
+        lifecycleScope.launch(Dispatchers.IO) {
+            WatchdogMonitorWorker.ensureScheduled(applicationContext)
+        }
 
         permissionLauncher =
             this.registerForActivityResult(
